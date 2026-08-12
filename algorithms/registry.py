@@ -24,6 +24,14 @@ ALGORITMOS = {
         "requiere_pesos": False,
         "permite_negativos": True,
         "requiere_dag": False,
+        "descripcion": (
+            "Recorre el grafo en anchura desde el nodo origen: explora primero "
+            "todos los vecinos directos antes de avanzar al siguiente nivel, "
+            "usando una cola FIFO.\n\n"
+            "No considera el peso de las aristas — el árbol que construye es "
+            "el de menor número de saltos, no el de menor costo.\n\n"
+            "Complejidad: O(V + E)."
+        ),
     },
     "dfs": {
         "id": "dfs",
@@ -32,6 +40,14 @@ ALGORITMOS = {
         "requiere_pesos": False,
         "permite_negativos": True,
         "requiere_dag": False,
+        "descripcion": (
+            "Recorre el grafo en profundidad desde el nodo origen: avanza por "
+            "una rama hasta el final antes de retroceder (backtrack) y probar "
+            "otra.\n\n"
+            "No calcula caminos mínimos; construye un árbol de descubrimiento "
+            "con tiempos de entrada/salida por nodo.\n\n"
+            "Complejidad: O(V + E)."
+        ),
     },
     "dijkstra": {
         "id": "dijkstra",
@@ -40,6 +56,16 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": False,
         "requiere_dag": False,
+        "descripcion": (
+            "Calcula el camino más corto (por peso acumulado) desde el "
+            "origen a todos los demás nodos usando una cola de prioridad: "
+            "en cada paso extrae el nodo no finalizado con menor distancia "
+            "tentativa y relaja sus aristas salientes.\n\n"
+            "Requiere que todos los pesos sean no negativos — con negativos "
+            "el resultado puede ser incorrecto, por eso no se ofrece en esos "
+            "grafos (usa Bellman-Ford).\n\n"
+            "Complejidad: O((V + E) log V) con heap binario."
+        ),
     },
     "bellman_ford": {
         "id": "bellman_ford",
@@ -48,6 +74,15 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": True,
         "requiere_dag": False,
+        "descripcion": (
+            "Calcula caminos mínimos desde el origen relajando TODAS las "
+            "aristas del grafo, V-1 veces.\n\n"
+            "Más lento que Dijkstra, pero admite pesos negativos; una pasada "
+            "extra permite detectar ciclos de peso negativo (en ese caso no "
+            "existe un camino mínimo bien definido para los nodos alcanzados "
+            "por el ciclo, y se marcan en rojo).\n\n"
+            "Complejidad: O(V · E)."
+        ),
     },
     "dag_sp": {
         "id": "dag_sp",
@@ -56,6 +91,15 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": True,
         "requiere_dag": True,
+        "descripcion": (
+            "Calcula caminos mínimos en un grafo dirigido acíclico (DAG) en "
+            "dos fases: primero un orden topológico (algoritmo de Kahn), "
+            "luego relaja las aristas siguiendo ese orden, una sola vez.\n\n"
+            "Al no haber ciclos no hace falta reintentar relajaciones como "
+            "en Bellman-Ford — es el método más eficiente cuando el grafo es "
+            "un DAG, y admite pesos negativos sin problema.\n\n"
+            "Complejidad: O(V + E)."
+        ),
     },
 }
 

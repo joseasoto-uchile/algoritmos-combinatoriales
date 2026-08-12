@@ -24,6 +24,9 @@ def id_arista(u: str, v: str, dirigido: bool) -> str:
 
 
 def graph_to_elements(G: nx.Graph) -> list[dict]:
+    """Construye los elementos de Cytoscape. Las aristas de un grafo NO
+    dirigido llevan la clase base 'no_dirigido', que la hoja de estilos usa
+    para no dibujarles punta de flecha (ver cytoscape_style.py)."""
     elementos = []
     for n, datos in G.nodes(data=True):
         pos = datos.get("pos", [0, 0])
@@ -44,7 +47,8 @@ def graph_to_elements(G: nx.Graph) -> list[dict]:
                     "source": str(u),
                     "target": str(v),
                     "label": etiqueta,
-                }
+                },
+                "classes": "" if dirigido else "no_dirigido",
             }
         )
     return elementos
@@ -100,10 +104,13 @@ def aplicar_clases(
     for el in elementos:
         el = {**el, "data": dict(el["data"])}
         data = el["data"]
+        # Preserva clases "estructurales" ya puestas por graph_to_elements
+        # (p. ej. 'no_dirigido'), y les suma las de estado de la traza.
+        clases = set((el.get("classes") or "").split())
         if "source" in data:
-            clases = set(clases_arista.get(data["id"], set()))
+            clases |= clases_arista.get(data["id"], set())
         else:
-            clases = set(clases_nodo.get(data["id"], set()))
+            clases |= clases_nodo.get(data["id"], set())
             if origen is not None and data["id"] == str(origen):
                 clases.add("origen")
         el["classes"] = " ".join(sorted(clases))

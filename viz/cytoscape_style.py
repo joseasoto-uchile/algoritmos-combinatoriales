@@ -33,6 +33,11 @@ STYLESHEET = [
             "text-background-padding": "1px",
         },
     },
+    {
+        # Grafo no dirigido: sin punta de flecha.
+        "selector": "edge.no_dirigido",
+        "style": {"target-arrow-shape": "none", "source-arrow-shape": "none"},
+    },
     # --- Nodo: estados persistentes ---
     {
         "selector": "node.visitado",

@@ -18,7 +18,7 @@ from graph_model.model import generar_aleatorio, graph_from_dict, graph_to_dict
 from viz.cytoscape_style import STYLESHEET
 from viz.elements import aplicar_clases, calcular_estado, graph_to_elements
 
-LAYOUTS = ["preset", "cose", "circle", "grid", "breadthfirst"]
+LAYOUTS = ["circle", "breadthfirst", "grid", "cose", "preset"]
 
 app = Dash(__name__)
 app.title = "Visualizador de Algoritmos sobre Grafos"
@@ -74,10 +74,44 @@ def _panel_algoritmo():
         className="panel",
         children=[
             html.H4("Algoritmo"),
-            dcc.Dropdown(id="dd-algoritmo", placeholder="Algoritmo"),
+            html.Div(
+                className="fila-algoritmo",
+                children=[
+                    dcc.Dropdown(id="dd-algoritmo", placeholder="Algoritmo"),
+                    html.Button(
+                        "ℹ️",
+                        id="btn-info-algoritmo",
+                        title="Ver cómo funciona este algoritmo",
+                        className="btn-info",
+                    ),
+                ],
+            ),
             dcc.Dropdown(id="dd-origen", placeholder="Nodo origen"),
             html.Button("Ejecutar", id="btn-ejecutar", n_clicks=0, className="btn-primario"),
             html.Div(id="txt-resultado", className="txt-estado"),
+        ],
+    )
+
+
+def _modal_info():
+    return html.Div(
+        id="modal-info",
+        className="modal-overlay",
+        style={"display": "none"},
+        children=[
+            html.Div(
+                className="modal-contenido",
+                children=[
+                    html.Div(
+                        className="modal-header",
+                        children=[
+                            html.H3(id="modal-info-titulo"),
+                            html.Button("✕", id="btn-cerrar-info", className="btn-cerrar"),
+                        ],
+                    ),
+                    dcc.Markdown(id="modal-info-texto"),
+                ],
+            )
         ],
     )
 
@@ -102,8 +136,15 @@ def _toolbar_grafo():
             html.Div(
                 className="fila-velocidad",
                 children=[
-                    html.Span("Velocidad", className="txt-ayuda"),
-                    dcc.Slider(id="sl-velocidad", min=100, max=2000, step=100, value=600),
+                    html.Span("Velocidad (pasos/seg)", className="txt-ayuda"),
+                    dcc.Slider(
+                        id="sl-velocidad",
+                        min=1,
+                        max=30,
+                        step=1,
+                        value=5,
+                        marks={1: "1", 5: "5", 10: "10", 20: "20", 30: "30"},
+                    ),
                 ],
             ),
             html.Div(id="txt-paso", className="txt-estado"),
@@ -131,12 +172,13 @@ app.layout = html.Div(
                                 dcc.Dropdown(
                                     id="dd-layout",
                                     options=[{"label": l, "value": l} for l in LAYOUTS],
-                                    value="preset",
+                                    value="circle",
                                     clearable=False,
                                 ),
                                 html.Div(
-                                    "'preset' usa la posición guardada en la instancia "
-                                    "y nunca reordena los nodos entre pasos.",
+                                    "Cualquier layout se recalcula solo al elegirlo o al "
+                                    "apretar 'Centrar' — nunca solo entre pasos. "
+                                    "'preset' usa la posición guardada en la instancia.",
                                     className="txt-ayuda",
                                 ),
                             ],
@@ -151,7 +193,7 @@ app.layout = html.Div(
                             id="cyto",
                             elements=[],
                             stylesheet=STYLESHEET,
-                            layout={"name": "preset"},
+                            layout={"name": "circle"},
                             autoRefreshLayout=False,
                             style={"width": "100%", "flex": "1", "border": "1px solid #cfd8dc"},
                         ),
@@ -159,7 +201,8 @@ app.layout = html.Div(
                 ),
             ],
         ),
-        dcc.Interval(id="interval", interval=600, disabled=True, n_intervals=0),
+        _modal_info(),
+        dcc.Interval(id="interval", interval=200, disabled=True, n_intervals=0),
         dcc.Store(id="store-grafo"),
         dcc.Store(id="store-trace"),
         dcc.Store(id="store-resultado"),
@@ -335,8 +378,11 @@ def avanzar_automatico(n_intervals, paso, trace):
     Output("interval", "interval"),
     Input("sl-velocidad", "value"),
 )
-def cambiar_velocidad(v):
-    return v or 600
+def cambiar_velocidad(pasos_por_segundo):
+    # El slider es "pasos por segundo" (más a la derecha = más rápido);
+    # dcc.Interval espera un intervalo en milisegundos, así que se invierte.
+    pps = pasos_por_segundo or 5
+    return max(20, round(1000 / pps))
 
 
 # ---------------------------------------------------------------------------
@@ -409,11 +455,35 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
 
     disparador = ctx.triggered_id
     if disparador in ("store-grafo", "dd-layout", "btn-centrar", None):
-        nuevo_layout = {"name": layout_name or "preset", "fit": True, "padding": 30, "animate": False}
+        nuevo_layout = {"name": layout_name or "circle", "fit": True, "padding": 30, "animate": False}
     else:
         nuevo_layout = no_update
 
     return elementos, nuevo_layout, texto_paso
+
+
+# ---------------------------------------------------------------------------
+# 10) Popup de instrucciones: qué hace el algoritmo elegido, restricciones
+#     y complejidad. El texto sale de algorithms/registry.py — agregar un
+#     algoritmo nuevo también agrega su popup automáticamente.
+# ---------------------------------------------------------------------------
+@app.callback(
+    Output("modal-info", "style"),
+    Output("modal-info-titulo", "children"),
+    Output("modal-info-texto", "children"),
+    Input("btn-info-algoritmo", "n_clicks"),
+    Input("btn-cerrar-info", "n_clicks"),
+    State("dd-algoritmo", "value"),
+    prevent_initial_call=True,
+)
+def alternar_modal_info(n_abrir, n_cerrar, alg_id):
+    disparador = ctx.triggered_id
+    if disparador == "btn-info-algoritmo":
+        if not alg_id:
+            raise PreventUpdate
+        info = ALGORITMOS[alg_id]
+        return {"display": "flex"}, info["nombre"], info.get("descripcion", "Sin descripción.")
+    return {"display": "none"}, no_update, no_update
 
 
 if __name__ == "__main__":
