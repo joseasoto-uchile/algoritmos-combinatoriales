@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 
 import dash
 import dash_cytoscape as cyto
@@ -478,7 +479,20 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
 
     disparador = ctx.triggered_id
     if disparador in ("store-grafo", "dd-layout", "btn-centrar", None):
-        nuevo_layout = {"name": layout_name or "circle", "fit": True, "padding": 30, "animate": False}
+        # "_nonce" no es una opción real del layout de Cytoscape (se ignora);
+        # está solo para que el diccionario cambie SIEMPRE. Si no, cuando el
+        # layout elegido es el mismo que el de la vez anterior (p. ej. sigue
+        # en "circle" tras generar un grafo nuevo), el prop le llega idéntico
+        # a dash-cytoscape, no detecta cambio, y no vuelve a ejecutar el
+        # algoritmo — quedan las posiciones internas (spring layout) en vez
+        # de las del layout elegido.
+        nuevo_layout = {
+            "name": layout_name or "circle",
+            "fit": True,
+            "padding": 30,
+            "animate": False,
+            "_nonce": time.time(),
+        }
     else:
         nuevo_layout = no_update
 
