@@ -1,0 +1,88 @@
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
+    margin: 0;
+}
+
+.app-contenedor {
+    padding: 16px 24px;
+}
+
+.fila-principal {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.columna-controles {
+    flex: 0 0 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.columna-grafo {
+    flex: 1;
+    min-width: 0;
+}
+
+.panel {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.panel h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #546e7a;
+}
+
+.panel label {
+    display: block;
+    font-size: 12px;
+    color: #607d8b;
+    margin-top: 6px;
+}
+
+.panel input[type="number"],
+.panel .Select-control {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-primario {
+    margin-top: 10px;
+    width: 100%;
+    background: #1565c0;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.btn-primario:hover {
+    background: #0d47a1;
+}
+
+.fila-botones {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+}
+
+.fila-botones button {
+    flex: 1;
+    padding: 6px 0;
+    cursor: pointer;
+}
+
+.txt-estado {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #37474f;
+}
