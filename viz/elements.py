@@ -23,19 +23,26 @@ def id_arista(u: str, v: str, dirigido: bool) -> str:
     return f"{a}__{b}"
 
 
-def graph_to_elements(G: nx.Graph) -> list[dict]:
+def graph_to_elements(G: nx.Graph, incluir_posiciones: bool = True) -> list[dict]:
     """Construye los elementos de Cytoscape. Las aristas de un grafo NO
     dirigido llevan la clase base 'no_dirigido', que la hoja de estilos usa
-    para no dibujarles punta de flecha (ver cytoscape_style.py)."""
+    para no dibujarles punta de flecha (ver cytoscape_style.py).
+
+    `incluir_posiciones` decide si cada nodo viaja con su coordenada guardada.
+    Solo debe activarse con el layout 'preset', que es justamente el que
+    significa "usá las posiciones de la instancia". Con cualquier otro layout
+    las coordenadas guardadas (spring) ya no describen lo que se ve: mandarlas
+    igual hace que Cytoscape las reaplique cada vez que se reemplaza la lista
+    de elementos —o sea, en cada paso de la traza— y el grafo salta desde el
+    layout elegido de vuelta a las posiciones viejas.
+    """
     elementos = []
     for n, datos in G.nodes(data=True):
-        pos = datos.get("pos", [0, 0])
-        elementos.append(
-            {
-                "data": {"id": str(n), "label": datos.get("label", str(n))},
-                "position": {"x": pos[0], "y": pos[1]},
-            }
-        )
+        elemento = {"data": {"id": str(n), "label": datos.get("label", str(n))}}
+        if incluir_posiciones:
+            pos = datos.get("pos", [0, 0])
+            elemento["position"] = {"x": pos[0], "y": pos[1]}
+        elementos.append(elemento)
     dirigido = G.is_directed()
     for u, v, datos in G.edges(data=True):
         peso = datos.get("weight")
@@ -92,6 +99,84 @@ def calcular_estado(trace: list[dict], paso_actual: int, dirigido: bool):
             agregar(clases_nodo, ev["nodo"], "activo")
 
     return clases_nodo, clases_arista
+
+
+def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float] | None:
+    """Reconstruye la distancia conocida de cada nodo en `paso_actual`.
+
+    Devuelve None si la traza no lleva información de distancia — es el caso de
+    DFS, que no calcula ninguna. Así la etiqueta secundaria aparece sola en los
+    algoritmos donde tiene sentido, sin necesidad de marcarlos en el registro.
+
+    Se reproducen los eventos en orden en vez de guardar el diccionario
+    completo en cada paso: la traza ya viaja al navegador en cada corrida y
+    duplicar el estado por paso la haría crecer de forma cuadrática.
+    """
+    if not trace:
+        return None
+
+    distancias: dict[str, float] = {}
+    hubo_datos = False
+    tope = max(0, min(paso_actual, len(trace) - 1))
+
+    for ev in trace[: tope + 1]:
+        # 'dist' lo emiten los algoritmos al fijar la distancia de un nodo;
+        # 'relajar' trae la nueva distancia del extremo de destino.
+        if "dist" in ev and "nodo" in ev:
+            distancias[ev["nodo"]] = ev["dist"]
+            hubo_datos = True
+        elif ev["tipo"] == "relajar" and "nueva_dist" in ev:
+            distancias[ev["v"]] = ev["nueva_dist"]
+            hubo_datos = True
+
+    if not hubo_datos:
+        # Puede que el algoritmo sí calcule distancias pero que en los primeros
+        # pasos todavía no haya emitido ninguna: se distingue mirando la traza
+        # entera, no solo el tramo recorrido.
+        lleva_distancias = any(
+            "dist" in ev or (ev["tipo"] == "relajar" and "nueva_dist" in ev) for ev in trace
+        )
+        if not lleva_distancias:
+            return None
+    return distancias
+
+
+def aplicar_distancias(
+    elementos: list[dict],
+    distancias: dict[str, float],
+    simbolo_infinito: str = "∞",
+) -> list[dict]:
+    """Agrega a cada nodo una segunda línea de etiqueta con su distancia.
+
+    Cytoscape.js dibuja una sola etiqueta por elemento, así que la "etiqueta
+    secundaria" se implementa como un segundo renglón del mismo texto, y la
+    hoja de estilos lo mueve fuera del nodo (ver cytoscape_style.py). El
+    prefijo 'd=' está para que cada renglón se identifique solo, sin tener que
+    ir a mirar la leyenda.
+
+    Los nodos todavía no alcanzados muestran ∞, que es justamente lo que hace
+    legible el avance de Dijkstra o Bellman-Ford: se ve cuáles siguen fuera del
+    alcance y cuáles ya mejoraron.
+    """
+    nuevos = []
+    for el in elementos:
+        el = {**el, "data": dict(el["data"])}
+        data = el["data"]
+        if "source" not in data:
+            valor = distancias.get(data["id"])
+            if valor is None or valor == float("inf"):
+                texto = simbolo_infinito
+            elif isinstance(valor, float) and valor.is_integer():
+                texto = str(int(valor))
+            else:
+                texto = str(valor)
+            data["dist"] = texto
+            data["label"] = f"{data['label']}\nd={texto}"
+            clases = set((el.get("classes") or "").split())
+            clases.add("con_distancia")
+            el["classes"] = " ".join(sorted(clases))
+        nuevos.append(el)
+    return nuevos
 
 
 def aplicar_clases(

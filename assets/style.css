@@ -8,9 +8,17 @@ body {
     background: #fafafa;
 }
 
+/* height fija la altura a la ventana: eso es lo que mantiene al sidebar
+   acotado y scrolleando por dentro. Si se cambia por min-height, el contenedor
+   pasa a medir lo que mide su contenido y se estira hasta la altura del
+   sidebar (~1300 px), inflando el lienzo.
+   min-height añade el piso: en una ventana más baja que esto el contenedor
+   deja de encogerse y es la PÁGINA la que scrollea en vertical, en vez de
+   aplastar el lienzo hasta dejarlo inservible. */
 .app-contenedor {
     padding: 12px 24px 16px;
     height: 100vh;
+    min-height: 640px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -24,22 +32,30 @@ body {
 /* La fila principal ocupa el resto de la altura de la ventana, sin que
    la página entera haga scroll vertical: si algo desborda, scrollea
    solo el sidebar (columna-controles), nunca el grafo.
-   Las tres columnas pueden encogerse (flex-shrink) en vez de quedar con
-   ancho fijo: con ancho fijo, en ventanas angostas no entraban las tres
-   y una terminaba tapando los botones de la otra sin avisar. Si aun así
-   no entran los anchos mínimos, aparece scroll horizontal en vez de
-   superponerse. */
+
+   El ancho de las dos columnas laterales vive en estas variables, que
+   assets/resize.js modifica al arrastrar los divisores. La columna del
+   grafo no declara ancho: se queda con lo que sobra, así que al angostar
+   un lateral el lienzo gana espacio en vez de empujar a los demás.
+
+   Si la ventana es tan angosta que no entran los anchos mínimos, la fila
+   scrollea horizontalmente en lugar de superponer columnas. */
 .fila-principal {
+    --ancho-controles: 280px;
+    --ancho-codigo: 300px;
     display: flex;
-    gap: 20px;
     flex: 1;
+    /* min-height: 0 es lo que permite que las columnas se encojan y que el
+       sidebar scrollee por dentro. El piso de altura NO va acá: si se pone,
+       la fila deja de encogerse y se estira hasta la altura del sidebar
+       (~1150 px), inflando el lienzo. El piso vive en .columna-grafo. */
     min-height: 0;
     overflow-x: auto;
 }
 
 .columna-controles {
-    flex: 0 1 280px;
-    min-width: 240px;
+    flex: 0 0 var(--ancho-controles);
+    min-width: 180px;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -47,20 +63,96 @@ body {
     padding-right: 6px;
 }
 
+/* El piso de altura del lienzo va acá, no en la fila: mientras la ventana dé
+   de sí, la columna ocupa el alto disponible y no hay scroll de página; cuando
+   la ventana es más baja que este mínimo, la columna deja de encogerse, el
+   contenedor crece y la página pasa a scrollear en vertical. */
+/* 480px = barra (~68) + lienzo mínimo (240) + leyenda (~134) + separaciones.
+   Debe ir de la mano del minHeight del lienzo en app.py y del min-height del
+   contenedor: si este piso queda por debajo de lo que miden los tres bloques,
+   la leyenda desborda la columna. */
 .columna-grafo {
-    flex: 2 1 320px;
+    flex: 1 1 320px;
     min-width: 280px;
+    min-height: 480px;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
 .columna-codigo {
-    flex: 0 1 300px;
-    min-width: 220px;
+    flex: 0 0 var(--ancho-codigo);
+    min-width: 160px;
     display: flex;
     flex-direction: column;
     min-height: 0;
+}
+
+/* --- Divisores arrastrables ---
+   El elemento mide 10px para que sea fácil de agarrar con el puntero, pero
+   la línea visible es de 2px y va centrada, así que a simple vista parece
+   apenas una separación entre columnas. */
+.divisor {
+    flex: 0 0 10px;
+    cursor: col-resize;
+    position: relative;
+    align-self: stretch;
+}
+
+.divisor::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background: #e0e0e0;
+    border-radius: 1px;
+    transition: background 0.15s;
+}
+
+.divisor:hover::after,
+.divisor-activo::after {
+    background: #1565c0;
+}
+
+/* Mientras se arrastra: sin selección de texto accidental y con el cursor
+   de redimensionar aunque el puntero se salga del divisor. */
+body.redimensionando {
+    cursor: col-resize;
+    user-select: none;
+}
+
+/* En pantallas angostas las tres columnas en fila no tienen sentido: se
+   apilan y la página entera pasa a scrollear en vertical. */
+@media (max-width: 900px) {
+    .app-contenedor {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .fila-principal {
+        flex-direction: column;
+        overflow-x: visible;
+    }
+
+    .columna-controles,
+    .columna-codigo {
+        flex: 0 0 auto;
+        width: 100%;
+        overflow-y: visible;
+    }
+
+    .columna-grafo {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 60vh;
+    }
+
+    /* Arrastrar no aplica cuando las columnas están apiladas. */
+    .divisor {
+        display: none;
+    }
 }
 
 .panel-codigo {
@@ -87,6 +179,11 @@ body {
     white-space: pre-wrap;
     color: #37474f;
     border-left: 3px solid transparent;
+    cursor: pointer;
+}
+
+.linea-codigo:hover {
+    background: #eceff1;
 }
 
 .linea-codigo .num-linea {
@@ -101,6 +198,71 @@ body {
     border-left-color: #f57f17;
     font-weight: 600;
     color: #263238;
+}
+
+/* Punto de interrupción: la reproducción automática se detiene al llegar
+   a esta línea. Se marca con un punto rojo sobre el número de línea. */
+.linea-breakpoint {
+    border-left-color: #d32f2f;
+}
+
+.linea-breakpoint .num-linea {
+    color: #d32f2f;
+    font-weight: 700;
+}
+
+.linea-breakpoint .num-linea::before {
+    content: "●";
+    margin-right: 2px;
+    font-size: 9px;
+    vertical-align: middle;
+}
+
+/* Si una línea es a la vez activa y breakpoint, gana el fondo amarillo del
+   paso actual pero se conserva el borde rojo, para no perder la marca. */
+.linea-breakpoint.linea-activa {
+    border-left-color: #d32f2f;
+}
+
+.insignia-complejidad {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #bbdefb;
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11.5px;
+    margin-bottom: 6px;
+}
+
+/* Algoritmos que el grafo actual no admite: antes desaparecían del
+   desplegable sin explicación. */
+.lista-no-disponibles {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #90a4ae;
+    border-top: 1px dashed #eceff1;
+    padding-top: 6px;
+}
+
+.lista-no-disponibles .item-no-disponible {
+    margin-top: 4px;
+}
+
+.lista-no-disponibles .nombre-no-disponible {
+    color: #78909c;
+    text-decoration: line-through;
+}
+
+.txt-error {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #c62828;
+    background: #ffebee;
+    border-left: 3px solid #c62828;
+    padding: 6px 8px;
+    border-radius: 3px;
 }
 
 .toolbar-grafo {
@@ -137,9 +299,167 @@ body {
     flex: 1;
 }
 
+.entrada-velocidad {
+    width: 62px;
+    padding: 4px 6px;
+    font-size: 12px;
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+    text-align: right;
+}
+
+.atajos-velocidad {
+    display: flex;
+    gap: 3px;
+}
+
+.atajos-velocidad button {
+    padding: 3px 7px;
+    font-size: 11px;
+    border: 1px solid #cfd8dc;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #546e7a;
+}
+
+.atajos-velocidad button:hover {
+    border-color: #1565c0;
+    color: #1565c0;
+}
+
 .txt-ayuda {
     font-size: 11px;
     color: #90a4ae;
+}
+
+/* --- Leyenda debajo del lienzo ---
+   Va con <details> para que se pueda plegar y devolver el espacio al grafo,
+   sin necesidad de un callback. */
+.leyenda {
+    flex: 0 0 auto;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+.leyenda > summary {
+    cursor: pointer;
+    color: #546e7a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    list-style: none;
+}
+
+.leyenda > summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.15s;
+}
+
+.leyenda[open] > summary::before {
+    content: "▾ ";
+}
+
+.leyenda-contenido {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-top: 6px;
+}
+
+.leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+/* La explicación del formato de etiqueta es más larga que el resto: se le
+   permite ocupar su propia fila completa. */
+.leyenda-etiqueta {
+    flex-basis: 100%;
+    white-space: normal;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #eceff1;
+    margin-bottom: 2px;
+}
+
+.leyenda-punto {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex: 0 0 auto;
+}
+
+.leyenda-nombre {
+    color: #37474f;
+    font-weight: 600;
+}
+
+.leyenda-detalle {
+    color: #90a4ae;
+}
+
+/* Miniatura del formato de etiqueta: reproduce el nombre arriba y la
+   distancia abajo, como se ve junto al nodo. */
+.muestra-etiqueta {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+    font-family: "Consolas", "Courier New", monospace;
+    background: #fafbfc;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1px 5px;
+    flex: 0 0 auto;
+}
+
+.muestra-nombre {
+    color: #263238;
+    font-weight: 700;
+}
+
+.muestra-dist {
+    color: #546e7a;
+    font-size: 10px;
+}
+
+/* Pie de página: una franja compacta al final, fuera de la fila de columnas
+   para que no compita por el alto del lienzo más de lo necesario. */
+.pie {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 5px;
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 10px;
+    line-height: 1.35;
+    color: #a4b3bb;
+}
+
+.pie-credito {
+    color: #78909c;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dotted #b0bec5;
+}
+
+.pie-credito:hover {
+    color: #1565c0;
+    border-bottom-color: #1565c0;
+}
+
+.pie-asistencia {
+    font-style: italic;
 }
 
 .panel {

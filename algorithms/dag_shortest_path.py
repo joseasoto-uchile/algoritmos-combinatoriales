@@ -36,7 +36,9 @@ def dag_shortest_path_trace(G: nx.Graph, origen: str):
     distancia = {n: math.inf for n in G.nodes}
     distancia[origen] = 0
     padre = {n: None for n in G.nodes}
-    tb.emit("visitar_nodo", nodo=origen, linea=3)
+    # 'dist' viaja en el evento para que la visualización pueda reconstruir la
+    # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
+    tb.emit("visitar_nodo", nodo=origen, linea=3, dist=0)
 
     for u in orden:
         if distancia[u] == math.inf:
@@ -49,7 +51,7 @@ def dag_shortest_path_trace(G: nx.Graph, origen: str):
                 distancia[v] = distancia[u] + peso
                 padre[v] = u
                 tb.emit("relajar", u=u, v=v, nueva_dist=distancia[v], linea=9)
-                tb.emit("visitar_nodo", nodo=v, linea=9)
+                tb.emit("visitar_nodo", nodo=v, linea=9, dist=distancia[v])
             else:
                 tb.emit("descartar_arista", u=u, v=v, linea=8)
         tb.emit("nodo_finalizado", nodo=u, linea=4)

@@ -18,7 +18,7 @@ def crear_grafo(dirigido: bool = True) -> nx.Graph:
     return nx.DiGraph() if dirigido else nx.Graph()
 
 
-def _asignar_posiciones(G: nx.Graph, seed: int | None = None, escala: float = 400.0) -> nx.Graph:
+def asignar_posiciones(G: nx.Graph, seed: int | None = None, escala: float = 400.0) -> nx.Graph:
     """Calcula una disposición inicial (spring layout) y la guarda como
     atributo 'pos' de cada nodo, en coordenadas cómodas para Cytoscape.
     """
@@ -62,6 +62,16 @@ def generar_aleatorio(
     if dag:
         dirigido = True
 
+    # Validación explícita: sin esto, un peso_min > peso_max llega hasta
+    # rng.randint() y revienta con un "empty range" que no le dice nada al
+    # usuario. Mismo criterio para n: el grafo vacío rompe todo lo de abajo.
+    if n < 1:
+        raise ValueError("El número de nodos debe ser al menos 1.")
+    if peso_min > peso_max:
+        raise ValueError(
+            f"El peso mínimo ({peso_min}) no puede ser mayor que el máximo ({peso_max})."
+        )
+
     rng = random.Random(seed)
     G = crear_grafo(dirigido)
 
@@ -77,7 +87,10 @@ def generar_aleatorio(
 
     def peso_aleatorio() -> int:
         if permitir_negativos:
-            w = rng.randint(-peso_max, peso_max)
+            # Con negativos se ignora peso_min a propósito y se sortea en
+            # [-peso_max, peso_max]: el objetivo de este modo es que aparezcan
+            # pesos de ambos signos para comparar Bellman-Ford contra Dijkstra.
+            w = rng.randint(-abs(peso_max), abs(peso_max))
             return w if w != 0 else 1
         return rng.randint(peso_min, peso_max)
 
@@ -121,7 +134,7 @@ def generar_aleatorio(
             agregar_arista(rng.choice(ids), rng.choice(ids))
             intentos += 1
 
-    _asignar_posiciones(G, seed=seed)
+    asignar_posiciones(G, seed=seed)
     return G
 
 

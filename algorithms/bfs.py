@@ -17,7 +17,9 @@ def bfs_trace(G: nx.Graph, origen: str):
     distancia = {origen: 0}
     cola = deque([origen])
 
-    tb.emit("visitar_nodo", nodo=origen, linea=3)
+    # 'dist' viaja en el evento para que la visualización pueda reconstruir la
+    # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
+    tb.emit("visitar_nodo", nodo=origen, linea=3, dist=0)
     while cola:
         u = cola.popleft()
         tb.emit("procesar_nodo", nodo=u, linea=5)
@@ -28,7 +30,7 @@ def bfs_trace(G: nx.Graph, origen: str):
                 padre[v] = u
                 distancia[v] = distancia[u] + 1
                 cola.append(v)
-                tb.emit("visitar_nodo", nodo=v, linea=8)
+                tb.emit("visitar_nodo", nodo=v, linea=8, dist=distancia[v])
                 tb.emit("arista_solucion", u=u, v=v, linea=9)
             else:
                 tb.emit("descartar_arista", u=u, v=v, linea=7)

@@ -23,7 +23,9 @@ def dijkstra_trace(G: nx.Graph, origen: str):
     finalizado = set()
     heap = [(0, origen)]
 
-    tb.emit("visitar_nodo", nodo=origen, linea=2)
+    # 'dist' viaja en el evento para que la visualización pueda reconstruir la
+    # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
+    tb.emit("visitar_nodo", nodo=origen, linea=2, dist=0)
     while heap:
         d, u = heapq.heappop(heap)
         if u in finalizado:
@@ -40,7 +42,7 @@ def dijkstra_trace(G: nx.Graph, origen: str):
                 heapq.heappush(heap, (nueva, v))
                 tb.emit("relajar", u=u, v=v, nueva_dist=nueva, linea=10)
                 if v not in finalizado:
-                    tb.emit("visitar_nodo", nodo=v, linea=11)
+                    tb.emit("visitar_nodo", nodo=v, linea=11, dist=nueva)
             else:
                 tb.emit("descartar_arista", u=u, v=v, linea=9)
         tb.emit("nodo_finalizado", nodo=u, linea=6)

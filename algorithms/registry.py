@@ -24,6 +24,7 @@ ALGORITMOS = {
         "requiere_pesos": False,
         "permite_negativos": True,
         "requiere_dag": False,
+        "complejidad": "O(V + E)",
         "descripcion": (
             "Recorre el grafo en anchura desde el nodo origen: explora primero "
             "todos los vecinos directos antes de avanzar al siguiente nivel, "
@@ -53,6 +54,7 @@ ALGORITMOS = {
         "requiere_pesos": False,
         "permite_negativos": True,
         "requiere_dag": False,
+        "complejidad": "O(V + E)",
         "descripcion": (
             "Recorre el grafo en profundidad desde el nodo origen: avanza por "
             "una rama hasta el final antes de retroceder (backtrack) y probar "
@@ -78,6 +80,7 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": False,
         "requiere_dag": False,
+        "complejidad": "O((V + E) log V)",
         "descripcion": (
             "Calcula el camino más corto (por peso acumulado) desde el "
             "origen a todos los demás nodos usando una cola de prioridad: "
@@ -110,6 +113,7 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": True,
         "requiere_dag": False,
+        "complejidad": "O(V · E)",
         "descripcion": (
             "Calcula caminos mínimos desde el origen relajando TODAS las "
             "aristas del grafo, V-1 veces.\n\n"
@@ -139,6 +143,7 @@ ALGORITMOS = {
         "requiere_pesos": True,
         "permite_negativos": True,
         "requiere_dag": True,
+        "complejidad": "O(V + E)",
         "descripcion": (
             "Calcula caminos mínimos en un grafo dirigido acíclico (DAG) en "
             "dos fases: primero un orden topológico (algoritmo de Kahn), "
@@ -164,18 +169,51 @@ ALGORITMOS = {
 }
 
 
+def motivo_no_disponible(info: dict, G: nx.Graph) -> str | None:
+    """Devuelve el motivo por el que `info` no aplica al grafo `G`, o None
+    si sí aplica.
+
+    Existe para que la UI pueda *explicar* la ausencia: antes el algoritmo
+    simplemente desaparecía del desplegable y no había forma de saber si
+    faltaba por una restricción real o por un error.
+    """
+    tiene_negativos = any(d.get("weight", 1) < 0 for _, _, d in G.edges(data=True))
+    es_dag = G.is_directed() and nx.is_directed_acyclic_graph(G)
+
+    if info["requiere_dag"] and not es_dag:
+        if not G.is_directed():
+            return "Requiere un grafo dirigido y acíclico; este es no dirigido."
+        return "Requiere un grafo acíclico (DAG); este tiene ciclos."
+    if tiene_negativos and not info["permite_negativos"]:
+        return "El grafo tiene pesos negativos y este algoritmo no los admite."
+    return None
+
+
+def estado_algoritmos(G: nx.Graph) -> list[dict]:
+    """Registro completo anotado con disponibilidad, en orden de definición.
+
+    Cada elemento: {"id", "nombre", "disponible": bool, "motivo": str | None}.
+    """
+    estado = []
+    for kid, info in ALGORITMOS.items():
+        motivo = motivo_no_disponible(info, G)
+        estado.append(
+            {
+                "id": kid,
+                "nombre": info["nombre"],
+                "disponible": motivo is None,
+                "motivo": motivo,
+            }
+        )
+    return estado
+
+
 def algoritmos_disponibles(G: nx.Graph) -> dict:
     """Filtra el registro según las propiedades del grafo actual, para no
     ofrecer en la UI un algoritmo que no aplica (p. ej. Dijkstra con pesos
     negativos, o caminos en DAG sobre un grafo con ciclos)."""
-    tiene_negativos = any(d.get("weight", 1) < 0 for _, _, d in G.edges(data=True))
-    es_dag = G.is_directed() and nx.is_directed_acyclic_graph(G)
-
-    disponibles = {}
-    for kid, info in ALGORITMOS.items():
-        if info["requiere_dag"] and not es_dag:
-            continue
-        if tiene_negativos and not info["permite_negativos"]:
-            continue
-        disponibles[kid] = info
-    return disponibles
+    return {
+        kid: info
+        for kid, info in ALGORITMOS.items()
+        if motivo_no_disponible(info, G) is None
+    }
