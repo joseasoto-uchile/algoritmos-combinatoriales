@@ -1,17 +1,34 @@
-body {
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #fafafa;
+html, body {
+    height: 100%;
     margin: 0;
 }
 
-.app-contenedor {
-    padding: 16px 24px;
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
 }
 
+.app-contenedor {
+    padding: 12px 24px 16px;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-contenedor h2 {
+    margin: 0 0 12px 0;
+    flex: 0 0 auto;
+}
+
+/* La fila principal ocupa el resto de la altura de la ventana, sin que
+   la página entera haga scroll vertical: si algo desborda, scrollea
+   solo el sidebar (columna-controles), nunca el grafo. */
 .fila-principal {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    flex: 1;
+    min-height: 0;
 }
 
 .columna-controles {
@@ -19,11 +36,55 @@ body {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    overflow-y: auto;
+    padding-right: 6px;
 }
 
 .columna-grafo {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toolbar-grafo {
+    flex: 0 0 auto;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.toolbar-grafo .fila-botones {
+    display: flex;
+    gap: 6px;
+}
+
+.toolbar-grafo .fila-botones button {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.toolbar-grafo .fila-velocidad {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+    flex: 1;
+}
+
+.toolbar-grafo .fila-velocidad .dash-slider {
+    flex: 1;
+}
+
+.txt-ayuda {
+    font-size: 11px;
+    color: #90a4ae;
 }
 
 .panel {

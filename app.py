@@ -18,7 +18,7 @@ from graph_model.model import generar_aleatorio, graph_from_dict, graph_to_dict
 from viz.cytoscape_style import STYLESHEET
 from viz.elements import aplicar_clases, calcular_estado, graph_to_elements
 
-LAYOUTS = ["cose", "circle", "grid", "breadthfirst"]
+LAYOUTS = ["preset", "cose", "circle", "grid", "breadthfirst"]
 
 app = Dash(__name__)
 app.title = "Visualizador de Algoritmos sobre Grafos"
@@ -82,11 +82,13 @@ def _panel_algoritmo():
     )
 
 
-def _panel_reproduccion():
+def _toolbar_grafo():
+    """Barra de reproducción + centrado, siempre visible sobre el canvas
+    (a diferencia de un panel más en el sidebar, que podía quedar fuera
+    de la vista si había que hacer scroll)."""
     return html.Div(
-        className="panel",
+        className="toolbar-grafo",
         children=[
-            html.H4("Reproducción"),
             html.Div(
                 className="fila-botones",
                 children=[
@@ -94,10 +96,16 @@ def _panel_reproduccion():
                     html.Button("⏪", id="btn-anterior", title="Paso anterior"),
                     html.Button("▶", id="btn-play", title="Reproducir / Pausar"),
                     html.Button("⏩", id="btn-siguiente", title="Paso siguiente"),
+                    html.Button("🎯 Centrar", id="btn-centrar", title="Centrar y ajustar vista al grafo"),
                 ],
             ),
-            html.Label("Velocidad (ms por paso)"),
-            dcc.Slider(id="sl-velocidad", min=100, max=2000, step=100, value=600),
+            html.Div(
+                className="fila-velocidad",
+                children=[
+                    html.Span("Velocidad", className="txt-ayuda"),
+                    dcc.Slider(id="sl-velocidad", min=100, max=2000, step=100, value=600),
+                ],
+            ),
             html.Div(id="txt-paso", className="txt-estado"),
         ],
     )
@@ -123,24 +131,30 @@ app.layout = html.Div(
                                 dcc.Dropdown(
                                     id="dd-layout",
                                     options=[{"label": l, "value": l} for l in LAYOUTS],
-                                    value="cose",
+                                    value="preset",
                                     clearable=False,
+                                ),
+                                html.Div(
+                                    "'preset' usa la posición guardada en la instancia "
+                                    "y nunca reordena los nodos entre pasos.",
+                                    className="txt-ayuda",
                                 ),
                             ],
                         ),
-                        _panel_reproduccion(),
                     ],
                 ),
                 html.Div(
                     className="columna-grafo",
                     children=[
+                        _toolbar_grafo(),
                         cyto.Cytoscape(
                             id="cyto",
                             elements=[],
                             stylesheet=STYLESHEET,
-                            layout={"name": "cose"},
-                            style={"width": "100%", "height": "650px", "border": "1px solid #cfd8dc"},
-                        )
+                            layout={"name": "preset"},
+                            autoRefreshLayout=False,
+                            style={"width": "100%", "flex": "1", "border": "1px solid #cfd8dc"},
+                        ),
                     ],
                 ),
             ],
@@ -353,7 +367,17 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace):
 
 
 # ---------------------------------------------------------------------------
-# 9) Render final: (grafo, traza, paso, layout) -> elementos de Cytoscape
+# 9) Render de Cytoscape: un único callback para 'elements' y 'layout'.
+#
+#    Van juntos a propósito: si se reparten en dos callbacks separados que
+#    escriben sobre el mismo componente, Dash puede despacharlos casi
+#    simultáneamente y Cytoscape.js llega a pisarse (crashea con
+#    "Cannot read properties of null (reading 'isHeadless')"). Por eso se
+#    resuelven acá adentro con no_update: el layout (reposicionar nodos)
+#    solo se recalcula cuando cambia el grafo, el tipo de layout elegido,
+#    o se pide "Centrar" — nunca en cada paso de la traza, porque con
+#    layouts de fuerza dirigida como "cose" eso hace saltar los nodos de
+#    lugar en cada paso y el grafo termina fuera del área visible.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("cyto", "elements"),
@@ -363,9 +387,10 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace):
     Input("store-trace", "data"),
     Input("store-paso", "data"),
     Input("dd-layout", "value"),
+    Input("btn-centrar", "n_clicks"),
     State("dd-origen", "value"),
 )
-def render(data, trace, paso, layout_name, origen):
+def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
     if not data:
         raise PreventUpdate
     G = graph_from_dict(data)
@@ -382,7 +407,13 @@ def render(data, trace, paso, layout_name, origen):
     else:
         elementos = aplicar_clases(elementos, {}, {}, origen)
 
-    return elementos, {"name": layout_name or "cose"}, texto_paso
+    disparador = ctx.triggered_id
+    if disparador in ("store-grafo", "dd-layout", "btn-centrar", None):
+        nuevo_layout = {"name": layout_name or "preset", "fit": True, "padding": 30, "animate": False}
+    else:
+        nuevo_layout = no_update
+
+    return elementos, nuevo_layout, texto_paso
 
 
 if __name__ == "__main__":
