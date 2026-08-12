@@ -32,6 +32,19 @@ ALGORITMOS = {
             "el de menor número de saltos, no el de menor costo.\n\n"
             "Complejidad: O(V + E)."
         ),
+        "pseudocodigo": [
+            "función BFS(G, origen):",
+            "  distancia[origen] ← 0",
+            "  marcar origen como visitado; encolar(origen)",
+            "  mientras cola no vacía:",
+            "    u ← desencolar()",
+            "    para cada vecino v de u:",
+            "      si v no visitado:",
+            "        marcar v como visitado",
+            "        distancia[v] ← distancia[u] + 1; padre[v] ← u",
+            "        encolar(v)",
+            "    fin de procesar u",
+        ],
     },
     "dfs": {
         "id": "dfs",
@@ -48,6 +61,15 @@ ALGORITMOS = {
             "con tiempos de entrada/salida por nodo.\n\n"
             "Complejidad: O(V + E)."
         ),
+        "pseudocodigo": [
+            "función DFS(G, u):",
+            "  marcar u como visitado",
+            "  para cada vecino v de u:",
+            "    si v no visitado:",
+            "      padre[v] ← u",
+            "      DFS(G, v)",
+            "  fin de procesar u (nodo completado)",
+        ],
     },
     "dijkstra": {
         "id": "dijkstra",
@@ -66,6 +88,20 @@ ALGORITMOS = {
             "grafos (usa Bellman-Ford).\n\n"
             "Complejidad: O((V + E) log V) con heap binario."
         ),
+        "pseudocodigo": [
+            "función Dijkstra(G, origen):",
+            "  distancia[origen] ← 0; el resto ← infinito",
+            "  Q ← cola de prioridad con todos los nodos",
+            "  mientras Q no vacía:",
+            "    u ← extraer nodo con menor distancia",
+            "    marcar u como finalizado",
+            "    para cada vecino v de u:",
+            "      peso ← G[u][v]",
+            "      si distancia[u] + peso < distancia[v]:",
+            "        distancia[v] ← distancia[u] + peso; padre[v] ← u",
+            "        actualizar v en Q",
+            "  reconstruir árbol de caminos mínimos con padre[]",
+        ],
     },
     "bellman_ford": {
         "id": "bellman_ford",
@@ -83,6 +119,18 @@ ALGORITMOS = {
             "por el ciclo, y se marcan en rojo).\n\n"
             "Complejidad: O(V · E)."
         ),
+        "pseudocodigo": [
+            "función BellmanFord(G, origen):",
+            "  distancia[origen] ← 0; el resto ← infinito",
+            "  repetir (V - 1) veces:",
+            "    para cada arista (u, v) con peso w en G:",
+            "      si distancia[u] + w < distancia[v]:",
+            "        distancia[v] ← distancia[u] + w; padre[v] ← u",
+            "  para cada arista (u, v) con peso w en G:",
+            "    si distancia[u] + w < distancia[v]:",
+            "      marcar v como parte de un ciclo negativo",
+            "  reconstruir árbol con padre[] (salvo nodos en ciclo negativo)",
+        ],
     },
     "dag_sp": {
         "id": "dag_sp",
@@ -100,6 +148,18 @@ ALGORITMOS = {
             "un DAG, y admite pesos negativos sin problema.\n\n"
             "Complejidad: O(V + E)."
         ),
+        "pseudocodigo": [
+            "función CaminoMinimoDAG(G, origen):",
+            "  orden ← ordenTopológico(G)   // algoritmo de Kahn",
+            "  distancia[origen] ← 0",
+            "  para cada nodo u en orden:",
+            "    si distancia[u] es finita:",
+            "      para cada vecino v de u:",
+            "        peso ← G[u][v]",
+            "        si distancia[u] + peso < distancia[v]:",
+            "          distancia[v] ← distancia[u] + peso; padre[v] ← u",
+            "  reconstruir camino con padre[]",
+        ],
     },
 }
 

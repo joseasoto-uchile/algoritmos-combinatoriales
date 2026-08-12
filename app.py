@@ -116,6 +116,23 @@ def _modal_info():
     )
 
 
+def _panel_pseudocodigo():
+    """Panel persistente (no modal) junto al canvas: muestra el pseudocódigo
+    del algoritmo elegido y resalta en vivo la línea que corresponde al
+    paso actual de la traza, sincronizado con la reproducción."""
+    return html.Div(
+        className="panel panel-codigo",
+        children=[
+            html.H4(id="pseudocodigo-titulo", children="Pseudocódigo"),
+            html.Div(
+                id="pseudocodigo-lineas",
+                className="bloque-codigo",
+                children=[html.Div("Elegí un algoritmo para verlo acá.", className="txt-ayuda")],
+            ),
+        ],
+    )
+
+
 def _toolbar_grafo():
     """Barra de reproducción + centrado, siempre visible sobre el canvas
     (a diferencia de un panel más en el sidebar, que podía quedar fuera
@@ -199,6 +216,10 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
+                html.Div(
+                    className="columna-codigo",
+                    children=[_panel_pseudocodigo()],
+                ),
             ],
         ),
         _modal_info(),
@@ -206,6 +227,7 @@ app.layout = html.Div(
         dcc.Store(id="store-grafo"),
         dcc.Store(id="store-trace"),
         dcc.Store(id="store-resultado"),
+        dcc.Store(id="store-algoritmo-ejecutado"),
         dcc.Store(id="store-paso", data=0),
         dcc.Store(id="store-reproduciendo", data=False),
     ],
@@ -313,6 +335,7 @@ def actualizar_opciones(data):
 @app.callback(
     Output("store-trace", "data", allow_duplicate=True),
     Output("store-resultado", "data"),
+    Output("store-algoritmo-ejecutado", "data"),
     Output("store-paso", "data", allow_duplicate=True),
     Output("txt-resultado", "children"),
     Input("btn-ejecutar", "n_clicks"),
@@ -329,8 +352,8 @@ def ejecutar(n_clicks, data, alg_id, origen):
     try:
         resultado, trace = info["funcion"](G, origen)
     except ValueError as exc:
-        return no_update, no_update, no_update, f"Error: {exc}"
-    return trace, resultado, 0, f"{info['nombre']} desde {origen} — {len(trace)} pasos de traza."
+        return no_update, no_update, no_update, no_update, f"Error: {exc}"
+    return trace, resultado, alg_id, 0, f"{info['nombre']} desde {origen} — {len(trace)} pasos de traza."
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +507,44 @@ def alternar_modal_info(n_abrir, n_cerrar, alg_id):
         info = ALGORITMOS[alg_id]
         return {"display": "flex"}, info["nombre"], info.get("descripcion", "Sin descripción.")
     return {"display": "none"}, no_update, no_update
+
+
+# ---------------------------------------------------------------------------
+# 11) Panel de pseudocódigo: se sincroniza en vivo con el paso actual de la
+#     traza. Cada evento de la traza trae un campo "linea" (asignado en el
+#     propio algoritmo, ver algorithms/bfs.py etc.) que indica a qué línea
+#     del pseudocódigo corresponde ese paso; acá solo se resalta.
+#     Si cambiás de algoritmo en el dropdown sin volver a ejecutar, se
+#     muestra el código pero sin resaltar nada (la traza vigente es de
+#     otro algoritmo).
+# ---------------------------------------------------------------------------
+@app.callback(
+    Output("pseudocodigo-titulo", "children"),
+    Output("pseudocodigo-lineas", "children"),
+    Input("dd-algoritmo", "value"),
+    Input("store-trace", "data"),
+    Input("store-paso", "data"),
+    State("store-algoritmo-ejecutado", "data"),
+)
+def render_pseudocodigo(alg_id, trace, paso, alg_id_ejecutado):
+    if not alg_id or alg_id not in ALGORITMOS:
+        raise PreventUpdate
+    info = ALGORITMOS[alg_id]
+    lineas = info.get("pseudocodigo", [])
+
+    linea_activa = None
+    if trace and alg_id == alg_id_ejecutado:
+        p = max(0, min(paso or 0, len(trace) - 1))
+        linea_activa = trace[p].get("linea")
+
+    hijos = [
+        html.Div(
+            [html.Span(f"{i:>2}", className="num-linea"), " ", texto],
+            className="linea-codigo" + (" linea-activa" if i == linea_activa else ""),
+        )
+        for i, texto in enumerate(lineas, start=1)
+    ]
+    return f"Pseudocódigo — {info['nombre']}", hijos
 
 
 if __name__ == "__main__":

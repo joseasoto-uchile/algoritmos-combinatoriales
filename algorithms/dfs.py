@@ -20,23 +20,24 @@ def dfs_trace(G: nx.Graph, origen: str):
     limite_previo = sys.getrecursionlimit()
     sys.setrecursionlimit(max(limite_previo, G.number_of_nodes() * 2 + 100))
     try:
+        # Los "linea" corresponden al pseudocódigo en algorithms/registry.py.
         def visitar(u):
             visitado.add(u)
             reloj[0] += 1
             descubrimiento[u] = reloj[0]
-            tb.emit("visitar_nodo", nodo=u)
-            tb.emit("procesar_nodo", nodo=u)
+            tb.emit("visitar_nodo", nodo=u, linea=2)
+            tb.emit("procesar_nodo", nodo=u, linea=2)
             for v in G[u]:
-                tb.emit("explorar_arista", u=u, v=v)
+                tb.emit("explorar_arista", u=u, v=v, linea=4)
                 if v not in visitado:
                     padre[v] = u
-                    tb.emit("arista_solucion", u=u, v=v)
+                    tb.emit("arista_solucion", u=u, v=v, linea=5)
                     visitar(v)
                 else:
-                    tb.emit("descartar_arista", u=u, v=v)
+                    tb.emit("descartar_arista", u=u, v=v, linea=4)
             reloj[0] += 1
             finalizacion[u] = reloj[0]
-            tb.emit("nodo_finalizado", nodo=u)
+            tb.emit("nodo_finalizado", nodo=u, linea=7)
 
         visitar(origen)
     finally:
