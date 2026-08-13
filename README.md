@@ -7,6 +7,48 @@ Stack: **Dash** (servidor + UI reactiva) + **Dash Cytoscape** (visualización
 interactiva del grafo) + **NetworkX** (estructura de datos y generación de
 instancias).
 
+## Dos implementaciones, a propósito
+
+El repositorio mantiene **la misma herramienta escrita dos veces**. No es un
+descuido ni una migración a medias:
+
+| | Dónde | Para qué |
+|---|---|---|
+| **Python + Dash** | raíz del repositorio, rama `main` | Desarrollar. Es donde se escriben y prueban los algoritmos. |
+| **JavaScript** | `web/`, rama `version-estatica` | Publicar. Corre entera en el navegador, así que se sirve desde GitHub Pages sin servidor ni costo. |
+
+La versión Dash resuelve cada paso de la traza con un callback en el servidor:
+necesita un proceso Python vivo, y por eso no se puede publicar en GitHub
+Pages. La versión JavaScript existe únicamente para eso.
+
+### El contrato entre ambas
+
+Los algoritmos de `web/js/algoritmos.js` emiten **exactamente la misma traza**
+que los de `algorithms/`: mismos tipos de evento, mismos campos y mismos
+números de línea del pseudocódigo. Esa igualdad es lo que hace que las dos
+muestren la misma animación.
+
+Es también lo primero que se rompe al tocar una sola de las dos. Antes de
+publicar un cambio en cualquier algoritmo:
+
+```bash
+python herramientas/verificar_paridad.py
+```
+
+Compara evento por evento sobre 12 instancias (las 6 de ejemplo más 6
+aleatorias que cubren dirigido/no dirigido, pesos negativos, DAG y denso).
+Devuelve 0 si coinciden y 1 con el primer evento distinto si no. Requiere
+Node.js.
+
+> Este verificador ya encontró un error real: la propagación del ciclo
+> negativo en Bellman-Ford usaba `set`, cuya iteración depende del hash que
+> Python aleatoriza por proceso, así que el orden en que se marcaban los nodos
+> cambiaba entre ejecuciones del mismo grafo.
+
+Si en algún momento mantener las dos deja de compensar, la salida natural es
+quedarse con la de JavaScript y archivar la Dash: hace lo mismo, se publica
+gratis y no necesita servidor.
+
 ## Instalación
 
 ```bash
@@ -28,6 +70,11 @@ automáticamente una instancia aleatoria de ejemplo.
 
 El diseño separa cuatro capas que no se conocen entre sí más que por
 contratos de datos simples (diccionarios/listas serializables):
+
+La versión JavaScript de `web/` refleja estas mismas capas archivo por archivo
+(`grafo.js` ← `graph_model/`, `algoritmos.js` ← `algorithms/`, `viz.js` ←
+`viz/`, `app.js` ← `app.py`), para que un cambio se pueda trasladar leyendo el
+módulo equivalente.
 
 ```
 graph_model/   Modelo de grafo (NetworkX) + generación aleatoria + serialización JSON.
