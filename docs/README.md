@@ -27,7 +27,7 @@ Dos detalles hicieron falta para lograr esa igualdad:
 ## Publicar en GitHub Pages
 
 1. Subir esta rama al repositorio.
-2. En Settings → Pages, elegir la rama y la carpeta `/web`.
+2. En Settings → Pages, elegir la rama y la carpeta `/docs`.
 
 No hace falta build: son archivos estáticos. Cytoscape se carga desde CDN; para
 que funcione sin conexión, descargar el archivo a `js/` y cambiar el `src` en

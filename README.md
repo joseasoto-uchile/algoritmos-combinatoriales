@@ -15,7 +15,7 @@ descuido ni una migración a medias:
 | | Dónde | Para qué |
 |---|---|---|
 | **Python + Dash** | raíz del repositorio, rama `main` | Desarrollar. Es donde se escriben y prueban los algoritmos. |
-| **JavaScript** | `web/`, rama `version-estatica` | Publicar. Corre entera en el navegador, así que se sirve desde GitHub Pages sin servidor ni costo. |
+| **JavaScript** | `docs/`, rama `version-estatica` | Publicar. Corre entera en el navegador, así que se sirve desde GitHub Pages sin servidor ni costo. |
 
 La versión Dash resuelve cada paso de la traza con un callback en el servidor:
 necesita un proceso Python vivo, y por eso no se puede publicar en GitHub
@@ -23,7 +23,7 @@ Pages. La versión JavaScript existe únicamente para eso.
 
 ### El contrato entre ambas
 
-Los algoritmos de `web/js/algoritmos.js` emiten **exactamente la misma traza**
+Los algoritmos de `docs/js/algoritmos.js` emiten **exactamente la misma traza**
 que los de `algorithms/`: mismos tipos de evento, mismos campos y mismos
 números de línea del pseudocódigo. Esa igualdad es lo que hace que las dos
 muestren la misma animación.
@@ -71,7 +71,7 @@ automáticamente una instancia aleatoria de ejemplo.
 El diseño separa cuatro capas que no se conocen entre sí más que por
 contratos de datos simples (diccionarios/listas serializables):
 
-La versión JavaScript de `web/` refleja estas mismas capas archivo por archivo
+La versión JavaScript de `docs/` refleja estas mismas capas archivo por archivo
 (`grafo.js` ← `graph_model/`, `algoritmos.js` ← `algorithms/`, `viz.js` ←
 `viz/`, `app.js` ← `app.py`), para que un cambio se pueda trasladar leyendo el
 módulo equivalente.

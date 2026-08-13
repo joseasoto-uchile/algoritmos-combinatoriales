@@ -1,7 +1,7 @@
 """Verifica que la versión JavaScript produzca las MISMAS trazas que Python.
 
 El repositorio mantiene dos implementaciones a propósito (ver README): la de
-Dash para desarrollar en Python y la estática de web/ para publicar. Eso solo
+Dash para desarrollar en Python y la estática de docs/ para publicar. Eso solo
 es sostenible si algo comprueba que no se separen, porque el primer cambio
 hecho en una sola las desincroniza sin que nadie se entere.
 
@@ -113,12 +113,12 @@ def main() -> int:
     total = sum(len(v["trazas"]) for v in referencia.values())
     print(f"Instancias: {len(referencia)}  ·  trazas a comparar: {total}")
 
-    # Los archivos de web/js/ son scripts sueltos, sin exports: se concatenan
+    # Los archivos de docs/js/ son scripts sueltos, sin exports: se concatenan
     # en uno solo para que las declaraciones de nivel superior (class, const)
     # queden en el mismo ámbito que el comparador.
     partes = [
-        os.path.join(RAIZ, "web", "js", "grafo.js"),
-        os.path.join(RAIZ, "web", "js", "algoritmos.js"),
+        os.path.join(RAIZ, "docs", "js", "grafo.js"),
+        os.path.join(RAIZ, "docs", "js", "algoritmos.js"),
         os.path.join(RAIZ, "herramientas", "comparar.js"),
     ]
     fuente = "\n".join(open(p, encoding="utf-8").read() for p in partes)

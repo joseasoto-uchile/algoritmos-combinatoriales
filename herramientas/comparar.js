@@ -1,7 +1,7 @@
 /* Comparador de trazas: Python contra JavaScript.
  *
  * No se ejecuta suelto. herramientas/verificar_paridad.py lo concatena detrás
- * de web/js/grafo.js y web/js/algoritmos.js y corre el resultado con Node, de
+ * de docs/js/grafo.js y docs/js/algoritmos.js y corre el resultado con Node, de
  * modo que acá ya están definidos Grafo y ALGORITMOS.
  *
  * Se compara evento por evento y no solo el resultado final: la gracia del
