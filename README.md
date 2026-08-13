@@ -14,12 +14,17 @@ descuido ni una migración a medias:
 
 | | Dónde | Para qué |
 |---|---|---|
-| **Python + Dash** | raíz del repositorio, rama `main` | Desarrollar. Es donde se escriben y prueban los algoritmos. |
-| **JavaScript** | `docs/`, rama `version-estatica` | Publicar. Corre entera en el navegador, así que se sirve desde GitHub Pages sin servidor ni costo. |
+| **Python + Dash** | raíz del repositorio, en las dos ramas | Desarrollar. Es donde se escriben y prueban los algoritmos. |
+| **JavaScript** | `docs/`, **solo en la rama `version-estatica`** | Publicar. Corre entera en el navegador, así que se sirve desde GitHub Pages sin servidor ni costo. |
 
 La versión Dash resuelve cada paso de la traza con un callback en el servidor:
 necesita un proceso Python vivo, y por eso no se puede publicar en GitHub
 Pages. La versión JavaScript existe únicamente para eso.
+
+`main` contiene solo la versión Python. `version-estatica` contiene esa misma
+versión **más** `docs/` (el port a JavaScript) y `herramientas/` (el
+verificador de paridad). Los cambios en los algoritmos se hacen en `main` y se
+llevan a la otra rama con `git merge main`.
 
 ### El contrato entre ambas
 
@@ -29,7 +34,7 @@ números de línea del pseudocódigo. Esa igualdad es lo que hace que las dos
 muestren la misma animación.
 
 Es también lo primero que se rompe al tocar una sola de las dos. Antes de
-publicar un cambio en cualquier algoritmo:
+publicar un cambio en cualquier algoritmo, desde `version-estatica`:
 
 ```bash
 python herramientas/verificar_paridad.py
