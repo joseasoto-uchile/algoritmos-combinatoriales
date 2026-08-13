@@ -49,15 +49,20 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
     # negativo. Marcar solo esos extremos deja el dibujo a medias — el ciclo
     # completo y todo lo alcanzable desde él tampoco tienen distancia mínima
     # bien definida, así que se propaga hacia adelante desde los detectados.
-    sospechosos = set()
+    # Para el recorrido se usan dict (como conjunto ordenado) y list, NO set:
+    # la iteración de un set de cadenas sigue el orden de hash, que Python
+    # aleatoriza en cada proceso. Con sets, el orden en que se marcaban los
+    # nodos cambiaba entre ejecuciones sobre el mismo grafo: el conjunto final
+    # era correcto, pero la animación no se repetía ni fijando la semilla.
+    sospechosos = {}
     for u, v, datos in aristas:
         peso = datos.get("weight", 1)
         if distancia[u] != math.inf and distancia[u] + peso < distancia[v]:
-            sospechosos.add(v)
+            sospechosos[v] = None
 
-    sucesores = {n: set() for n in nodos}
+    sucesores = {n: {} for n in nodos}
     for u, v, _ in aristas:
-        sucesores[u].add(v)
+        sucesores[u][v] = None
 
     ciclo_negativo = set()
     pendientes = list(sospechosos)
@@ -67,7 +72,7 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
             continue
         ciclo_negativo.add(n)
         tb.emit("ciclo_negativo", nodo=n, linea=9)
-        pendientes.extend(sucesores[n] - ciclo_negativo)
+        pendientes.extend(s for s in sucesores[n] if s not in ciclo_negativo)
 
     for v, p in padre.items():
         if p is not None and v not in ciclo_negativo:
