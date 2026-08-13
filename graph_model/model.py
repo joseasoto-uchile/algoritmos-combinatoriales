@@ -8,6 +8,7 @@ la posición de los nodos para que el layout visual sea reproducible.
 from __future__ import annotations
 
 import json
+import math
 import random
 
 import networkx as nx
@@ -154,14 +155,109 @@ def graph_to_dict(G: nx.Graph) -> dict:
     }
 
 
+def _id_arista_interno(u: str, v: str, dirigido: bool) -> str:
+    """Réplica del identificador que viz/elements.py genera para cada arista.
+
+    Se duplica acá a propósito, en vez de importarlo: graph_model no debe
+    depender de la capa de dibujo. Si allá cambia el formato, la validación
+    deja de detectar la colisión pero nada más se rompe.
+    """
+    if dirigido:
+        return f"{u}__{v}"
+    a, b = sorted((u, v))
+    return f"{a}__{b}"
+
+
+def validar_datos_grafo(data) -> None:
+    """Rechaza un diccionario de grafo malformado con un mensaje concreto.
+
+    Se valida ANTES de construir nada, y de forma estricta: un archivo o entra
+    completo o no entra. La alternativa —ir reparando sobre la marcha— llevaba
+    a ejecutar el algoritmo sobre un grafo distinto del que el usuario creía
+    tener, y a que las versiones Python y JavaScript no coincidieran, porque
+    cada una reparaba a su manera (NetworkX fusiona aristas repetidas y crea
+    los nodos que faltan; JavaScript no hacía ninguna de las dos).
+
+    Se informa solo el PRIMER problema: basta para corregirlo y el mensaje
+    entra en una línea. Los mensajes son idénticos a los de docs/js/grafo.js.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("JSON inválido: el contenido debe ser un objeto.")
+    for clave in ("nodos", "aristas"):
+        if clave not in data:
+            raise ValueError(f'JSON inválido: falta la clave "{clave}".')
+        if not isinstance(data[clave], list):
+            raise ValueError(f'JSON inválido: "{clave}" debe ser una lista.')
+
+    dirigido = bool(data.get("dirigido", True))
+
+    ids: set[str] = set()
+    for nodo in data["nodos"]:
+        if not isinstance(nodo, dict) or "id" not in nodo:
+            raise ValueError('JSON inválido: hay un nodo sin la clave "id".')
+        if not isinstance(nodo["id"], (str, int, float)) or isinstance(nodo["id"], bool):
+            raise ValueError("JSON inválido: hay un nodo con un identificador que no es texto ni número.")
+        nid = str(nodo["id"])
+        if nid == "":
+            raise ValueError("JSON inválido: hay un nodo con el identificador vacío.")
+        if nid in ids:
+            raise ValueError(f'JSON inválido: el nodo "{nid}" está declarado dos veces.')
+        ids.add(nid)
+
+    vistas: set[tuple[str, str]] = set()
+    ids_arista: set[str] = set()
+    for arista in data["aristas"]:
+        if not isinstance(arista, dict) or "origen" not in arista or "destino" not in arista:
+            raise ValueError('JSON inválido: hay una arista sin "origen" o sin "destino".')
+        u, v = str(arista["origen"]), str(arista["destino"])
+        for extremo in (u, v):
+            if extremo not in ids:
+                raise ValueError(
+                    f'JSON inválido: la arista {u} → {v} apunta al nodo "{extremo}", '
+                    "que no está declarado."
+                )
+        peso = arista.get("weight", arista.get("peso"))
+        if peso is None:
+            raise ValueError(f"JSON inválido: la arista {u} → {v} no tiene peso.")
+        if isinstance(peso, bool) or not isinstance(peso, (int, float)):
+            raise ValueError(
+                f'JSON inválido: la arista {u} → {v} tiene un peso no numérico ("{peso}").'
+            )
+        if math.isnan(peso) or math.isinf(peso):
+            raise ValueError(f"JSON inválido: la arista {u} → {v} tiene un peso no finito.")
+
+        clave = (u, v) if dirigido else tuple(sorted((u, v)))
+        if clave in vistas:
+            raise ValueError(f"JSON inválido: la arista {u} → {v} aparece repetida.")
+        vistas.add(clave)
+        ids_arista.add(_id_arista_interno(u, v, dirigido))
+
+    # Cytoscape exige identificadores únicos entre nodos Y aristas: un nodo
+    # llamado "0__1" chocaría con el id que se genera para la arista 0 → 1 y
+    # uno de los dos elementos no se dibujaría.
+    choque = ids & ids_arista
+    if choque:
+        nid = sorted(choque)[0]
+        raise ValueError(
+            f'JSON inválido: el nodo "{nid}" choca con el identificador interno '
+            "de una arista. Renómbralo."
+        )
+
+
 def graph_from_dict(data: dict) -> nx.Graph:
-    """Reconstruye un grafo a partir del diccionario producido por graph_to_dict."""
+    """Reconstruye un grafo a partir del diccionario producido por graph_to_dict.
+
+    Valida primero: antes se aceptaba cualquier cosa y los problemas aparecían
+    más tarde y peor (un peso de texto reventaba al calcular qué algoritmos
+    aplicaban, dejando la interfaz sin actualizar y sin ningún mensaje).
+    """
+    validar_datos_grafo(data)
     G = crear_grafo(dirigido=bool(data.get("dirigido", True)))
-    for nodo in data.get("nodos", []):
+    for nodo in data["nodos"]:
         nid = str(nodo["id"])
         attrs = {k: v for k, v in nodo.items() if k != "id"}
         G.add_node(nid, **attrs)
-    for arista in data.get("aristas", []):
+    for arista in data["aristas"]:
         u, v = str(arista["origen"]), str(arista["destino"])
         attrs = {k: v for k, v in arista.items() if k not in ("origen", "destino")}
         G.add_edge(u, v, **attrs)
