@@ -1,13 +1,12 @@
-"""Instancias de ejemplo con estructura reconocible.
+"""Instancias de ejemplo con estructura definida.
 
-Los grafos aleatorios sirven para probar, pero no para *entender*: cuando
-todos los nodos están mezclados cuesta seguir por qué BFS visita en cierto
-orden. Estas instancias tienen forma conocida (árbol, ciclo, rejilla, capas)
-y posiciones fijas, así que el recorrido del algoritmo se lee directo sobre
-el dibujo.
+Los grafos aleatorios sirven para probar la aplicación, pero el orden de visita
+es difícil de seguir cuando los nodos no tienen una disposición regular. Estas
+instancias tienen forma conocida (árbol, ciclo, rejilla, capas) y coordenadas
+fijas, de modo que el recorrido del algoritmo se corresponde con el dibujo.
 
-Cada entrada del registro devuelve un grafo ya posicionado; usar el layout
-'preset' en la UI respeta esas coordenadas.
+Cada entrada del registro devuelve un grafo con posiciones asignadas. El layout
+'preset' de la interfaz respeta esas coordenadas.
 """
 from __future__ import annotations
 
@@ -22,8 +21,11 @@ _ESCALA = 800.0
 
 
 def _arbol_binario(niveles: int = 4):
-    """Árbol binario completo. El clásico para ver BFS por niveles contra
-    DFS bajando por una rama hasta el fondo."""
+    """Árbol binario completo.
+
+    BFS lo recorre por niveles y DFS desciende por una rama hasta una hoja, lo
+    que hace visible la diferencia entre ambos.
+    """
     G = crear_grafo(dirigido=False)
     total = 2 ** niveles - 1
     for i in range(total):
@@ -31,8 +33,9 @@ def _arbol_binario(niveles: int = 4):
     for i in range(total):
         for hijo in (2 * i + 1, 2 * i + 2):
             if hijo < total:
-                # Peso creciente con la profundidad: hace que el camino
-                # mínimo por peso NO coincida con el de menos saltos.
+                # El peso aumenta con la profundidad, de modo que el
+                # camino mínimo por peso no coincide con el de menor
+                # número de aristas.
                 G.add_edge(str(i), str(hijo), weight=1 + (hijo % 5))
     for i in range(total):
         nivel = int(math.floor(math.log2(i + 1)))
@@ -45,8 +48,11 @@ def _arbol_binario(niveles: int = 4):
 
 
 def _ciclo(n: int = 8):
-    """Ciclo simple: útil para ver que BFS avanza por los dos lados a la vez
-    y se encuentra en el nodo opuesto."""
+    """Ciclo simple.
+
+    BFS avanza por los dos sentidos a la vez y ambos frentes se encuentran en el
+    nodo opuesto al origen.
+    """
     G = crear_grafo(dirigido=False)
     for i in range(n):
         G.add_node(str(i), label=str(i))
@@ -61,8 +67,11 @@ def _ciclo(n: int = 8):
 
 
 def _rejilla(filas: int = 4, columnas: int = 5):
-    """Rejilla: las distancias BFS forman anillos concéntricos alrededor
-    del origen, muy visual."""
+    """Rejilla rectangular.
+
+    Las distancias calculadas por BFS forman anillos concéntricos alrededor del
+    nodo origen.
+    """
     G = crear_grafo(dirigido=False)
     for f in range(filas):
         for c in range(columnas):
@@ -83,8 +92,11 @@ def _rejilla(filas: int = 4, columnas: int = 5):
 
 
 def _dag_capas(capas=(1, 3, 3, 2, 1)):
-    """DAG por capas: única instancia donde el algoritmo de orden topológico
-    está disponible, y donde se ve que basta una pasada de relajación."""
+    """Grafo dirigido acíclico organizado en capas.
+
+    Es la única instancia en la que el algoritmo de orden topológico está
+    disponible. Basta una pasada de relajación para obtener el resultado.
+    """
     G = crear_grafo(dirigido=True)
     ids_por_capa = []
     contador = 0
@@ -110,9 +122,11 @@ def _dag_capas(capas=(1, 3, 3, 2, 1)):
 
 
 def _ciclo_negativo():
-    """Instancia mínima con un ciclo de peso negativo (3→4→5→3 suma -2).
-    Es el único caso donde Bellman-Ford marca nodos en rojo; sirve para ver
-    por qué Dijkstra no se ofrece acá."""
+    """Instancia mínima con un ciclo de peso negativo.
+
+    El ciclo 3 -> 4 -> 5 -> 3 suma -2. Es el único caso en el que Bellman-Ford
+    marca nodos en rojo, y en el que Dijkstra no está disponible.
+    """
     G = crear_grafo(dirigido=True)
     aristas = [
         ("0", "1", 4), ("0", "2", 3), ("1", "3", 2), ("2", "3", 1),
@@ -130,8 +144,11 @@ def _ciclo_negativo():
 
 
 def _completo(n: int = 6):
-    """Grafo completo K_n: caso denso, útil para ver cuántas aristas descarta
-    Dijkstra y para probar rendimiento del dibujado."""
+    """Grafo completo K_n.
+
+    Caso denso. Permite observar cuántas aristas descarta Dijkstra y medir el
+    rendimiento del dibujado.
+    """
     G = crear_grafo(dirigido=False)
     radio = _ESCALA * 0.38
     centro = _ESCALA / 2
@@ -151,32 +168,32 @@ EJEMPLOS = {
     "arbol": {
         "nombre": "Árbol binario (15 nodos)",
         "constructor": _arbol_binario,
-        "descripcion": "No dirigido. BFS recorre por niveles; DFS baja hasta una hoja.",
+        "descripcion": "No dirigido. BFS recorre por niveles y DFS desciende hasta una hoja.",
     },
     "ciclo": {
         "nombre": "Ciclo (8 nodos)",
         "constructor": _ciclo,
-        "descripcion": "No dirigido. BFS avanza por ambos lados y se cierra en el opuesto.",
+        "descripcion": "No dirigido. BFS avanza por los dos sentidos y se cierra en el nodo opuesto.",
     },
     "rejilla": {
         "nombre": "Rejilla 4×5",
         "constructor": _rejilla,
-        "descripcion": "No dirigido. Las distancias forman anillos alrededor del origen.",
+        "descripcion": "No dirigido. Las distancias forman anillos concéntricos alrededor del origen.",
     },
     "dag": {
         "nombre": "DAG por capas",
         "constructor": _dag_capas,
-        "descripcion": "Dirigido y acíclico: habilita el camino mínimo por orden topológico.",
+        "descripcion": "Dirigido y acíclico. Habilita el camino mínimo por orden topológico.",
     },
     "ciclo_negativo": {
         "nombre": "Ciclo negativo (Bellman-Ford)",
         "constructor": _ciclo_negativo,
-        "descripcion": "Dirigido con un ciclo de peso -2. Dijkstra no se ofrece acá.",
+        "descripcion": "Dirigido con un ciclo de peso -2. Dijkstra no está disponible.",
     },
     "completo": {
         "nombre": "Grafo completo K6",
         "constructor": _completo,
-        "descripcion": "No dirigido y denso: muchas aristas descartadas por Dijkstra.",
+        "descripcion": "No dirigido y denso. Dijkstra descarta un número alto de aristas.",
     },
 }
 

@@ -1,5 +1,8 @@
-"""DFS recursivo reimplementado a mano, emitiendo eventos de descubrimiento
-y finalización (útil también para detectar el árbol DFS)."""
+"""Recorrido en profundidad, recursivo.
+
+Emite eventos de descubrimiento y de finalización, que permiten reconstruir el
+árbol DFS y los tiempos de entrada y salida de cada nodo.
+"""
 from __future__ import annotations
 
 import sys
@@ -20,7 +23,7 @@ def dfs_trace(G: nx.Graph, origen: str):
     limite_previo = sys.getrecursionlimit()
     sys.setrecursionlimit(max(limite_previo, G.number_of_nodes() * 2 + 100))
     try:
-        # Los "linea" corresponden al pseudocódigo en algorithms/registry.py.
+        # El campo "linea" indica la línea del pseudocódigo de registry.py.
         def visitar(u):
             visitado.add(u)
             reloj[0] += 1

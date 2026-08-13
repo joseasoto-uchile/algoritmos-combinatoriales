@@ -8,13 +8,14 @@ body {
     background: #fafafa;
 }
 
-/* height fija la altura a la ventana: eso es lo que mantiene al sidebar
-   acotado y scrolleando por dentro. Si se cambia por min-height, el contenedor
-   pasa a medir lo que mide su contenido y se estira hasta la altura del
-   sidebar (~1300 px), inflando el lienzo.
-   min-height añade el piso: en una ventana más baja que esto el contenedor
-   deja de encogerse y es la PÁGINA la que scrollea en vertical, en vez de
-   aplastar el lienzo hasta dejarlo inservible. */
+/* La propiedad height fija el alto a la ventana. Es lo que mantiene la columna
+   de controles acotada y con desplazamiento propio. Sustituirla por min-height
+   hace que el contenedor mida lo que mide su contenido y alcance el alto de esa
+   columna, unos 1300 px, con lo que el lienzo crece en exceso.
+
+   min-height establece el alto mínimo: en una ventana más baja, el contenedor
+   deja de reducirse y el desplazamiento vertical pasa a la página, en lugar de
+   reducir el lienzo hasta un tamaño inutilizable. */
 .app-contenedor {
     padding: 12px 24px 16px;
     height: 100vh;
@@ -29,17 +30,17 @@ body {
     flex: 0 0 auto;
 }
 
-/* La fila principal ocupa el resto de la altura de la ventana, sin que
-   la página entera haga scroll vertical: si algo desborda, scrollea
-   solo el sidebar (columna-controles), nunca el grafo.
+/* La fila principal ocupa el alto restante de la ventana. Si el contenido
+   excede ese alto, el desplazamiento vertical se produce en la columna de
+   controles, no en la página ni en el grafo.
 
-   El ancho de las dos columnas laterales vive en estas variables, que
-   assets/resize.js modifica al arrastrar los divisores. La columna del
-   grafo no declara ancho: se queda con lo que sobra, así que al angostar
-   un lateral el lienzo gana espacio en vez de empujar a los demás.
+   El ancho de las dos columnas laterales está definido en estas variables, que
+   assets/resize.js modifica al arrastrar los divisores. La columna del grafo no
+   declara ancho: ocupa el espacio restante, de modo que al reducir una columna
+   lateral el lienzo aumenta de tamaño.
 
-   Si la ventana es tan angosta que no entran los anchos mínimos, la fila
-   scrollea horizontalmente en lugar de superponer columnas. */
+   Si la ventana no admite los anchos mínimos, la fila se desplaza en
+   horizontal en lugar de superponer las columnas. */
 .fila-principal {
     --ancho-controles: 280px;
     --ancho-codigo: 300px;
@@ -63,14 +64,15 @@ body {
     padding-right: 6px;
 }
 
-/* El piso de altura del lienzo va acá, no en la fila: mientras la ventana dé
-   de sí, la columna ocupa el alto disponible y no hay scroll de página; cuando
-   la ventana es más baja que este mínimo, la columna deja de encogerse, el
-   contenedor crece y la página pasa a scrollear en vertical. */
-/* 480px = barra (~68) + lienzo mínimo (240) + leyenda (~134) + separaciones.
-   Debe ir de la mano del minHeight del lienzo en app.py y del min-height del
-   contenedor: si este piso queda por debajo de lo que miden los tres bloques,
-   la leyenda desborda la columna. */
+/* El alto mínimo del lienzo se declara aquí, no en la fila. Mientras la ventana
+   lo permita, la columna ocupa el alto disponible y la página no se desplaza.
+   Cuando la ventana es más baja que este mínimo, la columna deja de reducirse,
+   el contenedor crece y el desplazamiento vertical pasa a la página.
+
+   480 px corresponde a la barra (68), el lienzo mínimo (240), la leyenda (134)
+   y las separaciones. Debe mantenerse coherente con el minHeight del lienzo en
+   app.py y con el min-height del contenedor. Si este valor queda por debajo de
+   la suma de los tres bloques, la leyenda sobrepasa la columna. */
 .columna-grafo {
     flex: 1 1 320px;
     min-width: 280px;
@@ -89,9 +91,9 @@ body {
 }
 
 /* --- Divisores arrastrables ---
-   El elemento mide 10px para que sea fácil de agarrar con el puntero, pero
-   la línea visible es de 2px y va centrada, así que a simple vista parece
-   apenas una separación entre columnas. */
+   El elemento mide 10 px para facilitar el arrastre con el puntero. La línea
+   visible es de 2 px y está centrada, de modo que se percibe como una
+   separación entre columnas. */
 .divisor {
     flex: 0 0 10px;
     cursor: col-resize;
@@ -116,15 +118,15 @@ body {
     background: #1565c0;
 }
 
-/* Mientras se arrastra: sin selección de texto accidental y con el cursor
-   de redimensionar aunque el puntero se salga del divisor. */
+/* Durante el arrastre se desactiva la selección de texto y se mantiene el
+   cursor de redimensionado aunque el puntero salga del divisor. */
 body.redimensionando {
     cursor: col-resize;
     user-select: none;
 }
 
-/* En pantallas angostas las tres columnas en fila no tienen sentido: se
-   apilan y la página entera pasa a scrollear en vertical. */
+/* En ventanas estrechas las tres columnas no caben en una fila. Se apilan y el
+   desplazamiento vertical pasa a la página. */
 @media (max-width: 900px) {
     .app-contenedor {
         height: auto;
@@ -200,8 +202,8 @@ body.redimensionando {
     color: #263238;
 }
 
-/* Punto de interrupción: la reproducción automática se detiene al llegar
-   a esta línea. Se marca con un punto rojo sobre el número de línea. */
+/* Punto de interrupción. La reproducción automática se detiene al alcanzar
+   esta línea. Se señala con un punto rojo junto al número de línea. */
 .linea-breakpoint {
     border-left-color: #d32f2f;
 }
@@ -218,8 +220,8 @@ body.redimensionando {
     vertical-align: middle;
 }
 
-/* Si una línea es a la vez activa y breakpoint, gana el fondo amarillo del
-   paso actual pero se conserva el borde rojo, para no perder la marca. */
+/* Si una línea es a la vez activa y punto de interrupción, se aplica el fondo
+   amarillo del paso actual y se conserva el borde rojo. */
 .linea-breakpoint.linea-activa {
     border-left-color: #d32f2f;
 }
@@ -236,8 +238,8 @@ body.redimensionando {
     margin-bottom: 6px;
 }
 
-/* Algoritmos que el grafo actual no admite: antes desaparecían del
-   desplegable sin explicación. */
+/* Algoritmos que el grafo actual no admite. Se listan con el motivo en lugar
+   de omitirlos del desplegable. */
 .lista-no-disponibles {
     margin-top: 8px;
     font-size: 11px;
@@ -334,8 +336,8 @@ body.redimensionando {
 }
 
 /* --- Leyenda debajo del lienzo ---
-   Va con <details> para que se pueda plegar y devolver el espacio al grafo,
-   sin necesidad de un callback. */
+   Usa <details> para poder plegarla y ceder el espacio al grafo, sin necesidad
+   de un callback. */
 .leyenda {
     flex: 0 0 auto;
     background: #ffffff;
@@ -378,8 +380,8 @@ body.redimensionando {
     white-space: nowrap;
 }
 
-/* La explicación del formato de etiqueta es más larga que el resto: se le
-   permite ocupar su propia fila completa. */
+/* La descripción del formato de etiqueta es más larga que el resto y ocupa una
+   fila completa. */
 .leyenda-etiqueta {
     flex-basis: 100%;
     white-space: normal;
@@ -405,8 +407,8 @@ body.redimensionando {
     color: #90a4ae;
 }
 
-/* Miniatura del formato de etiqueta: reproduce el nombre arriba y la
-   distancia abajo, como se ve junto al nodo. */
+/* Miniatura del formato de etiqueta: el nombre arriba y la distancia abajo,
+   igual que junto al nodo. */
 .muestra-etiqueta {
     display: inline-flex;
     flex-direction: column;
@@ -430,8 +432,8 @@ body.redimensionando {
     font-size: 10px;
 }
 
-/* Pie de página: una franja compacta al final, fuera de la fila de columnas
-   para que no compita por el alto del lienzo más de lo necesario. */
+/* Pie de página. Se sitúa fuera de la fila de columnas para reducir el alto
+   que resta al lienzo. */
 .pie {
     flex: 0 0 auto;
     display: flex;
@@ -591,9 +593,10 @@ body.redimensionando {
     color: #263238;
 }
 
-/* Contador de iteraciones (solo Bellman-Ford). Se destaca del texto de paso
-   porque es lo que explica el costo del algoritmo: cuántas veces repasa TODAS
-   las aristas. Queda vacío en los demás algoritmos y entonces no ocupa nada. */
+/* Contador de iteraciones, solo para Bellman-Ford. Se diferencia del texto de
+   paso porque indica el número de recorridos completos sobre las aristas, que
+   determina el costo del algoritmo. En los demás algoritmos queda vacío y no
+   ocupa espacio. */
 .txt-iteracion:not(:empty) {
     margin-top: 4px;
     font-size: 12px;

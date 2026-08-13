@@ -1,5 +1,8 @@
-"""BFS reimplementado a mano (no usamos nx.bfs_tree) para poder emitir
-un evento en cada paso relevante del recorrido."""
+"""Recorrido en anchura.
+
+Implementación propia en lugar de nx.bfs_tree, necesaria para emitir un evento
+en cada paso del recorrido.
+"""
 from __future__ import annotations
 
 from collections import deque
@@ -10,15 +13,15 @@ from .trace import TraceBuilder
 
 
 def bfs_trace(G: nx.Graph, origen: str):
-    # Los "linea" corresponden al pseudocódigo en algorithms/registry.py.
+    # El campo "linea" indica la línea del pseudocódigo de registry.py.
     tb = TraceBuilder()
     visitado = {origen}
     padre = {origen: None}
     distancia = {origen: 0}
     cola = deque([origen])
 
-    # 'dist' viaja en el evento para que la visualización pueda reconstruir la
-    # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
+    # El campo 'dist' permite que la visualización reconstruya la distancia de
+    # cada nodo en cualquier paso sin volver a ejecutar el algoritmo.
     tb.emit("visitar_nodo", nodo=origen, linea=3, dist=0)
     while cola:
         u = cola.popleft()
