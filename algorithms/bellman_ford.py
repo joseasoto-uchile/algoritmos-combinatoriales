@@ -29,7 +29,18 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
     # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
     tb.emit("visitar_nodo", nodo=origen, linea=2, dist=0)
     n = len(nodos)
-    for i in range(max(n - 1, 0)):
+    total_iteraciones = max(n - 1, 0)
+    for i in range(total_iteraciones):
+        # Marca el comienzo de cada pasada. Sirve para mostrar en qué iteración
+        # va la reproducción: en Bellman-Ford el número de pasadas es la parte
+        # que explica su costo, y sin esto no se distingue una de otra porque
+        # todas repiten los mismos eventos sobre las mismas aristas.
+        tb.emit(
+            "inicio_iteracion",
+            iteracion=i + 1,
+            total_iteraciones=total_iteraciones,
+            linea=3,
+        )
         hubo_cambio = False
         for u, v, datos in aristas:
             peso = datos.get("weight", 1)
@@ -43,7 +54,25 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
             else:
                 tb.emit("descartar_arista", u=u, v=v, linea=5)
         if not hubo_cambio:
+            # Sin cambios en una pasada completa, las siguientes tampoco harían
+            # nada: se corta antes de las V-1 y se avisa, porque es justo lo
+            # interesante de ver (termina en menos iteraciones que el peor caso).
+            tb.emit(
+                "fin_iteraciones",
+                iteracion=i + 1,
+                total_iteraciones=total_iteraciones,
+                anticipado=True,
+                linea=3,
+            )
             break
+    else:
+        tb.emit(
+            "fin_iteraciones",
+            iteracion=total_iteraciones,
+            total_iteraciones=total_iteraciones,
+            anticipado=False,
+            linea=3,
+        )
 
     # Una pasada extra: toda arista que TODAVÍA relaja delata un ciclo de peso
     # negativo. Marcar solo esos extremos deja el dibujo a medias — el ciclo

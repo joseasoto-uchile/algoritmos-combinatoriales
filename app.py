@@ -26,7 +26,9 @@ from viz.elements import (
     aplicar_distancias,
     calcular_distancias,
     calcular_estado,
+    calcular_iteracion,
     graph_to_elements,
+    texto_iteracion,
 )
 
 LAYOUTS = ["circle", "breadthfirst", "grid", "cose", "preset"]
@@ -419,6 +421,9 @@ def _toolbar_grafo():
                 ],
             ),
             html.Div(id="txt-paso", className="txt-estado"),
+            # Solo se llena en algoritmos que trabajan por iteraciones sobre
+            # todas las aristas (Bellman-Ford); en el resto queda vacío.
+            html.Div(id="txt-iteracion", className="txt-iteracion"),
         ],
     )
 
@@ -918,6 +923,7 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
     Output("cyto", "elements"),
     Output("cyto", "layout"),
     Output("txt-paso", "children"),
+    Output("txt-iteracion", "children"),
     Input("store-grafo", "data"),
     Input("store-trace", "data"),
     Input("store-paso", "data"),
@@ -937,6 +943,7 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
     dirigido = G.is_directed()
 
     texto_paso = "Sin traza — ejecuta un algoritmo."
+    texto_iter = ""
     if trace:
         paso = max(0, min(paso or 0, len(trace) - 1))
         clases_nodo, clases_arista = calcular_estado(trace, paso, dirigido)
@@ -948,6 +955,7 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
             elementos = aplicar_distancias(elementos, distancias)
         ev = trace[paso]
         texto_paso = f"Paso {paso + 1}/{len(trace)} — {ev['tipo']}"
+        texto_iter = texto_iteracion(calcular_iteracion(trace, paso))
     else:
         elementos = aplicar_clases(elementos, {}, {}, origen)
 
@@ -970,7 +978,7 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
     else:
         nuevo_layout = no_update
 
-    return elementos, nuevo_layout, texto_paso
+    return elementos, nuevo_layout, texto_paso, texto_iter
 
 
 # ---------------------------------------------------------------------------

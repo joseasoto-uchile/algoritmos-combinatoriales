@@ -590,3 +590,18 @@ body.redimensionando {
 .btn-cerrar:hover {
     color: #263238;
 }
+
+/* Contador de iteraciones (solo Bellman-Ford). Se destaca del texto de paso
+   porque es lo que explica el costo del algoritmo: cuántas veces repasa TODAS
+   las aristas. Queda vacío en los demás algoritmos y entonces no ocupa nada. */
+.txt-iteracion:not(:empty) {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1565c0;
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}

@@ -141,6 +141,65 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
     return distancias
 
 
+def calcular_iteracion(trace: list[dict], paso_actual: int) -> dict | None:
+    """Estado del contador de iteraciones en `paso_actual`, o None si el
+    algoritmo no trabaja por iteraciones.
+
+    Solo Bellman-Ford las emite: es el único cuyo costo se explica por cuántas
+    veces repasa todas las aristas, y sin este dato las pasadas son
+    indistinguibles entre sí porque repiten los mismos eventos.
+    """
+    if not trace:
+        return None
+    tope = max(0, min(paso_actual, len(trace) - 1))
+    estado = None
+    for ev in trace[: tope + 1]:
+        if ev["tipo"] == "inicio_iteracion":
+            estado = {
+                "iteracion": ev["iteracion"],
+                "total": ev["total_iteraciones"],
+                "terminado": False,
+                "anticipado": False,
+            }
+        elif ev["tipo"] == "fin_iteraciones":
+            estado = {
+                "iteracion": ev["iteracion"],
+                "total": ev["total_iteraciones"],
+                "terminado": True,
+                "anticipado": ev.get("anticipado", False),
+            }
+    if estado is None:
+        # Puede que el algoritmo sí itere pero que todavía no haya empezado la
+        # primera pasada: se distingue mirando la traza entera.
+        if not any(ev["tipo"] == "inicio_iteracion" for ev in trace):
+            return None
+        primera = next(ev for ev in trace if ev["tipo"] == "inicio_iteracion")
+        return {
+            "iteracion": 0,
+            "total": primera["total_iteraciones"],
+            "terminado": False,
+            "anticipado": False,
+        }
+    return estado
+
+
+def texto_iteracion(estado: dict | None) -> str:
+    """Convierte el estado de iteración en la línea que se muestra en la UI."""
+    if estado is None:
+        return ""
+    total = estado["total"]
+    if estado["terminado"]:
+        if estado["anticipado"]:
+            return (
+                f"Iteraciones: {estado['iteracion']} de {total} "
+                f"— cortó antes: una pasada sin cambios"
+            )
+        return f"Iteraciones: {estado['iteracion']} de {total} — completadas"
+    if estado["iteracion"] == 0:
+        return f"Iteración 0 de {total} — aún no empieza el bucle"
+    return f"Iteración {estado['iteracion']} de {total}"
+
+
 def aplicar_distancias(
     elementos: list[dict],
     distancias: dict[str, float],
