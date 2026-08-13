@@ -189,7 +189,16 @@ function bellmanFordTraza(G, origen) {
     }
 
     tb.emitir('visitar_nodo', { nodo: origen, linea: 2, dist: 0 });
-    for (let i = 0; i < Math.max(nodos.length - 1, 0); i++) {
+    const totalIteraciones = Math.max(nodos.length - 1, 0);
+    let cortoAnticipado = false;
+    for (let i = 0; i < totalIteraciones; i++) {
+        // Marca el comienzo de cada pasada. Sirve para mostrar en qué iteración
+        // va la reproducción: en Bellman-Ford el número de pasadas es la parte
+        // que explica su costo, y sin esto no se distingue una de otra porque
+        // todas repiten los mismos eventos sobre las mismas aristas.
+        tb.emitir('inicio_iteracion', {
+            iteracion: i + 1, total_iteraciones: totalIteraciones, linea: 3,
+        });
         let hubo = false;
         for (const [u, v, peso] of aristas) {
             tb.emitir('explorar_arista', { u, v, iteracion: i + 1, linea: 5 });
@@ -203,7 +212,23 @@ function bellmanFordTraza(G, origen) {
                 tb.emitir('descartar_arista', { u, v, linea: 5 });
             }
         }
-        if (!hubo) break;
+        if (!hubo) {
+            // Sin cambios en una pasada completa, las siguientes tampoco harían
+            // nada: se corta antes de las V-1 y se avisa, porque es justo lo
+            // interesante de ver (termina en menos iteraciones que el peor caso).
+            tb.emitir('fin_iteraciones', {
+                iteracion: i + 1, total_iteraciones: totalIteraciones,
+                anticipado: true, linea: 3,
+            });
+            cortoAnticipado = true;
+            break;
+        }
+    }
+    if (!cortoAnticipado) {
+        tb.emitir('fin_iteraciones', {
+            iteracion: totalIteraciones, total_iteraciones: totalIteraciones,
+            anticipado: false, linea: 3,
+        });
     }
 
     // Pasada extra: toda arista que todavía relaja delata un ciclo negativo.

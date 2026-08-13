@@ -109,9 +109,15 @@ function reconstruirGrafo({ recalcular = true } = {}) {
 
 function actualizarTextoPaso() {
     const t = $('#txt-paso');
-    if (!estado.traza) { t.textContent = 'Sin traza — ejecuta un algoritmo.'; return; }
+    const it = $('#txt-iteracion');
+    if (!estado.traza) {
+        t.textContent = 'Sin traza — ejecuta un algoritmo.';
+        it.textContent = '';
+        return;
+    }
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
     t.textContent = `Paso ${paso + 1}/${estado.traza.length} — ${estado.traza[paso].tipo}`;
+    it.textContent = textoIteracion(calcularIteracion(estado.traza, paso));
 }
 
 /* --- Instancias ---------------------------------------------------------- */

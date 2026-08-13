@@ -166,6 +166,46 @@ function calcularDistancias(traza, pasoActual) {
     return distancias;
 }
 
+/* Estado del contador de iteraciones en `pasoActual`, o null si el algoritmo
+ * no trabaja por iteraciones. Solo Bellman-Ford las emite: es el único cuyo
+ * costo se explica por cuántas veces repasa todas las aristas, y sin este dato
+ * las pasadas son indistinguibles porque repiten los mismos eventos. */
+function calcularIteracion(traza, pasoActual) {
+    if (!traza || !traza.length) return null;
+    const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
+    let estado = null;
+    for (let i = 0; i <= tope; i++) {
+        const ev = traza[i];
+        if (ev.tipo === 'inicio_iteracion') {
+            estado = { iteracion: ev.iteracion, total: ev.total_iteraciones,
+                       terminado: false, anticipado: false };
+        } else if (ev.tipo === 'fin_iteraciones') {
+            estado = { iteracion: ev.iteracion, total: ev.total_iteraciones,
+                       terminado: true, anticipado: Boolean(ev.anticipado) };
+        }
+    }
+    if (estado === null) {
+        // Puede que el algoritmo sí itere pero que todavía no haya empezado la
+        // primera pasada: se distingue mirando la traza entera.
+        const primera = traza.find((ev) => ev.tipo === 'inicio_iteracion');
+        if (!primera) return null;
+        return { iteracion: 0, total: primera.total_iteraciones,
+                 terminado: false, anticipado: false };
+    }
+    return estado;
+}
+
+function textoIteracion(estado) {
+    if (estado === null) return '';
+    if (estado.terminado) {
+        return estado.anticipado
+            ? `Iteraciones: ${estado.iteracion} de ${estado.total} — cortó antes: una pasada sin cambios`
+            : `Iteraciones: ${estado.iteracion} de ${estado.total} — completadas`;
+    }
+    if (estado.iteracion === 0) return `Iteración 0 de ${estado.total} — aún no empieza el bucle`;
+    return `Iteración ${estado.iteracion} de ${estado.total}`;
+}
+
 function aplicarDistancias(elementos, distancias) {
     return elementos.map((el) => {
         if ('source' in el.data) return el;

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Visualizador de Algoritmos sobre Grafos</title>
-<link rel="stylesheet" href="css/estilo.css?v=2">
+<link rel="stylesheet" href="css/estilo.css?v=3">
 <!-- Cytoscape desde CDN. Si se quiere que la página funcione sin conexión,
      basta con descargar el archivo a js/ y cambiar este src. -->
 <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
@@ -101,6 +101,9 @@
           <div id="atajos-velocidad" class="atajos-velocidad"></div>
         </div>
         <div id="txt-paso" class="txt-estado"></div>
+        <!-- Solo se llena en algoritmos que iteran sobre todas las aristas
+             (Bellman-Ford); en el resto queda vacio y no ocupa nada. -->
+        <div id="txt-iteracion" class="txt-iteracion"></div>
       </div>
 
       <div id="cyto"></div>
@@ -144,9 +147,9 @@
 <!-- El ?v= invalida la caché del navegador al publicar una versión nueva.
      Súbelo cuando cambies algún archivo de js/ o css/, o los visitantes
      seguirán ejecutando el anterior. -->
-<script src="js/grafo.js?v=2"></script>
-<script src="js/algoritmos.js?v=2"></script>
-<script src="js/viz.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/grafo.js?v=3"></script>
+<script src="js/algoritmos.js?v=3"></script>
+<script src="js/viz.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
