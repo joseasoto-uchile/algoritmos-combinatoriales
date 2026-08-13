@@ -296,8 +296,7 @@ def _pie():
     return html.Footer(
         className="pie",
         children=[
-            # El crédito es el enlace a la licencia: un clic lleva al LICENSE
-            # del repositorio, así el pie no tiene que explicar los términos.
+            # El crédito enlaza al archivo LICENSE del repositorio.
             html.A(
                 "© 2026 José A. Soto, Universidad de Chile",
                 href=URL_LICENCIA,
@@ -366,9 +365,11 @@ def _leyenda():
 
 
 def _toolbar_grafo():
-    """Barra de reproducción + centrado, siempre visible sobre el canvas
-    (a diferencia de un panel más en el sidebar, que podía quedar fuera
-    de la vista si había que hacer scroll)."""
+    """Controles de reproducción y centrado, sobre el lienzo.
+
+    Situada fuera de la columna de controles, que tiene desplazamiento propio,
+    de modo que permanece visible.
+    """
     return html.Div(
         className="toolbar-grafo",
         children=[
@@ -412,8 +413,8 @@ def _toolbar_grafo():
                 ],
             ),
             html.Div(id="txt-paso", className="txt-estado"),
-            # Solo se llena en algoritmos que trabajan por iteraciones sobre
-            # todas las aristas (Bellman-Ford); en el resto queda vacío.
+            # Solo se rellena en los algoritmos que trabajan por iteraciones
+            # sobre todas las aristas, es decir Bellman-Ford.
             html.Div(id="txt-iteracion", className="txt-iteracion"),
         ],
     )
@@ -428,11 +429,10 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     className="columna-controles",
-                    # Orden por frecuencia de uso, no por orden lógico: sobre una
-                    # instancia ya dibujada uno elige y ejecuta algoritmos varias
-                    # veces, y recién después genera otra instancia. Tener que
-                    # bajar hasta el final del sidebar para lo más frecuente
-                    # obligaba a hacer scroll en cada corrida.
+                    # Los paneles están ordenados por frecuencia de uso. Sobre
+                    # una instancia ya dibujada, la selección y ejecución de
+                    # algoritmos se repite varias veces antes de generar otra
+                    # instancia.
                     children=[
                         _panel_algoritmo(),
                         _panel_layout(),
@@ -441,9 +441,9 @@ app.layout = html.Div(
                         _panel_archivo(),
                     ],
                 ),
-                # Los divisores los maneja assets/resize.js: arrastrar cambia
-                # el ancho de la columna indicada en data-objetivo; doble clic
-                # la devuelve al valor por omisión.
+                # assets/resize.js gestiona los divisores. El arrastre cambia
+                # el ancho de la columna indicada en data-objetivo y el doble
+                # clic lo devuelve al valor por omisión.
                 html.Div(
                     className="divisor",
                     title="Arrastra para redimensionar · doble clic para restablecer",
@@ -459,13 +459,10 @@ app.layout = html.Div(
                             stylesheet=STYLESHEET,
                             layout={"name": "circle"},
                             autoRefreshLayout=False,
-                            # minHeight cumple dos papeles: es el alto mínimo
-                            # del lienzo, y además destraba el encogido. Un
-                            # elemento flex sin min-height explícito usa
-                            # 'auto', que equivale al tamaño de su contenido:
-                            # sin esto el lienzo no cedía altura en ventanas
-                            # bajas y la leyenda terminaba desbordando la
-                            # columna y pisando el pie de página.
+                            # minHeight fija el alto mínimo del lienzo y
+                            # permite que se reduzca. Un elemento flex sin
+                            # min-height explícito usa 'auto', equivalente al
+                            # tamaño de su contenido, y no cede altura.
                             style={
                                 "width": "100%",
                                 "flex": "1",
@@ -502,7 +499,7 @@ app.layout = html.Div(
 
 
 # ---------------------------------------------------------------------------
-# 1) Generar instancia aleatoria (también corre una vez al cargar la página)
+# 1) Generar instancia aleatoria. Se ejecuta también al cargar la página.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("store-grafo", "data"),
@@ -555,8 +552,8 @@ def cargar_ejemplo(n_clicks, clave):
     if not clave:
         raise PreventUpdate
     G = construir_ejemplo(clave)
-    # Estas instancias definen coordenadas explícitas (niveles del árbol,
-    # filas de la rejilla), por lo que se fuerza el layout 'preset'.
+    # Estas instancias definen coordenadas explícitas, de modo que se fuerza
+    # el layout 'preset'.
     return graph_to_dict(G), None, 0, "preset"
 
 
@@ -591,7 +588,7 @@ def cargar(contenido, nombre_archivo):
         data = json.loads(base64.b64decode(cadena_b64))
         graph_from_dict(data)  # valida el formato; lanza ValueError con el motivo
     except ValueError as exc:
-        # Archivo mal formado: el mensaje ya nombra el problema concreto.
+        # Archivo mal formado. El mensaje ya indica el problema.
         return no_update, no_update, no_update, str(exc), "txt-error"
     except Exception as exc:  # noqa: BLE001
         return (
@@ -640,8 +637,8 @@ def exportar_traza(n_json, n_csv, trace, alg_id):
             f"Exportados {len(trace)} pasos en JSON.",
         )
 
-    # CSV: la traza es heterogénea (cada tipo de evento trae campos distintos),
-    # así que se toma la unión de todas las claves como encabezado.
+    # La traza es heterogénea: cada tipo de evento tiene campos distintos. El
+    # encabezado es la unión de todas las claves.
     claves = []
     for ev in trace:
         for k in ev:
@@ -677,10 +674,8 @@ def actualizar_opciones(data, alg_actual):
         G = graph_from_dict(data)
         estado = estado_algoritmos(G)
     except Exception as exc:  # noqa: BLE001
-        # Segunda capa: 'cargar' ya valida el archivo, pero store-grafo también
-        # lo escriben 'generar' y 'cargar_ejemplo'. Sin esto, un grafo inválido
-        # que llegara por cualquier otra vía dejaba los desplegables sin
-        # actualizar y sin ningún mensaje: parecía que la app se había colgado.
+        # Segunda capa de validación. 'cargar' ya comprueba el archivo, pero
+        # 'generar' y 'cargar_ejemplo' también escriben en store-grafo.
         aviso = html.Div(f"No se pudo preparar el grafo: {exc}", className="txt-error")
         return [], None, [], None, aviso
 
@@ -739,9 +734,7 @@ def origen_por_clic(datos_nodo):
     Output("store-paso", "data", allow_duplicate=True),
     Output("txt-resultado", "children"),
     Output("txt-resultado", "className"),
-    # Ejecutar arranca la reproducción sola: pedir el algoritmo y además tener
-    # que apretar ▶ era un paso de más, porque lo que se quiere ver al ejecutar
-    # es justamente la animación.
+    # Ejecutar inicia también la reproducción.
     Output("store-reproduciendo", "data", allow_duplicate=True),
     Output("interval", "disabled", allow_duplicate=True),
     Output("btn-play", "children", allow_duplicate=True),
@@ -756,13 +749,12 @@ def ejecutar(n_clicks, data, alg_id, origen):
         raise PreventUpdate
     G = graph_from_dict(data)
     info = ALGORITMOS[alg_id]
-    # En los caminos de error no se toca la reproducción: si había una
-    # animación corriendo de una ejecución anterior, se queda como estaba.
+    # En los caminos de error no se modifica la reproducción en curso.
     sin_tocar_reproduccion = (no_update, no_update, no_update)
     try:
         resultado, trace = info["funcion"](G, origen)
     except ValueError as exc:
-        # Restricción conocida del algoritmo (p. ej. pesos negativos).
+        # Restricción del algoritmo, por ejemplo pesos negativos.
         return (
             no_update, no_update, no_update, no_update,
             f"Error: {exc}", "txt-error", *sin_tocar_reproduccion,
@@ -775,8 +767,7 @@ def ejecutar(n_clicks, data, alg_id, origen):
             f"Falla inesperada en {info['nombre']}: {type(exc).__name__}: {exc}",
             "txt-error", *sin_tocar_reproduccion,
         )
-    # Una traza de un solo paso no tiene nada que animar: se deja pausada para
-    # no encender el temporizador y apagarlo en el tic siguiente.
+    # Una traza de un solo paso no se anima: queda pausada.
     reproducir = len(trace) > 1
     return (
         trace,
@@ -836,8 +827,7 @@ def avanzar_automatico(n_intervals, paso, trace, breakpoints):
     paso = (paso or 0) + 1
     if paso >= len(trace) - 1:
         return len(trace) - 1, False, True, "▶"
-    # Punto de interrupción: pausa al llegar a una línea marcada, dejando el
-    # paso visible para poder inspeccionar el estado del grafo en ese momento.
+    # Punto de interrupción: la reproducción se detiene con el paso visible.
     if breakpoints and trace[paso].get("linea") in breakpoints:
         return paso, False, True, "▶"
     return paso, no_update, no_update, no_update
@@ -848,9 +838,9 @@ def avanzar_automatico(n_intervals, paso, trace, breakpoints):
     Input("in-velocidad", "value"),
 )
 def cambiar_velocidad(pasos_por_segundo):
-    # El campo son pasos por segundo; dcc.Interval espera un intervalo en
-    # milisegundos, así que se invierte. El tope inferior de 16 ms evita pedir
-    # un ritmo que el navegador no puede sostener (~60 cuadros por segundo).
+    # El campo son pasos por segundo y dcc.Interval espera milisegundos, de
+    # modo que se invierte. El mínimo de 16 ms corresponde a unos 60 cuadros por
+    # segundo, el límite del navegador.
     pps = _velocidad_valida(pasos_por_segundo)
     return max(16, round(1000 / pps))
 
@@ -869,7 +859,7 @@ def atajo_velocidad(clicks):
     disparador = ctx.triggered_id
     if not isinstance(disparador, dict):
         raise PreventUpdate
-    # Al montarse los botones llegan con n_clicks en 0: no es un clic real.
+    # Al montarse, los botones llegan con n_clicks en 0, que no es un clic.
     if not ctx.triggered or not ctx.triggered[0]["value"]:
         raise PreventUpdate
     return disparador["valor"]
@@ -904,9 +894,8 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
     elif disparador == "btn-reiniciar":
         paso = 0
 
-    # Usar un control manual durante la reproducción automática dejaba el
-    # Interval activo, y este sobrescribía el paso elegido. Cualquier control
-    # manual detiene la reproducción.
+    # Cualquier control manual detiene la reproducción. De lo contrario el
+    # Interval sobrescribe el paso elegido.
     if reproduciendo:
         return paso, False, True, "▶"
     return paso, no_update, no_update, no_update
@@ -936,9 +925,8 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
     Input("store-paso", "data"),
     Input("dd-layout", "value"),
     Input("btn-centrar", "n_clicks"),
-    # 'dd-origen' es Input y no State: como State, cambiar el nodo origen no
-    # disparaba el redibujado y el resaltado del origen se quedaba en el nodo
-    # anterior hasta que algo más provocara un render.
+    # 'dd-origen' es Input y no State: el cambio de nodo origen debe provocar
+    # el redibujado para que se actualice su resaltado.
     Input("dd-origen", "value"),
 )
 def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
@@ -955,8 +943,8 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
         paso = max(0, min(paso or 0, len(trace) - 1))
         clases_nodo, clases_arista = calcular_estado(trace, paso, dirigido)
         elementos = aplicar_clases(elementos, clases_nodo, clases_arista, origen)
-        # Etiqueta secundaria con la distancia: devuelve None en algoritmos que
-        # no calculan ninguna (DFS), y ahí los nodos quedan con su etiqueta sola.
+        # Etiqueta secundaria con la distancia. Devuelve None en los
+        # algoritmos que no calculan distancias, como DFS.
         distancias = calcular_distancias(trace, paso)
         if distancias is not None:
             elementos = aplicar_distancias(elementos, distancias)
@@ -1012,11 +1000,10 @@ def alternar_modal_info(n_abrir, n_cerrar, alg_id):
 # ---------------------------------------------------------------------------
 # 14) Panel de pseudocódigo.
 #
-#     Las líneas se construyen SOLO cuando cambia el algoritmo, no en cada
-#     paso: si se reconstruyeran a cada paso, el n_clicks de cada línea se
-#     reiniciaría y los puntos de interrupción (que dependen de detectar el
-#     clic) se dispararían solos. El resaltado del paso actual lo hace un
-#     callback de cliente más abajo, que solo cambia className.
+#     Las líneas se construyen solo cuando cambia el algoritmo. Reconstruirlas
+#     en cada paso reiniciaría el n_clicks de cada línea, y los puntos de
+#     interrupción dependen de ese contador. El resaltado del paso actual lo
+#     aplica el callback de cliente que hay más abajo, que cambia className.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("pseudocodigo-titulo", "children"),
@@ -1041,7 +1028,7 @@ def render_pseudocodigo(alg_id):
         )
         for i, texto in enumerate(lineas, start=1)
     ]
-    # Los puntos de interrupción son por algoritmo: al cambiar, se limpian.
+    # Los puntos de interrupción son propios de cada algoritmo.
     return f"Pseudocódigo: {info['nombre']}", insignia, hijos, []
 
 
@@ -1058,8 +1045,8 @@ def alternar_breakpoint(clicks, breakpoints):
     disparador = ctx.triggered_id
     if not isinstance(disparador, dict):
         raise PreventUpdate
-    # Al recrearse las líneas (cambio de algoritmo) Dash dispara este callback
-    # con n_clicks en 0/None: eso no es un clic real del usuario.
+    # Al recrearse las líneas por un cambio de algoritmo, Dash dispara este
+    # callback con n_clicks en 0 o None, que no es un clic del usuario.
     if not ctx.triggered or not ctx.triggered[0]["value"]:
         raise PreventUpdate
     linea = disparador["index"]
@@ -1074,10 +1061,10 @@ def alternar_breakpoint(clicks, breakpoints):
 # ---------------------------------------------------------------------------
 # 16) Resaltado en vivo del pseudocódigo (en el navegador).
 #
-#     Va del lado del cliente porque se dispara en cada paso de la
-#     reproducción: a 60 pasos/seg, un viaje al servidor por paso solo para
-#     mover un fondo amarillo hace que la animación se atrase respecto del
-#     grafo. Acá solo reescribe className, sin recrear los nodos del DOM.
+#     Se ejecuta en el cliente porque se dispara en cada paso de la
+#     reproducción. A 60 pasos por segundo, una petición al servidor por paso
+#     retrasa el resaltado respecto del grafo. Solo reescribe className, sin
+#     recrear los nodos del DOM.
 # ---------------------------------------------------------------------------
 app.clientside_callback(
     """
@@ -1114,12 +1101,10 @@ app.clientside_callback(
 
 
 if __name__ == "__main__":
-    # dev_tools_ui controla la barra inferior de Dash (Plotly Cloud / Errors /
-    # Callbacks). Se deja encendida por omisión porque las pestañas de errores
-    # y callbacks sirven al desarrollar; la de "Plotly Cloud" es publicidad de
-    # su hosting y no hay forma de ocultar solo esa.
-    #   DASH_TOOLBAR=0  -> esconde la barra, conservando la recarga en caliente
-    #   DASH_DEBUG=0    -> apaga también la recarga en caliente
+    # dev_tools_ui controla la barra inferior de Dash. Se mantiene activa por
+    # omisión, ya que incluye los paneles de errores y de callbacks.
+    #   DASH_TOOLBAR=0  oculta la barra y conserva la recarga automática
+    #   DASH_DEBUG=0    desactiva también la recarga automática
     depurar = os.environ.get("DASH_DEBUG", "1") != "0"
     app.run(
         debug=depurar,

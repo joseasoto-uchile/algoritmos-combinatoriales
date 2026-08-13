@@ -14,9 +14,8 @@ import math
 
 from .model import crear_grafo
 
-# Las posiciones se escriben en el mismo espacio de coordenadas que usa
-# model.asignar_posiciones (aprox. 0..800), para que 'preset' se vea igual
-# de encuadrado que los layouts calculados.
+# Las posiciones usan el mismo espacio de coordenadas que
+# model.asignar_posiciones, aproximadamente de 0 a 800.
 _ESCALA = 800.0
 
 

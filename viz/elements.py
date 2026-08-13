@@ -172,8 +172,8 @@ def calcular_iteracion(trace: list[dict], paso_actual: int) -> dict | None:
                 "anticipado": ev.get("anticipado", False),
             }
     if estado is None:
-        # Puede que el algoritmo sí itere pero que todavía no haya empezado la
-        # primera pasada: se distingue mirando la traza entera.
+        # El algoritmo puede iterar y no haber empezado la primera pasada, de
+        # modo que se examina la traza completa.
         if not any(ev["tipo"] == "inicio_iteracion" for ev in trace):
             return None
         primera = next(ev for ev in trace if ev["tipo"] == "inicio_iteracion")
