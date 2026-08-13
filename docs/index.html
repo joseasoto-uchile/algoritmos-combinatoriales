@@ -4,10 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Visualizador de Algoritmos sobre Grafos</title>
-<link rel="stylesheet" href="css/estilo.css?v=3">
-<!-- Cytoscape desde CDN. Si se quiere que la página funcione sin conexión,
-     basta con descargar el archivo a js/ y cambiar este src. -->
-<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<!-- Segunda capa contra la inyección de HTML. La causa está corregida en
+     app.js (los <option> se construyen con la API del DOM), pero 'script-src
+     self' impide además que un manejador en línea inyectado llegue a
+     ejecutarse, aunque en el futuro se cuele otra inyección.
+     'unsafe-inline' hace falta en estilos porque la leyenda usa atributos
+     style y Cytoscape fija estilos en línea sobre su contenedor; inyectar un
+     estilo es mucho menos grave que inyectar un script.
+     GitHub Pages no deja poner cabeceras propias, pero la etiqueta vale igual. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<link rel="stylesheet" href="css/estilo.css?v=4">
+<!-- Cytoscape servido desde el propio sitio, no desde un CDN: si la red del
+     campus bloquea el CDN la página salía en blanco, y además así funciona
+     sin conexión. Actualizar este archivo es descargar la versión nueva y
+     subir el ?v= de abajo. -->
+<script src="js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
 <div class="app-contenedor">
@@ -147,9 +159,9 @@
 <!-- El ?v= invalida la caché del navegador al publicar una versión nueva.
      Súbelo cuando cambies algún archivo de js/ o css/, o los visitantes
      seguirán ejecutando el anterior. -->
-<script src="js/grafo.js?v=3"></script>
-<script src="js/algoritmos.js?v=3"></script>
-<script src="js/viz.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/grafo.js?v=4"></script>
+<script src="js/algoritmos.js?v=4"></script>
+<script src="js/viz.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

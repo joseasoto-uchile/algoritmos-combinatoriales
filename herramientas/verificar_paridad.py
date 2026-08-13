@@ -81,6 +81,53 @@ def _saneable(valor):
     return valor
 
 
+# Archivos malformados: se comprueba que AMBAS versiones los rechacen con el
+# mismo mensaje. Es lo que faltaba: comparar solo instancias bien formadas dejó
+# pasar que cada versión "reparaba" los archivos rotos a su manera.
+CASOS_INVALIDOS = [
+    ("peso no numerico", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
+                          "aristas": [{"origen": "0", "destino": "1", "weight": "diez"}]}),
+    ("peso ausente", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
+                      "aristas": [{"origen": "0", "destino": "1"}]}),
+    ("nodo no declarado", {"dirigido": True, "nodos": [{"id": "0"}],
+                           "aristas": [{"origen": "0", "destino": "99", "weight": 1}]}),
+    ("arista repetida", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
+                         "aristas": [{"origen": "0", "destino": "1", "weight": 1},
+                                     {"origen": "0", "destino": "1", "weight": 5}]}),
+    ("repetida no dirigida", {"dirigido": False, "nodos": [{"id": "0"}, {"id": "1"}],
+                              "aristas": [{"origen": "0", "destino": "1", "weight": 1},
+                                          {"origen": "1", "destino": "0", "weight": 2}]}),
+    ("nodo duplicado", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "0"}], "aristas": []}),
+    ("id vacio", {"dirigido": True, "nodos": [{"id": ""}], "aristas": []}),
+    ("choque de id", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}, {"id": "0__1"}],
+                      "aristas": [{"origen": "0", "destino": "1", "weight": 1}]}),
+    ("falta clave nodos", {"dirigido": True, "aristas": []}),
+    ("nodos no es lista", {"dirigido": True, "nodos": {"id": "0"}, "aristas": []}),
+    ("no es objeto", [1, 2, 3]),
+    ("arista sin origen", {"dirigido": True, "nodos": [{"id": "0"}],
+                           "aristas": [{"destino": "0", "weight": 1}]}),
+    # El XSS que motivó todo esto: el identificador con marcado tiene que
+    # comportarse igual en las dos versiones (aceptado como texto literal).
+    ("id con marcado", {"dirigido": True,
+                        "nodos": [{"id": '"><img src=x onerror="alert(1)">'}, {"id": "1"}],
+                        "aristas": [{"origen": '"><img src=x onerror="alert(1)">',
+                                     "destino": "1", "weight": 1}]}),
+]
+
+
+def construir_casos_invalidos() -> list[dict]:
+    """Ejecuta la validación de Python y anota su veredicto para comparar."""
+    casos = []
+    for nombre, datos in CASOS_INVALIDOS:
+        try:
+            graph_from_dict(datos)
+            mensaje = None
+        except ValueError as exc:
+            mensaje = str(exc)
+        casos.append({"nombre": nombre, "datos": datos, "mensajePython": mensaje})
+    return casos
+
+
 def construir_referencia() -> dict:
     referencia = {}
     instancias = [(k, construir_ejemplo(k)) for k in EJEMPLOS]
@@ -112,6 +159,8 @@ def main() -> int:
     referencia = construir_referencia()
     total = sum(len(v["trazas"]) for v in referencia.values())
     print(f"Instancias: {len(referencia)}  ·  trazas a comparar: {total}")
+    # Clave aparte para que el comparador la separe de las instancias normales.
+    referencia["__invalidos__"] = construir_casos_invalidos()
 
     # Los archivos de docs/js/ son scripts sueltos, sin exports: se concatenan
     # en uno solo para que las declaraciones de nivel superior (class, const)

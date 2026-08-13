@@ -30,6 +30,95 @@ function generadorAleatorio(semilla) {
     };
 }
 
+/* Réplica del identificador que viz.js genera para cada arista. Se duplica a
+ * propósito en vez de importarlo: el modelo no debe depender de la capa de
+ * dibujo. Espeja a graph_model/model.py. */
+function idAristaInterno(u, v, dirigido) {
+    return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
+}
+
+/* Rechaza un objeto de grafo malformado con un mensaje concreto.
+ *
+ * Espeja graph_model/model.py: MISMAS reglas y MISMOS mensajes, porque un
+ * archivo tiene que comportarse igual en las dos versiones. Antes no había
+ * validación de ningún lado y cada una "reparaba" a su manera —Python fusiona
+ * aristas repetidas y crea los nodos que faltan, JavaScript no—, así que el
+ * mismo archivo daba grafos distintos.
+ *
+ * En JavaScript el silencio era peor que en Python: un peso de texto no lanza
+ * error, se concatena, y Dijkstra devolvía distancias como "0diez2" sin avisar
+ * de nada.
+ *
+ * Se informa solo el PRIMER problema: basta para corregirlo y cabe en una línea.
+ */
+function validarDatosGrafo(datos) {
+    if (datos === null || typeof datos !== 'object' || Array.isArray(datos)) {
+        throw new Error('JSON inválido: el contenido debe ser un objeto.');
+    }
+    for (const clave of ['nodos', 'aristas']) {
+        if (!(clave in datos)) throw new Error(`JSON inválido: falta la clave "${clave}".`);
+        if (!Array.isArray(datos[clave])) {
+            throw new Error(`JSON inválido: "${clave}" debe ser una lista.`);
+        }
+    }
+
+    const dirigido = Boolean(datos.dirigido);
+    const ids = new Set();
+    for (const nodo of datos.nodos) {
+        if (nodo === null || typeof nodo !== 'object' || !('id' in nodo)) {
+            throw new Error('JSON inválido: hay un nodo sin la clave "id".');
+        }
+        const tipo = typeof nodo.id;
+        if (tipo !== 'string' && tipo !== 'number') {
+            throw new Error('JSON inválido: hay un nodo con un identificador que no es texto ni número.');
+        }
+        const nid = String(nodo.id);
+        if (nid === '') throw new Error('JSON inválido: hay un nodo con el identificador vacío.');
+        if (ids.has(nid)) throw new Error(`JSON inválido: el nodo "${nid}" está declarado dos veces.`);
+        ids.add(nid);
+    }
+
+    const vistas = new Set();
+    const idsArista = new Set();
+    for (const arista of datos.aristas) {
+        if (arista === null || typeof arista !== 'object'
+            || !('origen' in arista) || !('destino' in arista)) {
+            throw new Error('JSON inválido: hay una arista sin "origen" o sin "destino".');
+        }
+        const u = String(arista.origen), v = String(arista.destino);
+        for (const extremo of [u, v]) {
+            if (!ids.has(extremo)) {
+                throw new Error(`JSON inválido: la arista ${u} → ${v} apunta al nodo "${extremo}", que no está declarado.`);
+            }
+        }
+        const peso = arista.weight ?? arista.peso;
+        if (peso === undefined || peso === null) {
+            throw new Error(`JSON inválido: la arista ${u} → ${v} no tiene peso.`);
+        }
+        if (typeof peso !== 'number') {
+            throw new Error(`JSON inválido: la arista ${u} → ${v} tiene un peso no numérico ("${peso}").`);
+        }
+        if (!Number.isFinite(peso)) {
+            throw new Error(`JSON inválido: la arista ${u} → ${v} tiene un peso no finito.`);
+        }
+
+        const clave = dirigido ? `${u}>${v}` : [u, v].sort().join('-');
+        if (vistas.has(clave)) {
+            throw new Error(`JSON inválido: la arista ${u} → ${v} aparece repetida.`);
+        }
+        vistas.add(clave);
+        idsArista.add(idAristaInterno(u, v, dirigido));
+    }
+
+    // Cytoscape exige identificadores únicos entre nodos Y aristas: un nodo
+    // llamado "0__1" chocaría con el id generado para la arista 0 → 1 y uno de
+    // los dos elementos no se dibujaría.
+    const choque = [...ids].filter((n) => idsArista.has(n)).sort();
+    if (choque.length) {
+        throw new Error(`JSON inválido: el nodo "${choque[0]}" choca con el identificador interno de una arista. Renómbralo.`);
+    }
+}
+
 class Grafo {
     constructor(dirigido = true) {
         this.dirigido = dirigido;
@@ -106,12 +195,13 @@ class Grafo {
     }
 
     static desdeObjeto(datos) {
+        validarDatosGrafo(datos);
         const G = new Grafo(Boolean(datos.dirigido));
-        for (const n of datos.nodos || []) {
+        for (const n of datos.nodos) {
             G.agregarNodo(n.id, { label: n.label ?? String(n.id), pos: n.pos });
         }
-        for (const a of datos.aristas || []) {
-            G.agregarArista(a.origen, a.destino, a.weight ?? a.peso ?? 1);
+        for (const a of datos.aristas) {
+            G.agregarArista(a.origen, a.destino, a.weight ?? a.peso);
         }
         return G;
     }

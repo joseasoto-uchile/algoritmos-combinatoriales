@@ -29,9 +29,23 @@ Dos detalles hicieron falta para lograr esa igualdad:
 1. Subir esta rama al repositorio.
 2. En Settings → Pages, elegir la rama y la carpeta `/docs`.
 
-No hace falta build: son archivos estáticos. Cytoscape se carga desde CDN; para
-que funcione sin conexión, descargar el archivo a `js/` y cambiar el `src` en
-`index.html`.
+No hace falta build: son archivos estáticos y sin dependencias externas.
+Cytoscape va incluido en `js/cytoscape.min.js` (3.30.2) en vez de cargarse
+desde un CDN: si la red bloquea el CDN la página salía en blanco, y así además
+funciona sin conexión. Para actualizarlo, descargar la versión nueva sobre ese
+archivo y subir el `?v=` de su etiqueta en `index.html`.
+
+## Seguridad
+
+`index.html` declara una Content-Security-Policy por `<meta>` con
+`script-src 'self'`. Es la segunda capa contra la inyección de HTML: la causa
+está corregida en `app.js` —los `<option>` se construyen con la API del DOM,
+nunca concatenando identificadores dentro de `innerHTML`— pero la CSP impide
+además que un manejador en línea inyectado llegue a ejecutarse.
+
+**Al tocar la interfaz, no usar `innerHTML` con nada que venga del archivo que
+carga el usuario.** Los identificadores de nodo son datos de entrada: un nodo
+llamado `"><img src=x onerror=...>` ejecutaba código al abrir el archivo.
 
 ## Al modificar js/ o css/
 

@@ -26,8 +26,39 @@ function normalizar(ev) {
     return JSON.stringify(o);
 }
 
+/* Los archivos malformados son el otro lado del contrato: si las dos versiones
+ * no los rechazan con el MISMO mensaje, el mismo archivo se comporta distinto
+ * en cada una. Eso ya pasó —Python fusionaba aristas repetidas y creaba nodos
+ * ausentes, JavaScript no— y esta comparación no lo detectaba porque solo
+ * miraba instancias bien formadas. */
+function compararRechazos(casos) {
+    const fallos = [];
+    for (const { nombre, datos, mensajePython } of casos) {
+        let mensajeJs = null;
+        try {
+            Grafo.desdeObjeto(datos);
+        } catch (e) {
+            mensajeJs = e.message;
+        }
+        // mensajePython === null significa que Python lo acepta: es el caso de
+        // los identificadores con marcado, que son texto válido y deben
+        // aceptarse en ambas (el riesgo estaba en cómo se dibujaban, no en el
+        // dato en sí).
+        if (mensajeJs !== mensajePython) {
+            const desc = (m) => (m === null ? '(lo acepta)' : m);
+            fallos.push({
+                nombre,
+                motivo: `veredictos distintos\n      JavaScript: ${desc(mensajeJs)}\n      Python    : ${desc(mensajePython)}`,
+            });
+        }
+    }
+    return fallos;
+}
+
 function comparar(rutaReferencia) {
     const ref = JSON.parse(fs.readFileSync(rutaReferencia, 'utf8'));
+    const casosInvalidos = ref.__invalidos__ || [];
+    delete ref.__invalidos__;
     let idénticas = 0, eventos = 0;
     const fallos = [];
 
@@ -60,10 +91,20 @@ function comparar(rutaReferencia) {
 
     const total = idénticas + fallos.length;
     console.log(`Trazas comparadas: ${total}  ·  eventos: ${eventos.toLocaleString('es')}`);
-    if (!fallos.length) {
-        console.log('OK: las dos implementaciones producen trazas idénticas.');
+
+    const fallosRechazo = compararRechazos(casosInvalidos);
+    console.log(`Archivos invalidos comparados: ${casosInvalidos.length}`);
+    if (fallosRechazo.length) {
+        console.log(`FALLA: ${fallosRechazo.length} archivo(s) no se rechazan igual.\n`);
+        for (const f of fallosRechazo) console.log(`  [${f.nombre}] ${f.motivo}`);
+        console.log('');
+    }
+
+    if (!fallos.length && !fallosRechazo.length) {
+        console.log('OK: trazas identicas y mismos rechazos en ambas implementaciones.');
         return 0;
     }
+    if (!fallos.length) return 1;
     console.log(`FALLA: ${fallos.length} traza(s) difieren.\n`);
     for (const f of fallos.slice(0, 10)) {
         console.log(`  [${f.clave}] ${f.algId}`);

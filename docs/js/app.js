@@ -43,6 +43,24 @@ function velocidadValida(valor) {
     return Math.min(Math.max(n, VELOCIDAD_MINIMA), VELOCIDAD_MAXIMA);
 }
 
+/* Rellena un <select> con la API del DOM en vez de innerHTML.
+ *
+ * Esto NO es cosmético: los identificadores de nodo salen del archivo que
+ * carga el usuario, y concatenarlos dentro de innerHTML era una inyección de
+ * HTML real. Un nodo llamado
+ *     "><img src=x onerror="...">
+ * ejecutaba código al abrir el archivo. Con textContent el navegador trata el
+ * valor como texto y nunca lo interpreta como marcado.
+ */
+function llenarDesplegable(select, pares) {
+    select.replaceChildren(...pares.map(([valor, etiqueta]) => {
+        const op = document.createElement('option');
+        op.value = valor;
+        op.textContent = etiqueta;
+        return op;
+    }));
+}
+
 /* --- Origen por omisión -------------------------------------------------- */
 function origenPorOmision(G) {
     const ids = G.ids;
@@ -164,12 +182,12 @@ function actualizarOpciones() {
     const disponibles = estados.filter((e) => e.disponible);
     const sel = $('#dd-algoritmo');
     const previo = sel.value;
-    sel.innerHTML = disponibles.map((e) => `<option value="${e.id}">${e.nombre}</option>`).join('');
+    llenarDesplegable(sel, disponibles.map((e) => [e.id, e.nombre]));
     // Conserva el algoritmo elegido si el grafo nuevo también lo admite.
     sel.value = disponibles.some((e) => e.id === previo) ? previo : (disponibles[0]?.id ?? '');
 
     const origen = $('#dd-origen');
-    origen.innerHTML = estado.G.ids.map((n) => `<option value="${n}">${n}</option>`).join('');
+    llenarDesplegable(origen, estado.G.ids.map((n) => [n, n]));
     origen.value = origenPorOmision(estado.G);
 
     const noDisp = estados.filter((e) => !e.disponible);
@@ -388,12 +406,23 @@ function activarDivisores() {
 
 /* --- Arranque ------------------------------------------------------------ */
 function iniciar() {
-    $('#dd-layout').innerHTML = LAYOUTS.map((l) =>
-        `<option value="${l}"${l === 'circle' ? ' selected' : ''}>${l}</option>`).join('');
-    $('#dd-ejemplo').innerHTML = '<option value="">Elegir ejemplo</option>'
-        + Object.entries(EJEMPLOS).map(([k, v]) => `<option value="${k}">${v.nombre}</option>`).join('');
-    $('#atajos-velocidad').innerHTML = ATAJOS_VELOCIDAD.map((v) =>
-        `<button type="button" data-velocidad="${v}" title="${v} pasos por segundo">${v}</button>`).join('');
+    // Estos tres se llenan con constantes del propio código, no con datos del
+    // usuario, pero se construyen igual con la API del DOM para no dejar
+    // ningún sitio donde alguien copie el patrón de innerHTML más adelante.
+    llenarDesplegable($('#dd-layout'), LAYOUTS.map((l) => [l, l]));
+    $('#dd-layout').value = 'circle';
+    llenarDesplegable($('#dd-ejemplo'), [
+        ['', 'Elegir ejemplo'],
+        ...Object.entries(EJEMPLOS).map(([k, v]) => [k, v.nombre]),
+    ]);
+    $('#atajos-velocidad').replaceChildren(...ATAJOS_VELOCIDAD.map((v) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.velocidad = v;
+        b.title = `${v} pasos por segundo`;
+        b.textContent = v;
+        return b;
+    }));
     $('#in-velocidad').value = VELOCIDAD_INICIAL;
     $('#pie-credito').href = URL_LICENCIA;
     renderLeyenda();
@@ -466,11 +495,18 @@ function iniciar() {
         if (!archivo) return;
         const lector = new FileReader();
         lector.onload = () => {
+            const salida = $('#txt-archivo');
             try {
                 cargarGrafo(Grafo.desdeObjeto(JSON.parse(lector.result)));
-                $('#txt-archivo').textContent = `Cargado: ${archivo.name}`;
+                salida.textContent = `Cargado: ${archivo.name}`;
+                salida.className = 'txt-estado';
             } catch (e) {
-                $('#txt-archivo').textContent = `No se pudo leer ${archivo.name}: ${e.message}`;
+                // En rojo y con el motivo concreto: antes salía en gris y se
+                // confundía con un mensaje de carga correcta.
+                salida.textContent = e instanceof SyntaxError
+                    ? `JSON inválido: ${archivo.name} no es un archivo JSON bien formado.`
+                    : e.message;
+                salida.className = 'txt-error';
             }
         };
         lector.readAsText(archivo);

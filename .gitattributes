@@ -1,0 +1,9 @@
+# Dependencia vendorizada: se guarda byte a byte como viene de origen, sin
+# conversion de fin de linea. Si git la normalizara, el archivo dejaria de
+# coincidir con el que publica el CDN y no se podria verificar su integridad
+# comparando el hash.
+#
+# docs/js/cytoscape.min.js  ->  cytoscape 3.30.2
+# sha256: 83e8c54a6bec655bfd81df07df605649c268af69aeca67a5ea2da54ea42dac81
+# origen: https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js
+docs/js/cytoscape.min.js -text
