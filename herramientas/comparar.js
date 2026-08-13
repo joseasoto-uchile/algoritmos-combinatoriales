@@ -1,21 +1,22 @@
 /* Comparador de trazas: Python contra JavaScript.
  *
- * No se ejecuta suelto. herramientas/verificar_paridad.py lo concatena detrás
- * de docs/js/grafo.js y docs/js/algoritmos.js y corre el resultado con Node, de
- * modo que acá ya están definidos Grafo y ALGORITMOS.
+ * No se ejecuta por separado. herramientas/verificar_paridad.py lo concatena
+ * detrás de docs/js/grafo.js y docs/js/algoritmos.js y ejecuta el resultado con
+ * Node, de modo que Grafo y ALGORITMOS ya están definidos.
  *
- * Se compara evento por evento y no solo el resultado final: la gracia del
- * visualizador es el recorrido, así que dos implementaciones que lleguen a las
- * mismas distancias por caminos distintos mostrarían animaciones diferentes y
- * ya no serían la misma herramienta.
+ * La comparación es evento por evento, no solo del resultado final. Lo que
+ * muestra la aplicación es el recorrido, de modo que dos implementaciones que
+ * lleguen a las mismas distancias por caminos distintos producirían animaciones
+ * diferentes.
  */
 'use strict';
 
 const fs = require('fs');
 
-// Campos que solo aparecen en el evento 'fin' y guardan el resultado completo.
-// Se excluyen de la comparación porque su forma serializada difiere entre
-// lenguajes (infinito, orden de claves) sin que eso afecte a la animación.
+// Campos que solo aparecen en el evento 'fin' y contienen el resultado
+// completo. Se excluyen de la comparación porque su forma serializada difiere
+// entre lenguajes, por el infinito y el orden de las claves, sin que eso afecte
+// a la animación.
 const CAMPOS_RESULTADO = new Set(['distancias', 'padres', 'orden_topologico', 'ciclo_negativo']);
 
 function normalizar(ev) {
@@ -26,11 +27,11 @@ function normalizar(ev) {
     return JSON.stringify(o);
 }
 
-/* Los archivos malformados son el otro lado del contrato: si las dos versiones
- * no los rechazan con el MISMO mensaje, el mismo archivo se comporta distinto
- * en cada una. Eso ya pasó —Python fusionaba aristas repetidas y creaba nodos
- * ausentes, JavaScript no— y esta comparación no lo detectaba porque solo
- * miraba instancias bien formadas. */
+/* Los archivos malformados forman la otra parte del contrato. Si las dos
+ * versiones no los rechazan con el mismo mensaje, un mismo archivo se comporta
+ * de forma distinta en cada una. Ocurrió antes: Python fusionaba aristas
+ * repetidas y creaba los nodos ausentes, y JavaScript no. Esta comparación no
+ * lo detectaba porque solo examinaba instancias bien formadas. */
 function compararRechazos(casos) {
     const fallos = [];
     for (const { nombre, datos, mensajePython } of casos) {
@@ -40,10 +41,10 @@ function compararRechazos(casos) {
         } catch (e) {
             mensajeJs = e.message;
         }
-        // mensajePython === null significa que Python lo acepta: es el caso de
-        // los identificadores con marcado, que son texto válido y deben
-        // aceptarse en ambas (el riesgo estaba en cómo se dibujaban, no en el
-        // dato en sí).
+        // Si mensajePython es null, Python acepta el archivo. Es el caso de los
+        // identificadores que contienen marcado: son texto válido y deben
+        // aceptarse en las dos versiones. El riesgo estaba en cómo se dibujaban,
+        // no en el dato.
         if (mensajeJs !== mensajePython) {
             const desc = (m) => (m === null ? '(lo acepta)' : m);
             fallos.push({

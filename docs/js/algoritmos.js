@@ -1,8 +1,8 @@
 /* Algoritmos y su registro.
  *
- * Port de algorithms/ de la versión Dash. Cada algoritmo emite la MISMA traza
- * de eventos que su gemelo en Python (mismos tipos, mismos campos, mismos
- * números de línea), así la capa de dibujo es idéntica en las dos versiones.
+ * Port de algorithms/. Cada algoritmo emite la misma traza de eventos que su
+ * equivalente en Python: los mismos tipos, los mismos campos y los mismos
+ * números de línea. Por eso la capa de dibujo es idéntica en las dos versiones.
  */
 
 class ConstructorTraza {
@@ -13,15 +13,15 @@ class ConstructorTraza {
     }
 }
 
-/* Cola de prioridad mínima (montículo binario). JS no trae una, y usar un
- * array con sort() en cada extracción convertiría Dijkstra en O(V² log V)
- * justo en el caso denso donde se nota.
+/* Cola de prioridad mínima, implementada como montículo binario. JavaScript no
+ * incluye una, y ordenar un array en cada extracción elevaría el costo de
+ * Dijkstra a O(V^2 log V) en los grafos densos.
  *
- * Ante empate de prioridad desempata por el valor, igual que heapq en Python:
- * allá los elementos son tuplas (distancia, nodo) y las tuplas se comparan
- * elemento a elemento. Sin este desempate, con dos nodos a la misma distancia
- * cada versión extraía uno distinto y las trazas divergían aunque el
- * resultado final fuese el mismo. */
+ * Ante un empate de prioridad desempata por el valor, igual que heapq en
+ * Python, donde los elementos son tuplas (distancia, nodo) que se comparan
+ * elemento a elemento. Sin ese desempate, con dos nodos a la misma distancia
+ * cada versión extraía uno distinto y las trazas divergían, aunque el resultado
+ * final coincidiera. */
 function _menorQue(a, b) {
     if (a[0] !== b[0]) return a[0] < b[0];
     return String(a[1]) < String(b[1]);
@@ -92,9 +92,10 @@ function bfsTraza(G, origen) {
 }
 
 /* --- DFS ---------------------------------------------------------------- */
-/* Recursivo, igual que algorithms/dfs.py: es lo que hace que el orden de los
- * eventos coincida con el de la versión Python. La profundidad está acotada
- * por el número de nodos, muy por debajo del límite de pila del navegador. */
+/* Recursivo, igual que algorithms/dfs.py. Esa equivalencia es la que hace que
+ * el orden de los eventos coincida con el de la versión Python. La profundidad
+ * está acotada por el número de nodos, por debajo del límite de pila del
+ * navegador. */
 function dfsTraza(G, origen) {
     const tb = new ConstructorTraza();
     const visitado = new Set();
@@ -132,11 +133,11 @@ function dijkstraTraza(G, origen) {
     }
     const tb = new ConstructorTraza();
     const distancia = { [origen]: 0 };
-    /* Map y no objeto: los nodos se insertan en 'padre' a medida que se
-     * relajan, y al final se recorre en ese orden para emitir las aristas de
-     * la solución. Un objeto con claves numéricas ("0", "1", ...) las recorre
-     * en orden ascendente por especificación de JS, no de inserción, y las
-     * aristas salían en un orden distinto al de la versión Python. */
+    /* Se usa Map y no un objeto. Los nodos se insertan en 'padre' a medida que
+     * se relajan, y al final se recorre en ese orden para emitir las aristas de
+     * la solución. Un objeto con claves numéricas las recorre en orden
+     * ascendente por especificación del lenguaje, no en orden de inserción, y
+     * las aristas se emitían en un orden distinto al de la versión Python. */
     const padre = new Map([[origen, null]]);
     const finalizado = new Set();
     const cola = new ColaPrioridad();
@@ -181,7 +182,7 @@ function bellmanFordTraza(G, origen) {
     distancia[origen] = 0;
     const padre = Object.fromEntries(nodos.map((n) => [n, null]));
 
-    // En un grafo no dirigido cada arista relaja en los dos sentidos.
+    // En un grafo no dirigido cada arista se relaja en los dos sentidos.
     const aristas = [];
     for (const { origen: u, destino: v, peso } of G.aristas) {
         aristas.push([u, v, peso]);
@@ -192,10 +193,10 @@ function bellmanFordTraza(G, origen) {
     const totalIteraciones = Math.max(nodos.length - 1, 0);
     let cortoAnticipado = false;
     for (let i = 0; i < totalIteraciones; i++) {
-        // Marca el comienzo de cada pasada. Sirve para mostrar en qué iteración
-        // va la reproducción: en Bellman-Ford el número de pasadas es la parte
-        // que explica su costo, y sin esto no se distingue una de otra porque
-        // todas repiten los mismos eventos sobre las mismas aristas.
+        // Marca el comienzo de cada pasada. La interfaz lo usa para mostrar el
+        // número de iteración actual. El número de pasadas determina el costo
+        // del algoritmo, y sin este evento las pasadas son indistinguibles,
+        // porque todas repiten los mismos eventos sobre las mismas aristas.
         tb.emitir('inicio_iteracion', {
             iteracion: i + 1, total_iteraciones: totalIteraciones, linea: 3,
         });
@@ -213,9 +214,9 @@ function bellmanFordTraza(G, origen) {
             }
         }
         if (!hubo) {
-            // Sin cambios en una pasada completa, las siguientes tampoco harían
-            // nada: se corta antes de las V-1 y se avisa, porque es justo lo
-            // interesante de ver (termina en menos iteraciones que el peor caso).
+            // Si una pasada completa no produce cambios, las siguientes
+            // tampoco los producirían. El algoritmo termina antes de las V-1
+            // pasadas y lo indica en la traza.
             tb.emitir('fin_iteraciones', {
                 iteracion: i + 1, total_iteraciones: totalIteraciones,
                 anticipado: true, linea: 3,
@@ -231,9 +232,9 @@ function bellmanFordTraza(G, origen) {
         });
     }
 
-    // Pasada extra: toda arista que todavía relaja delata un ciclo negativo.
-    // Se propaga hacia adelante porque el ciclo completo y todo lo alcanzable
-    // desde él tampoco tienen distancia mínima bien definida.
+    // Pasada adicional: toda arista que aún se puede relajar indica un ciclo de
+    // peso negativo. Se propaga hacia adelante porque el ciclo completo y todos
+    // los nodos alcanzables desde él tampoco tienen distancia mínima definida.
     const sospechosos = new Set();
     for (const [u, v, peso] of aristas) {
         if (distancia[u] !== Infinity && distancia[u] + peso < distancia[v]) sospechosos.add(v);
@@ -302,8 +303,8 @@ const ALGORITMOS = {
         permiteNegativos: true, requiereDag: false, complejidad: 'O(V + E)',
         descripcion: 'Recorre el grafo en anchura desde el nodo origen: explora primero todos '
             + 'los vecinos directos antes de avanzar al siguiente nivel, usando una cola FIFO.\n\n'
-            + 'No considera el peso de las aristas — el árbol que construye es el de menor '
-            + 'número de saltos, no el de menor costo.',
+            + 'No considera el peso de las aristas. El árbol resultante es el de menor '
+            + 'número de aristas, no el de menor costo.',
         pseudocodigo: [
             'función BFS(G, origen):',
             '  distancia[origen] ← 0',
@@ -338,11 +339,11 @@ const ALGORITMOS = {
     dijkstra: {
         id: 'dijkstra', nombre: 'Dijkstra (camino mínimo)', funcion: dijkstraTraza,
         permiteNegativos: false, requiereDag: false, complejidad: 'O((V + E) log V)',
-        descripcion: 'Calcula el camino más corto por peso acumulado desde el origen usando una '
-            + 'cola de prioridad: en cada paso extrae el nodo no finalizado con menor distancia '
+        descripcion: 'Calcula el camino de menor peso acumulado desde el origen mediante una '
+            + 'cola de prioridad. En cada paso extrae el nodo no finalizado con menor distancia '
             + 'tentativa y relaja sus aristas salientes.\n\n'
-            + 'Requiere pesos no negativos: con negativos el resultado puede ser incorrecto, por '
-            + 'eso no se ofrece en esos grafos.',
+            + 'Requiere pesos no negativos. Con pesos negativos el resultado puede ser '
+            + 'incorrecto, por lo que no se ofrece en esos grafos.',
         pseudocodigo: [
             'función Dijkstra(G, origen):',
             '  distancia[origen] ← 0; el resto ← infinito',
@@ -361,10 +362,11 @@ const ALGORITMOS = {
     bellman_ford: {
         id: 'bellman_ford', nombre: 'Bellman-Ford (camino mínimo)', funcion: bellmanFordTraza,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(V · E)',
-        descripcion: 'Calcula caminos mínimos relajando TODAS las aristas del grafo, V-1 veces.\n\n'
-            + 'Más lento que Dijkstra, pero admite pesos negativos; una pasada extra permite '
-            + 'detectar ciclos de peso negativo, cuyos nodos se marcan en rojo porque no tienen '
-            + 'un camino mínimo bien definido.',
+        descripcion: 'Calcula caminos mínimos relajando todas las aristas del grafo, V-1 '
+            + 'veces.\n\n'
+            + 'Es más lento que Dijkstra, pero admite pesos negativos. Una pasada adicional '
+            + 'detecta ciclos de peso negativo. Los nodos alcanzados por un ciclo de ese tipo no '
+            + 'tienen camino mínimo definido, y se marcan en rojo.',
         pseudocodigo: [
             'función BellmanFord(G, origen):',
             '  distancia[origen] ← 0; el resto ← infinito',
@@ -381,11 +383,11 @@ const ALGORITMOS = {
     dag_sp: {
         id: 'dag_sp', nombre: 'Camino mínimo en DAG (orden topológico)', funcion: dagCaminoMinimoTraza,
         permiteNegativos: true, requiereDag: true, complejidad: 'O(V + E)',
-        descripcion: 'Calcula caminos mínimos en un grafo dirigido acíclico en dos fases: primero '
-            + 'un orden topológico (algoritmo de Kahn), luego relaja las aristas siguiendo ese '
-            + 'orden, una sola vez.\n\n'
-            + 'Al no haber ciclos no hace falta reintentar relajaciones como en Bellman-Ford, y '
-            + 'admite pesos negativos sin problema.',
+        descripcion: 'Calcula caminos mínimos en un grafo dirigido acíclico en dos fases. '
+            + 'Primero obtiene un orden topológico con el algoritmo de Kahn, y después relaja '
+            + 'las aristas siguiendo ese orden, una sola vez.\n\n'
+            + 'Al no haber ciclos no es necesario repetir las relajaciones como en Bellman-Ford. '
+            + 'Admite pesos negativos.',
         pseudocodigo: [
             'función CaminoMinimoDAG(G, origen):',
             '  orden ← ordenTopológico(G)   // algoritmo de Kahn',
@@ -401,9 +403,9 @@ const ALGORITMOS = {
     },
 };
 
-/* Motivo por el que un algoritmo no aplica al grafo, o null si sí aplica.
- * Existe para poder EXPLICAR la ausencia en la interfaz en vez de que el
- * algoritmo simplemente desaparezca de la lista. */
+/* Motivo por el que un algoritmo no es aplicable al grafo, o null si lo es. La
+ * interfaz usa este texto para indicar por qué un algoritmo no está disponible,
+ * en lugar de omitirlo de la lista sin explicación. */
 function motivoNoDisponible(info, G) {
     if (info.requiereDag && !G.esDAG()) {
         return G.dirigido

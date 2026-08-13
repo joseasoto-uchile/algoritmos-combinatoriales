@@ -1,8 +1,8 @@
-/* Capa de interacción: la única que toca el DOM.
+/* Capa de interacción. Es la única que accede al DOM.
  *
- * Port de app.py. En la versión Dash cada paso de la traza era un callback al
- * servidor; acá todo ocurre en el navegador, así que la página se puede
- * publicar como sitio estático (GitHub Pages) sin backend.
+ * Port de app.py. En la versión Dash cada paso de la traza se resuelve con un
+ * callback en el servidor. Aquí todo se calcula en el navegador, por lo que la
+ * página se puede publicar como sitio estático en GitHub Pages.
  */
 
 const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];
@@ -26,8 +26,8 @@ const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 /* --- Utilidades de lectura de formulario -------------------------------- */
 function entero(valor, defecto) {
-    // No se usa `valor || defecto`: 0 es falsy y un peso mínimo de 0 escrito
-    // por el usuario se convertiría silenciosamente en el valor por omisión.
+    // No se usa `valor || defecto`. En JavaScript 0 es un valor falso, y un
+    // peso mínimo de 0 se sustituiría por el valor por omisión sin avisar.
     if (valor === null || valor === undefined || valor === '') return defecto;
     const n = parseInt(valor, 10);
     return Number.isNaN(n) ? defecto : n;
@@ -43,14 +43,13 @@ function velocidadValida(valor) {
     return Math.min(Math.max(n, VELOCIDAD_MINIMA), VELOCIDAD_MAXIMA);
 }
 
-/* Rellena un <select> con la API del DOM en vez de innerHTML.
+/* Rellena un elemento select mediante la API del DOM, no con innerHTML.
  *
- * Esto NO es cosmético: los identificadores de nodo salen del archivo que
- * carga el usuario, y concatenarlos dentro de innerHTML era una inyección de
- * HTML real. Un nodo llamado
+ * Los identificadores de nodo proceden del archivo que carga el usuario.
+ * Concatenarlos dentro de innerHTML permitía inyectar HTML: un nodo llamado
  *     "><img src=x onerror="...">
  * ejecutaba código al abrir el archivo. Con textContent el navegador trata el
- * valor como texto y nunca lo interpreta como marcado.
+ * valor como texto y no lo interpreta como marcado.
  */
 function llenarDesplegable(select, pares) {
     select.replaceChildren(...pares.map(([valor, etiqueta]) => {
@@ -66,9 +65,9 @@ function origenPorOmision(G) {
     const ids = G.ids;
     if (!ids.length) return null;
     if (G.dirigido) {
-        // En un dirigido, "conexo" solo garantiza conexidad débil: el primer
-        // nodo puede no tener salidas y el recorrido queda en tres pasos, que
-        // se lee como si la aplicación estuviera rota.
+        // En un grafo dirigido, la opción "conexo" solo garantiza conexidad
+        // débil. El primer nodo puede no tener aristas salientes, y en ese caso
+        // el recorrido consta de tres pasos, lo que aparenta un fallo.
         return ids.reduce((mejor, n) => (G.gradoSalida(n) > G.gradoSalida(mejor) ? n : mejor), ids[0]);
     }
     return ids.find((n) => G.vecinos(n).length > 0) ?? ids[0];
@@ -77,9 +76,9 @@ function origenPorOmision(G) {
 /* --- Render del grafo ---------------------------------------------------- */
 function elementosActuales() {
     const layout = $('#dd-layout').value;
-    // Solo 'preset' quiere las coordenadas guardadas: con cualquier otro
-    // layout, mandarlas hace que Cytoscape las reaplique en cada paso y el
-    // grafo salte de vuelta a las posiciones viejas.
+    // Solo el layout 'preset' utiliza las coordenadas guardadas. Con cualquier
+    // otro layout, enviarlas hace que Cytoscape las vuelva a aplicar en cada
+    // paso y el grafo regrese a las posiciones anteriores.
     let elementos = grafoAElementos(estado.G, layout === 'preset');
     if (estado.traza) {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
@@ -99,9 +98,9 @@ function recalcularLayout() {
     }).run();
 }
 
-/* Redibuja el estado sin recalcular posiciones. Cytoscape conserva las
- * coordenadas de los nodos que ya existen, así que solo cambian clases y
- * etiquetas: es lo que evita que el grafo salte entre pasos. */
+/* Redibuja el estado sin recalcular las posiciones. Cytoscape conserva las
+ * coordenadas de los nodos existentes, por lo que solo cambian las clases y las
+ * etiquetas. Es lo que evita que el grafo cambie de disposición entre pasos. */
 function pintarEstado() {
     const elementos = elementosActuales();
     const porId = new Map(elementos.map((e) => [e.data.id, e]));
@@ -129,12 +128,12 @@ function actualizarTextoPaso() {
     const t = $('#txt-paso');
     const it = $('#txt-iteracion');
     if (!estado.traza) {
-        t.textContent = 'Sin traza — ejecuta un algoritmo.';
+        t.textContent = 'Sin traza. Ejecuta un algoritmo.';
         it.textContent = '';
         return;
     }
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-    t.textContent = `Paso ${paso + 1}/${estado.traza.length} — ${estado.traza[paso].tipo}`;
+    t.textContent = `Paso ${paso + 1}/${estado.traza.length}: ${estado.traza[paso].tipo}`;
     it.textContent = textoIteracion(calcularIteracion(estado.traza, paso));
 }
 
@@ -169,8 +168,8 @@ function generarInstancia() {
         err.className = '';
         cargarGrafo(G);
     } catch (e) {
-        // Parámetros incoherentes: se avisa y se conserva el grafo anterior en
-        // lugar de dejar la aplicación sin instancia.
+        // Con parámetros incoherentes se muestra el motivo y se conserva el
+        // grafo anterior, en lugar de dejar la aplicación sin instancia.
         err.textContent = e.message;
         err.className = 'txt-error';
     }
@@ -194,7 +193,7 @@ function actualizarOpciones() {
     $('#lista-no-disponibles').innerHTML = noDisp.length
         ? `<div>No aplican a este grafo:</div>${noDisp.map((e) =>
             `<div class="item-no-disponible"><span class="nombre-no-disponible">${e.nombre}</span>`
-            + ` <span>— ${e.motivo}</span></div>`).join('')}`
+            + `<span>: ${e.motivo}</span></div>`).join('')}`
         : '';
     renderPseudocodigo();
 }
@@ -211,16 +210,16 @@ function ejecutar() {
         estado.algEjecutado = algId;
         estado.paso = 0;
         pausar();
-        salida.textContent = `${info.nombre} desde ${origen} — ${traza.length} pasos de traza.`;
+        salida.textContent = `${info.nombre} desde ${origen}, ${traza.length} pasos de traza.`;
         salida.className = 'txt-estado';
         pintarEstado();
-        // Arranca la animación sola: pedir el algoritmo y además tener que
-        // apretar ▶ era un paso de más, porque lo que se quiere ver al
-        // ejecutar es justamente la animación.
+        // La animación empieza sin intervención adicional. Ejecutar el
+        // algoritmo y después pulsar reproducir eran dos acciones para una
+        // sola intención.
         reproducir();
     } catch (e) {
-        // En el camino de error no se toca la reproducción: si había una
-        // animación corriendo de una ejecución anterior, se queda como estaba.
+        // En caso de error no se modifica la reproducción. Si había una
+        // animación en curso de una ejecución anterior, continúa igual.
         salida.textContent = `Error: ${e.message}`;
         salida.className = 'txt-error';
     }
@@ -239,8 +238,8 @@ function pausar() {
 
 function reproducir() {
     if (!estado.traza || estado.traza.length < 2) return;
-    // Dar play con la traza terminada no hacía nada visible: el primer tic
-    // detectaba el final y volvía a pausar. Ahora reinicia solo.
+    // Con la traza terminada, el primer ciclo detectaba el final y volvía a
+    // detenerse, sin efecto visible. Ahora la reproducción vuelve al principio.
     if (estado.paso >= estado.traza.length - 1) estado.paso = 0;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
@@ -260,8 +259,8 @@ function avanzarAutomatico() {
         estado.paso = estado.traza.length - 1;
         pausar();
     } else if (estado.breakpoints.has(estado.traza[estado.paso].linea)) {
-        // Punto de interrupción: pausa dejando el paso visible, para poder
-        // inspeccionar el estado del grafo en ese momento.
+        // Punto de interrupción. La reproducción se detiene con el paso
+        // visible, lo que permite examinar el estado del grafo.
         pausar();
     }
     pintarEstado();
@@ -269,8 +268,8 @@ function avanzarAutomatico() {
 
 function controlPaso(delta) {
     if (!estado.traza) return;
-    // Tocar un control manual mientras corre la animación hacía que el
-    // temporizador siguiera avanzando y peleara con el paso elegido a mano.
+    // Usar un control manual durante la animación dejaba el temporizador
+    // activo, y este sobrescribía el paso elegido.
     if (estado.reproduciendo) pausar();
     estado.paso = delta === null ? 0
         : Math.max(0, Math.min(estado.paso + delta, estado.traza.length - 1));
@@ -282,10 +281,11 @@ function renderPseudocodigo() {
     const algId = $('#dd-algoritmo').value;
     if (!algId || !ALGORITMOS[algId]) return;
     const info = ALGORITMOS[algId];
-    $('#pseudocodigo-titulo').textContent = `Pseudocódigo — ${info.nombre}`;
+    $('#pseudocodigo-titulo').textContent = `Pseudocódigo: ${info.nombre}`;
     $('#pseudocodigo-complejidad').innerHTML =
         `<span class="insignia-complejidad">${info.complejidad}</span>`;
-    // Los puntos de interrupción son por algoritmo: al cambiar, se limpian.
+    // Los puntos de interrupción son propios de cada algoritmo y se borran al
+    // cambiar de algoritmo.
     estado.breakpoints.clear();
     $('#pseudocodigo-lineas').innerHTML = info.pseudocodigo.map((texto, i) =>
         `<div class="linea-codigo" data-linea="${i + 1}">`
@@ -296,9 +296,9 @@ function renderPseudocodigo() {
 
 function resaltarPseudocodigo() {
     let lineaActiva = null;
-    // Solo se resalta si la traza vigente es de ESTE algoritmo: al cambiar el
-    // desplegable sin volver a ejecutar, el código mostrado no se corresponde
-    // con los pasos guardados.
+    // Solo se resalta si la traza corresponde al algoritmo mostrado. Al
+    // cambiar el desplegable sin volver a ejecutar, el pseudocódigo visible no
+    // se corresponde con los pasos guardados.
     if (estado.traza && $('#dd-algoritmo').value === estado.algEjecutado) {
         const p = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
         lineaActiva = estado.traza[p].linea;
@@ -320,8 +320,8 @@ function descargar(nombre, contenido, tipo = 'application/json') {
 }
 
 function exportarTrazaCSV() {
-    // La traza es heterogénea (cada tipo de evento trae campos distintos), así
-    // que el encabezado es la unión de todas las claves.
+    // La traza es heterogénea: cada tipo de evento tiene campos distintos. El
+    // encabezado es la unión de todas las claves.
     const claves = [];
     estado.traza.forEach((ev) => Object.keys(ev).forEach((k) => { if (!claves.includes(k)) claves.push(k); }));
     const escapar = (v) => {
@@ -343,7 +343,7 @@ function renderLeyenda() {
         + '<span class="muestra-etiqueta"><span class="muestra-nombre">3</span>'
         + '<span class="muestra-dist">d=7</span></span>'
         + '<span class="leyenda-nombre">Etiqueta</span>'
-        + '<span class="leyenda-detalle">· nombre del nodo arriba, distancia actual abajo (∞ = aún no alcanzado)</span>'
+        + '<span class="leyenda-detalle">: nombre del nodo arriba, distancia actual abajo. El símbolo de infinito indica que el nodo no se ha alcanzado.</span>'
         + `</div>${muestras}`;
 }
 
@@ -372,8 +372,9 @@ function activarDivisores() {
         ev.preventDefault();
         const inicial = parseFloat(getComputedStyle(fila).getPropertyValue(VARIABLE[obj])) || OMISION[obj];
         const x0 = ev.clientX;
-        // La columna de código está a la derecha del divisor: crece cuando el
-        // puntero va hacia la izquierda, así que el signo se invierte.
+        // La columna de código está a la derecha del divisor, de modo que
+        // aumenta cuando el puntero se desplaza hacia la izquierda. Por eso se
+        // invierte el signo.
         const signo = obj === 'codigo' ? -1 : 1;
         document.body.classList.add('redimensionando');
 
@@ -406,9 +407,9 @@ function activarDivisores() {
 
 /* --- Arranque ------------------------------------------------------------ */
 function iniciar() {
-    // Estos tres se llenan con constantes del propio código, no con datos del
-    // usuario, pero se construyen igual con la API del DOM para no dejar
-    // ningún sitio donde alguien copie el patrón de innerHTML más adelante.
+    // Estos tres se rellenan con constantes del código, no con datos del
+    // usuario. Se construyen igualmente con la API del DOM para no dejar el
+    // patrón de innerHTML en el archivo.
     llenarDesplegable($('#dd-layout'), LAYOUTS.map((l) => [l, l]));
     $('#dd-layout').value = 'circle';
     llenarDesplegable($('#dd-ejemplo'), [
@@ -443,8 +444,8 @@ function iniciar() {
     $('#btn-ejemplo').addEventListener('click', () => {
         const k = $('#dd-ejemplo').value;
         if (!k) return;
-        // Estas instancias traen coordenadas pensadas a mano, así que se
-        // fuerza 'preset' para respetarlas.
+        // Estas instancias definen coordenadas explícitas, por lo que se
+        // fuerza el layout 'preset'.
         cargarGrafo(construirEjemplo(k), { layout: 'preset' });
     });
     $('#dd-ejemplo').addEventListener('change', () => {
@@ -501,8 +502,8 @@ function iniciar() {
                 salida.textContent = `Cargado: ${archivo.name}`;
                 salida.className = 'txt-estado';
             } catch (e) {
-                // En rojo y con el motivo concreto: antes salía en gris y se
-                // confundía con un mensaje de carga correcta.
+                // El mensaje se muestra en rojo con el motivo. Antes aparecía
+                // en gris y se confundía con una carga correcta.
                 salida.textContent = e instanceof SyntaxError
                     ? `JSON inválido: ${archivo.name} no es un archivo JSON bien formado.`
                     : e.message;

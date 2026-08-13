@@ -1,12 +1,13 @@
 /* Modelo de grafo: creación, generación aleatoria, ejemplos y serialización.
  *
- * Port de graph_model/ (model.py + ejemplos.py) de la versión Dash. Esta capa
- * no sabe nada de algoritmos ni de dibujo, igual que en Python.
+ * Port de graph_model/ (model.py y ejemplos.py). Esta capa no depende de los
+ * algoritmos ni del dibujo, igual que en la versión Python.
  */
 
-/* Generador con semilla (mulberry32). JS no trae uno propio y Math.random no
- * acepta semilla, así que sin esto las instancias no serían reproducibles y
- * el campo "semilla" de la interfaz no tendría sentido. */
+/* Generador de números aleatorios con semilla (mulberry32). JavaScript no
+ * incluye uno y Math.random no acepta semilla. Sin esta función las instancias
+ * no serían reproducibles y el campo "semilla" de la interfaz no tendría
+ * efecto. */
 function generadorAleatorio(semilla) {
     let a = (semilla >>> 0) || 0x9e3779b9;
     const siguiente = () => {
@@ -30,26 +31,26 @@ function generadorAleatorio(semilla) {
     };
 }
 
-/* Réplica del identificador que viz.js genera para cada arista. Se duplica a
- * propósito en vez de importarlo: el modelo no debe depender de la capa de
- * dibujo. Espeja a graph_model/model.py. */
+/* Réplica del identificador que viz.js genera para cada arista. Se duplica en
+ * lugar de importarlo porque el modelo no debe depender de la capa de dibujo.
+ * Equivale a la función homónima de graph_model/model.py. */
 function idAristaInterno(u, v, dirigido) {
     return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
 }
 
-/* Rechaza un objeto de grafo malformado con un mensaje concreto.
+/* Rechaza un objeto de grafo que no cumple el formato.
  *
- * Espeja graph_model/model.py: MISMAS reglas y MISMOS mensajes, porque un
- * archivo tiene que comportarse igual en las dos versiones. Antes no había
- * validación de ningún lado y cada una "reparaba" a su manera —Python fusiona
- * aristas repetidas y crea los nodos que faltan, JavaScript no—, así que el
- * mismo archivo daba grafos distintos.
+ * Aplica las mismas reglas y devuelve los mismos mensajes que
+ * graph_model/model.py, porque un archivo debe comportarse igual en las dos
+ * versiones. Sin validación, cada una corregía los defectos de forma distinta:
+ * Python fusiona aristas repetidas y crea los nodos ausentes, JavaScript no
+ * hacía ninguna de las dos cosas, y el mismo archivo producía grafos distintos.
  *
- * En JavaScript el silencio era peor que en Python: un peso de texto no lanza
- * error, se concatena, y Dijkstra devolvía distancias como "0diez2" sin avisar
- * de nada.
+ * En JavaScript la ausencia de validación tenía peor efecto que en Python: un
+ * peso de tipo texto no produce error, se concatena, y Dijkstra devolvía
+ * distancias como "0diez2" sin ningún aviso.
  *
- * Se informa solo el PRIMER problema: basta para corregirlo y cabe en una línea.
+ * Se informa solo el primer problema encontrado.
  */
 function validarDatosGrafo(datos) {
     if (datos === null || typeof datos !== 'object' || Array.isArray(datos)) {
@@ -110,9 +111,9 @@ function validarDatosGrafo(datos) {
         idsArista.add(idAristaInterno(u, v, dirigido));
     }
 
-    // Cytoscape exige identificadores únicos entre nodos Y aristas: un nodo
-    // llamado "0__1" chocaría con el id generado para la arista 0 → 1 y uno de
-    // los dos elementos no se dibujaría.
+    // Cytoscape exige identificadores únicos entre nodos y aristas. Un nodo
+    // llamado "0__1" coincide con el identificador de la arista 0 -> 1, y uno
+    // de los dos elementos no se dibuja.
     const choque = [...ids].filter((n) => idsArista.has(n)).sort();
     if (choque.length) {
         throw new Error(`JSON inválido: el nodo "${choque[0]}" choca con el identificador interno de una arista. Renómbralo.`);
@@ -140,8 +141,8 @@ class Grafo {
     get ids() { return [...this.nodos.keys()]; }
 
     /* Lista de adyacencia. En un grafo no dirigido cada arista se registra en
-     * ambos sentidos, que es lo que hace que los recorridos funcionen igual
-     * sin que los algoritmos tengan que preguntar por la dirección. */
+     * los dos sentidos, de modo que los algoritmos no necesitan comprobar la
+     * dirección. */
     get adyacencia() {
         if (this._ady) return this._ady;
         const ady = new Map();
@@ -160,9 +161,10 @@ class Grafo {
 
     tienePesosNegativos() { return this.aristas.some((a) => a.peso < 0); }
 
-    /* Orden topológico por Kahn; devuelve null si hay ciclo. Se usa tanto para
-     * decidir si el grafo es un DAG como para el algoritmo de caminos en DAG,
-     * así no hay dos implementaciones que puedan discrepar. */
+    /* Orden topológico por el algoritmo de Kahn. Devuelve null si el grafo
+     * tiene ciclos. Se usa para comprobar si el grafo es acíclico y para el
+     * algoritmo de caminos mínimos en DAG, de modo que no existen dos
+     * implementaciones que puedan discrepar. */
     ordenTopologico() {
         if (!this.dirigido) return null;
         const gradoEntrada = new Map([...this.nodos.keys()].map((n) => [n, 0]));
@@ -210,8 +212,9 @@ class Grafo {
 const ESCALA_POSICIONES = 800;
 
 /* Disposición inicial en círculo. La versión Python usa el spring layout de
- * NetworkX, que no existe acá; da igual porque estas coordenadas solo las usa
- * el layout 'preset' y para las instancias aleatorias Cytoscape recalcula. */
+ * NetworkX, que no está disponible aquí. La diferencia no afecta al resultado:
+ * estas coordenadas solo las utiliza el layout 'preset', y en las instancias
+ * aleatorias Cytoscape calcula las posiciones. */
 function asignarPosiciones(G) {
     const ids = G.ids;
     const radio = ESCALA_POSICIONES * 0.4;
@@ -263,8 +266,8 @@ function generarAleatorio({
 
     const orden = rng.mezclar([...ids]);
     if (conexo) {
-        // Árbol de conectividad primero: garantiza que no queden nodos sueltos
-        // antes de repartir las aristas restantes al azar.
+        // Se construye primero un árbol de conectividad, que garantiza que no
+        // queden nodos aislados antes de repartir las aristas restantes.
         for (let i = 1; i < n; i++) agregar(orden[rng.entero(0, i - 1)], orden[i]);
     }
     const limite = numAristas * 20 + 200;
@@ -283,8 +286,8 @@ function generarAleatorio({
 }
 
 /* ---------------------------------------------------------------------------
- * Instancias de ejemplo: estructura reconocible y posiciones fijas, para que
- * el recorrido del algoritmo se lea directo sobre el dibujo.
+ * Instancias de ejemplo con estructura definida y coordenadas fijas, de modo
+ * que el recorrido del algoritmo se corresponda con el dibujo.
  * ------------------------------------------------------------------------- */
 function ejArbolBinario(niveles = 4) {
     const G = new Grafo(false);
@@ -391,17 +394,17 @@ function ejCompleto(n = 6) {
 
 const EJEMPLOS = {
     arbol: { nombre: 'Árbol binario (15 nodos)', constructor: ejArbolBinario,
-        descripcion: 'No dirigido. BFS recorre por niveles; DFS baja hasta una hoja.' },
+        descripcion: 'No dirigido. BFS recorre por niveles y DFS desciende hasta una hoja.' },
     ciclo: { nombre: 'Ciclo (8 nodos)', constructor: ejCiclo,
-        descripcion: 'No dirigido. BFS avanza por ambos lados y se cierra en el opuesto.' },
+        descripcion: 'No dirigido. BFS avanza por los dos sentidos y se cierra en el nodo opuesto.' },
     rejilla: { nombre: 'Rejilla 4×5', constructor: () => ejRejilla(),
-        descripcion: 'No dirigido. Las distancias forman anillos alrededor del origen.' },
+        descripcion: 'No dirigido. Las distancias forman anillos concéntricos alrededor del origen.' },
     dag: { nombre: 'DAG por capas', constructor: () => ejDagCapas(),
-        descripcion: 'Dirigido y acíclico: habilita el camino mínimo por orden topológico.' },
+        descripcion: 'Dirigido y acíclico. Habilita el camino mínimo por orden topológico.' },
     ciclo_negativo: { nombre: 'Ciclo negativo (Bellman-Ford)', constructor: ejCicloNegativo,
-        descripcion: 'Dirigido con un ciclo de peso -2. Dijkstra no se ofrece acá.' },
+        descripcion: 'Dirigido con un ciclo de peso -2. Dijkstra no está disponible.' },
     completo: { nombre: 'Grafo completo K6', constructor: () => ejCompleto(),
-        descripcion: 'No dirigido y denso: muchas aristas descartadas por Dijkstra.' },
+        descripcion: 'No dirigido y denso. Dijkstra descarta un número alto de aristas.' },
 };
 
 function construirEjemplo(clave) {

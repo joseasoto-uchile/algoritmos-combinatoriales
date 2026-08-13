@@ -46,9 +46,10 @@ body {
     padding-right: 6px;
 }
 
-/* El piso de altura del lienzo va acá, no en la fila: si se pone en la fila,
-   esta deja de encogerse y se estira hasta la altura del sidebar, inflando el
-   lienzo. 480px = barra + lienzo mínimo (240) + leyenda + separaciones. */
+/* El alto mínimo del lienzo se declara aquí, no en la fila. Declarado en la
+   fila, esta deja de reducirse y alcanza el alto de la columna de controles,
+   con lo que el lienzo crece en exceso. 480 px corresponde a la barra, el
+   lienzo mínimo (240), la leyenda y las separaciones. */
 .columna-grafo {
     flex: 1 1 320px;
     min-width: 280px;

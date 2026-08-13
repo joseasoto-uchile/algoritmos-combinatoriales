@@ -14,7 +14,7 @@
      GitHub Pages no deja poner cabeceras propias, pero la etiqueta vale igual. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=4">
+<link rel="stylesheet" href="css/estilo.css?v=5">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN: si la red del
      campus bloquea el CDN la página salía en blanco, y además así funciona
      sin conexión. Actualizar este archivo es descargar la versión nueva y
@@ -48,8 +48,8 @@
         <h4>Layout</h4>
         <select id="dd-layout"></select>
         <div class="txt-ayuda">
-          Cualquier layout se recalcula solo al elegirlo o al apretar «Centrar» — nunca
-          solo entre pasos. «preset» usa la posición guardada en la instancia.
+          Cualquier layout se recalcula al elegirlo o al pulsar "Centrar", nunca
+          entre pasos. El layout "preset" usa la posición guardada en la instancia.
         </div>
       </div>
 
@@ -140,7 +140,7 @@
 
   <footer class="pie">
     <a id="pie-credito" class="pie-credito" target="_blank" rel="noopener noreferrer"
-       title="Ver la licencia MIT en el repositorio">© 2026 José A. Soto — Universidad de Chile</a>
+       title="Ver la licencia MIT en el repositorio">© 2026 José A. Soto, Universidad de Chile</a>
     <span>· Uso educativo ·</span>
     <span class="pie-asistencia">Asistido por Claude (Anthropic)</span>
   </footer>
@@ -159,9 +159,9 @@
 <!-- El ?v= invalida la caché del navegador al publicar una versión nueva.
      Súbelo cuando cambies algún archivo de js/ o css/, o los visitantes
      seguirán ejecutando el anterior. -->
-<script src="js/grafo.js?v=4"></script>
-<script src="js/algoritmos.js?v=4"></script>
-<script src="js/viz.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/grafo.js?v=5"></script>
+<script src="js/algoritmos.js?v=5"></script>
+<script src="js/viz.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>

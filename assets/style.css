@@ -46,10 +46,11 @@ body {
     --ancho-codigo: 300px;
     display: flex;
     flex: 1;
-    /* min-height: 0 es lo que permite que las columnas se encojan y que el
-       sidebar scrollee por dentro. El piso de altura NO va acá: si se pone,
-       la fila deja de encogerse y se estira hasta la altura del sidebar
-       (~1150 px), inflando el lienzo. El piso vive en .columna-grafo. */
+    /* min-height: 0 permite que las columnas se reduzcan y que la columna de
+       controles tenga su propio desplazamiento. El alto mínimo no se declara
+       aquí: si se declara, la fila deja de reducirse y alcanza el alto de esa
+       columna, unos 1150 px, con lo que el lienzo crece en exceso. Ese valor
+       está en .columna-grafo. */
     min-height: 0;
     overflow-x: auto;
 }
