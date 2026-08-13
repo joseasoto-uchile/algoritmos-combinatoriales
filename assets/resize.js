@@ -1,13 +1,12 @@
 /* Divisores arrastrables entre las tres columnas.
  *
- * Dash no incluye un componente de este tipo. El ancho de las columnas
- * laterales está en dos variables CSS, --ancho-controles y --ancho-codigo,
- * declaradas en .fila-principal, y este script las modifica durante el
- * arrastre. La columna del grafo no tiene ancho propio: ocupa el resto.
+ * El ancho de las columnas laterales está en dos variables CSS,
+ * --ancho-controles y --ancho-codigo, declaradas en .fila-principal. Este
+ * script las modifica durante el arrastre. La columna del grafo no tiene ancho
+ * propio: ocupa el resto.
  *
- * El ancho elegido se guarda en localStorage. Sin esa persistencia, cada
- * recarga de Dash, frecuente en modo de depuración, devolvía las columnas a su
- * tamaño por omisión.
+ * El ancho elegido se guarda en localStorage y se restaura al cargar la
+ * página.
  */
 (function () {
     "use strict";
@@ -29,8 +28,8 @@
         try {
             localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(anchos));
         } catch (e) {
-            /* localStorage puede estar deshabilitado. En ese caso se pierde la
-               persistencia, pero el arrastre sigue funcionando. */
+            /* localStorage puede estar deshabilitado. Se pierde solo la
+               persistencia del ancho. */
         }
     }
 
@@ -44,10 +43,8 @@
     }
 
     /* Cytoscape mide su contenedor una sola vez y no detecta el cambio de
-       ancho de la columna. Sin este aviso, el lienzo conserva el tamaño
-       anterior y el grafo queda recortado o desplazado respecto del puntero.
-       Cytoscape escucha el evento 'resize' de window, por lo que basta con
-       emitirlo. */
+       ancho de la columna. Escucha el evento 'resize' de window, por lo que
+       basta con emitirlo para que actualice el tamaño del lienzo. */
     var pendiente = null;
     function avisarRedimension() {
         if (pendiente) return;
@@ -107,9 +104,9 @@
     }
 
     /* Dash construye el layout después de cargar este script, y lo reconstruye
-       en cada recarga en modo de depuración. Por ese motivo los manejadores se
-       registran en document, donde sobreviven a la reconstrucción, y se observa
-       el DOM para restaurar los anchos cuando aparece la fila. */
+       en cada recarga. Los manejadores se registran en document, donde
+       sobreviven a la reconstrucción, y un MutationObserver restaura los anchos
+       cuando aparece la fila. */
     document.addEventListener("mousedown", function (evento) {
         var divisor = evento.target.closest(".divisor");
         if (!divisor) return;

@@ -2,9 +2,8 @@
 
 Es el único archivo que define la apariencia. La lógica no depende de él.
 
-Los colores están en el diccionario COLORES y la leyenda de la interfaz se
-construye a partir de ESTADOS_LEYENDA. De ese modo un cambio de color se
-refleja en la leyenda sin editarla por separado.
+Los colores están en COLORES y la leyenda de la interfaz se construye a partir
+de ESTADOS_LEYENDA, de modo que un cambio de color se refleja en la leyenda.
 """
 
 COLORES = {
@@ -140,22 +139,13 @@ STYLESHEET = [
     },
     # --- Etiqueta con la distancia calculada hasta el paso actual ---
     #
-    # La etiqueta se sitúa debajo del nodo, no dentro. Se descartaron dos
-    # alternativas:
-    #   - dentro de un nodo de tamaño fijo, una distancia de tres o más cifras
-    #     sobrepasa el borde del círculo;
-    #   - ajustar el tamaño del nodo al texto evita ese problema, pero produce
-    #     nodos de tamaños distintos.
-    # Fuera del nodo, el tamaño es uniforme y el texto no se recorta.
+    # Cytoscape.js admite una sola etiqueta por elemento. El nombre del nodo y
+    # la distancia son los dos renglones de un mismo texto, situado bajo el
+    # nodo, y comparten color: no hay propiedad para asignar color por renglón.
     #
-    # Cytoscape.js dibuja una sola etiqueta por elemento, por lo que el nombre
-    # del nodo forma el primer renglón del mismo texto en lugar de quedar
-    # dentro del círculo. Por el mismo motivo ambos renglones comparten color:
-    # no existe una propiedad para asignar un color por renglón.
-    #
-    # Esta regla se declara al final de forma deliberada. Los estados
-    # anteriores fijan texto blanco para que se lea sobre un nodo oscuro, pero
-    # aquí el texto queda sobre el fondo del lienzo y debe ser oscuro.
+    # Esta regla debe declararse después de las de estado, que fijan texto
+    # blanco para los nodos oscuros. Aquí el texto va sobre el fondo del
+    # lienzo.
     {
         "selector": "node.con_distancia",
         "style": {

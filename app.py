@@ -39,17 +39,8 @@ URL_LICENCIA = (
     "https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE"
 )
 
-# Velocidad de reproducción, en pasos por segundo.
-#
-# El valor se escribe en un campo numérico. Antes se usaba un deslizador lineal
-# de 1 a 60, que repartía sus valores en unos 200 px, es decir 3 px por unidad.
-# Pasar de 1 a 2 pasos por segundo requería una precisión que no es razonable
-# exigir, y ese es el rango que se usa para seguir el algoritmo en detalle.
-#
-# Tampoco se mantiene un deslizador junto al campo. Si se escribe un valor que
-# no coincide con ninguna de sus posiciones, los dos controles muestran valores
-# distintos, y sincronizarlos hace que uno sobrescriba lo que el usuario
-# escribió en el otro. Los atajos son botones: no guardan estado propio y solo
+# Velocidad de reproducción, en pasos por segundo. El valor se escribe en un
+# campo numérico y los atajos son botones, que no guardan estado propio y solo
 # escriben en el campo.
 VELOCIDAD_MINIMA = 1
 VELOCIDAD_MAXIMA = 100
@@ -61,7 +52,7 @@ def _velocidad_valida(valor) -> int:
     """Normaliza el valor escrito en el campo de velocidad.
 
     El campo puede llegar vacío mientras se escribe, o con un valor fuera de
-    rango. Se acota aquí en lugar de confiar en los límites del control.
+    rango, de modo que se acota aquí.
     """
     try:
         v = int(float(valor))
@@ -77,9 +68,8 @@ server = app.server
 def _entero(valor, defecto: int) -> int:
     """Convierte a int aceptando el campo vacío, sin confundir 0 con vacío.
 
-    La expresión `int(valor or defecto)` no es equivalente: en Python 0 es un
-    valor falso, por lo que un peso mínimo de 0 se sustituía por el valor por
-    omisión sin avisar.
+    En Python 0 es un valor falso, por lo que `int(valor or defecto)` no sirve:
+    sustituiría un 0 escrito por el usuario.
     """
     if valor is None or valor == "":
         return defecto
@@ -101,15 +91,14 @@ def _decimal(valor, defecto: float) -> float:
 def _origen_por_omision(G, nodos):
     """Elige el nodo origen que se preselecciona al cambiar de instancia.
 
-    En un grafo dirigido, la opción "conexo" solo garantiza conexidad débil. El
-    primer nodo puede no tener aristas salientes, y en ese caso el recorrido
-    consta de tres pasos, lo que aparenta un fallo de la aplicación. Por eso se
-    elige el nodo con mayor grado de salida.
+    En un grafo dirigido se elige el nodo con mayor grado de salida. La opción
+    "conexo" solo garantiza conexidad débil, de modo que el primer nodo puede
+    no tener aristas salientes y producir un recorrido de tres pasos.
 
-    En un grafo no dirigido ese criterio no aporta, porque desde cualquier nodo
-    se alcanza todo su componente, y empeora los ejemplos con estructura
-    definida: en el árbol conviene partir de la raíz. Se mantiene el primer
-    nodo, omitiendo los que no tienen aristas.
+    En un grafo no dirigido se elige el primer nodo con aristas. Desde
+    cualquier nodo se alcanza todo su componente, y en las instancias con
+    estructura definida el primero es el más representativo, como la raíz del
+    árbol.
     """
     if not nodos:
         return None
@@ -544,8 +533,8 @@ def generar(n_clicks, n, densidad, peso_min, peso_max, flags, seed):
             seed=None if seed in (None, "") else _entero(seed, 0),
         )
     except ValueError as exc:
-        # Parámetros incoherentes (p. ej. peso mínimo > máximo): se avisa y se
-        # conserva el grafo anterior en lugar de dejar la app sin instancia.
+        # Con parámetros incoherentes se muestra el motivo y se conserva el
+        # grafo anterior.
         return no_update, no_update, no_update, str(exc), "txt-error"
     return graph_to_dict(G), None, 0, "", "txt-estado"
 
@@ -697,8 +686,7 @@ def actualizar_opciones(data, alg_actual):
 
     disponibles = [e for e in estado if e["disponible"]]
     opciones_alg = [{"label": e["nombre"], "value": e["id"]} for e in disponibles]
-    # Conserva el algoritmo elegido si el grafo nuevo también lo admite:
-    # antes cualquier cambio de instancia devolvía la selección al primero.
+    # Conserva el algoritmo elegido si el grafo nuevo también lo admite.
     ids_disponibles = {e["id"] for e in disponibles}
     if alg_actual in ids_disponibles:
         valor_alg = alg_actual
@@ -780,8 +768,8 @@ def ejecutar(n_clicks, data, alg_id, origen):
             f"Error: {exc}", "txt-error", *sin_tocar_reproduccion,
         )
     except Exception as exc:  # noqa: BLE001
-        # Cualquier otra falla: mostrarla en la UI en vez de dejar que Dash
-        # aborte el callback y la app quede aparentemente colgada.
+        # Cualquier otra falla se muestra en la interfaz. Sin capturarla, Dash
+        # aborta el callback y no aparece ningún mensaje.
         return (
             no_update, no_update, no_update, no_update,
             f"Falla inesperada en {info['nombre']}: {type(exc).__name__}: {exc}",
@@ -821,8 +809,8 @@ def alternar_play(n_clicks, reproduciendo, trace, paso):
     if not trace:
         raise PreventUpdate
     nuevo = not reproduciendo
-    # Dar play con la traza terminada antes no hacía nada visible: el primer
-    # tick detectaba el final y volvía a pausar. Ahora reinicia solo.
+    # Con la traza terminada se vuelve al principio. De lo contrario el primer
+    # tick detecta el final y detiene la reproducción.
     if nuevo and (paso or 0) >= len(trace) - 1:
         return nuevo, not nuevo, "⏸", 0
     return nuevo, not nuevo, ("⏸" if nuevo else "▶"), no_update
@@ -927,11 +915,10 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
 # ---------------------------------------------------------------------------
 # 12) Dibujo de Cytoscape. Un solo callback para 'elements' y 'layout'.
 #
-#    Los dos parámetros se resuelven en el mismo callback de forma
-#    deliberada. Repartidos en dos callbacks que escriben sobre el mismo
-#    componente, Dash puede despacharlos de forma casi simultánea y
-#    Cytoscape.js falla con el error "Cannot read properties of null
-#    (reading 'isHeadless')".
+#    Los dos parámetros deben resolverse en el mismo callback. Repartidos en
+#    dos callbacks que escriben sobre el mismo componente, Dash puede
+#    despacharlos de forma casi simultánea y Cytoscape.js falla con el error
+#    "Cannot read properties of null (reading 'isHeadless')".
 #
 #    Dentro se decide con no_update cuándo recalcular el layout: solo al
 #    cambiar el grafo, al elegir otro layout o al pulsar "Centrar". No se
@@ -981,13 +968,9 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
 
     disparador = ctx.triggered_id
     if disparador in ("store-grafo", "dd-layout", "btn-centrar", None):
-        # "_nonce" no es una opción real del layout de Cytoscape (se ignora);
-        # está solo para que el diccionario cambie SIEMPRE. Si no, cuando el
-        # layout elegido es el mismo que el de la vez anterior (p. ej. sigue
-        # en "circle" tras generar un grafo nuevo), el prop le llega idéntico
-        # a dash-cytoscape, no detecta cambio, y no vuelve a ejecutar el
-        # algoritmo, y quedan las posiciones internas del spring layout en
-        # lugar de las del layout elegido.
+        # "_nonce" no es una opción de Cytoscape y se ignora. Garantiza que el
+        # diccionario cambie en cada llamada: con un valor idéntico al anterior,
+        # dash-cytoscape no detecta cambio y no vuelve a ejecutar el layout.
         nuevo_layout = {
             "name": layout_name or "circle",
             "fit": True,

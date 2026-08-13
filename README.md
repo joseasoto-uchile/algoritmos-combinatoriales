@@ -32,24 +32,18 @@ Los algoritmos de `docs/js/algoritmos.js` emiten la misma traza que los de
 números de línea del pseudocódigo. Esa igualdad es la condición para que las
 dos versiones muestren la misma animación.
 
-Un cambio aplicado a una sola de las dos rompe esa igualdad. Antes de publicar
-una modificación en cualquier algoritmo, ejecutar desde `version-estatica`:
+Un cambio aplicado a una sola de las dos rompe esa igualdad. Tras modificar
+cualquier algoritmo, ejecutar desde `version-estatica`:
 
 ```bash
 python herramientas/verificar_paridad.py
 ```
 
-Compara evento por evento sobre 12 instancias (las 6 de ejemplo y 6 aleatorias
-que cubren grafos dirigidos, no dirigidos, con pesos negativos, DAG y densos).
+Compara evento por evento sobre 12 instancias: las 6 de ejemplo y 6 aleatorias
+que cubren grafos dirigidos, no dirigidos, con pesos negativos, DAG y densos.
 Comprueba además que ambas versiones rechacen los mismos 13 archivos inválidos
 con el mismo mensaje. Devuelve 0 si coinciden y 1 con el primer evento distinto
 en caso contrario. Requiere Node.js.
-
-Este verificador detectó dos errores: la propagación del ciclo negativo en
-Bellman-Ford usaba `set`, cuya iteración depende del hash que Python aleatoriza
-por proceso, de modo que el orden de marcado cambiaba entre ejecuciones del
-mismo grafo; y las dos versiones aceptaban archivos malformados aplicando
-correcciones distintas.
 
 ## Instalación
 
