@@ -190,7 +190,13 @@ function ejecutar() {
         salida.textContent = `${info.nombre} desde ${origen} — ${traza.length} pasos de traza.`;
         salida.className = 'txt-estado';
         pintarEstado();
+        // Arranca la animación sola: pedir el algoritmo y además tener que
+        // apretar ▶ era un paso de más, porque lo que se quiere ver al
+        // ejecutar es justamente la animación.
+        reproducir();
     } catch (e) {
+        // En el camino de error no se toca la reproducción: si había una
+        // animación corriendo de una ejecución anterior, se queda como estaba.
         salida.textContent = `Error: ${e.message}`;
         salida.className = 'txt-error';
     }
@@ -207,15 +213,20 @@ function pausar() {
     $('#btn-play').textContent = '▶';
 }
 
-function alternarPlay() {
-    if (!estado.traza) return;
-    if (estado.reproduciendo) { pausar(); return; }
+function reproducir() {
+    if (!estado.traza || estado.traza.length < 2) return;
     // Dar play con la traza terminada no hacía nada visible: el primer tic
     // detectaba el final y volvía a pausar. Ahora reinicia solo.
     if (estado.paso >= estado.traza.length - 1) estado.paso = 0;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
     estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
+}
+
+function alternarPlay() {
+    if (!estado.traza) return;
+    if (estado.reproduciendo) pausar();
+    else reproducir();
 }
 
 function avanzarAutomatico() {

@@ -728,6 +728,12 @@ def origen_por_clic(datos_nodo):
     Output("store-paso", "data", allow_duplicate=True),
     Output("txt-resultado", "children"),
     Output("txt-resultado", "className"),
+    # Ejecutar arranca la reproducción sola: pedir el algoritmo y además tener
+    # que apretar ▶ era un paso de más, porque lo que se quiere ver al ejecutar
+    # es justamente la animación.
+    Output("store-reproduciendo", "data", allow_duplicate=True),
+    Output("interval", "disabled", allow_duplicate=True),
+    Output("btn-play", "children", allow_duplicate=True),
     Input("btn-ejecutar", "n_clicks"),
     State("store-grafo", "data"),
     State("dd-algoritmo", "value"),
@@ -739,19 +745,28 @@ def ejecutar(n_clicks, data, alg_id, origen):
         raise PreventUpdate
     G = graph_from_dict(data)
     info = ALGORITMOS[alg_id]
+    # En los caminos de error no se toca la reproducción: si había una
+    # animación corriendo de una ejecución anterior, se queda como estaba.
+    sin_tocar_reproduccion = (no_update, no_update, no_update)
     try:
         resultado, trace = info["funcion"](G, origen)
     except ValueError as exc:
         # Restricción conocida del algoritmo (p. ej. pesos negativos).
-        return no_update, no_update, no_update, no_update, f"Error: {exc}", "txt-error"
+        return (
+            no_update, no_update, no_update, no_update,
+            f"Error: {exc}", "txt-error", *sin_tocar_reproduccion,
+        )
     except Exception as exc:  # noqa: BLE001
         # Cualquier otra falla: mostrarla en la UI en vez de dejar que Dash
         # aborte el callback y la app quede aparentemente colgada.
         return (
             no_update, no_update, no_update, no_update,
             f"Falla inesperada en {info['nombre']}: {type(exc).__name__}: {exc}",
-            "txt-error",
+            "txt-error", *sin_tocar_reproduccion,
         )
+    # Una traza de un solo paso no tiene nada que animar: se deja pausada para
+    # no encender el temporizador y apagarlo en el tic siguiente.
+    reproducir = len(trace) > 1
     return (
         trace,
         resultado,
@@ -759,6 +774,9 @@ def ejecutar(n_clicks, data, alg_id, origen):
         0,
         f"{info['nombre']} desde {origen} — {len(trace)} pasos de traza.",
         "txt-estado",
+        reproducir,
+        not reproducir,
+        "⏸" if reproducir else "▶",
     )
 
 
