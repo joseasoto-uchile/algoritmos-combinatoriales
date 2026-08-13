@@ -279,8 +279,7 @@ function renderPseudocodigo() {
     $('#pseudocodigo-titulo').textContent = `Pseudocódigo: ${info.nombre}`;
     $('#pseudocodigo-complejidad').innerHTML =
         `<span class="insignia-complejidad">${info.complejidad}</span>`;
-    // Los puntos de interrupción son propios de cada algoritmo y se borran al
-    // cambiar de algoritmo.
+    // Los puntos de interrupción son propios de cada algoritmo.
     estado.breakpoints.clear();
     $('#pseudocodigo-lineas').innerHTML = info.pseudocodigo.map((texto, i) =>
         `<div class="linea-codigo" data-linea="${i + 1}">`

@@ -30,8 +30,9 @@ from algorithms.registry import ALGORITMOS, estado_algoritmos  # noqa: E402
 from graph_model.ejemplos import EJEMPLOS, construir_ejemplo  # noqa: E402
 from graph_model.model import generar_aleatorio, graph_from_dict, graph_to_dict  # noqa: E402
 
-# Instancias aleatorias que cubren las combinaciones que cambian qué algoritmos
-# aplican: dirigido/no dirigido, con y sin pesos negativos, y DAG.
+# Instancias aleatorias que cubren las combinaciones que determinan qué
+# algoritmos son aplicables: dirigido o no dirigido, con y sin pesos negativos,
+# y DAG.
 CASOS_ALEATORIOS = [
     ("dirigido_simple", dict(n=12, densidad=0.3, dirigido=True, conexo=True, seed=1)),
     ("no_dirigido", dict(n=12, densidad=0.35, dirigido=False, conexo=True, seed=2)),

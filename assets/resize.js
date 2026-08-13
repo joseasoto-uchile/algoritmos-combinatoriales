@@ -44,7 +44,7 @@
 
     /* Cytoscape mide su contenedor una sola vez y no detecta el cambio de
        ancho de la columna. Escucha el evento 'resize' de window, por lo que
-       basta con emitirlo para que actualice el tamaño del lienzo. */
+       es suficiente emitirlo para que actualice el tamaño del lienzo. */
     var pendiente = null;
     function avisarRedimension() {
         if (pendiente) return;
