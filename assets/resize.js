@@ -1,13 +1,13 @@
-/* Barras divisorias arrastrables entre las tres columnas.
+/* Divisores arrastrables entre las tres columnas.
  *
- * Dash no trae un componente "splitter", así que el ancho de las columnas
- * laterales vive en dos variables CSS (--ancho-controles / --ancho-codigo)
- * sobre .fila-principal, y este script las modifica al arrastrar. La columna
- * del grafo no tiene ancho propio: ocupa lo que sobra.
+ * Dash no incluye un componente de este tipo. El ancho de las columnas
+ * laterales está en dos variables CSS, --ancho-controles y --ancho-codigo,
+ * declaradas en .fila-principal, y este script las modifica durante el
+ * arrastre. La columna del grafo no tiene ancho propio: ocupa el resto.
  *
- * El ancho elegido se guarda en localStorage porque, si no, cada recarga de
- * Dash (que en modo debug ocurre a cada rato) devolvía las columnas al
- * tamaño por omisión y había que reacomodarlas de nuevo.
+ * El ancho elegido se guarda en localStorage. Sin esa persistencia, cada
+ * recarga de Dash, frecuente en modo de depuración, devolvía las columnas a su
+ * tamaño por omisión.
  */
 (function () {
     "use strict";
@@ -29,8 +29,8 @@
         try {
             localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(anchos));
         } catch (e) {
-            /* localStorage puede estar deshabilitado; no es motivo para romper
-               el arrastre, solo se pierde la persistencia. */
+            /* localStorage puede estar deshabilitado. En ese caso se pierde la
+               persistencia, pero el arrastre sigue funcionando. */
         }
     }
 
@@ -43,10 +43,11 @@
         fila.style.setProperty(VARIABLE[objetivo], acotar(objetivo, valor) + "px");
     }
 
-    /* Cytoscape mide su contenedor una sola vez y no se entera de que la
-       columna cambió de ancho: sin esto el lienzo queda del tamaño viejo y el
-       grafo aparece cortado o desplazado respecto del puntero. Escucha
-       'resize' de window, así que alcanza con emitirlo. */
+    /* Cytoscape mide su contenedor una sola vez y no detecta el cambio de
+       ancho de la columna. Sin este aviso, el lienzo conserva el tamaño
+       anterior y el grafo queda recortado o desplazado respecto del puntero.
+       Cytoscape escucha el evento 'resize' de window, por lo que basta con
+       emitirlo. */
     var pendiente = null;
     function avisarRedimension() {
         if (pendiente) return;
@@ -65,8 +66,9 @@
         var anchoInicial = parseFloat(estilos.getPropertyValue(VARIABLE[objetivo])) ||
             POR_OMISION[objetivo];
         var xInicial = evento.clientX;
-        // La columna de código está a la derecha del divisor, así que crece
-        // cuando el puntero va hacia la izquierda: el signo se invierte.
+        // La columna de código está a la derecha del divisor, de modo que
+        // aumenta cuando el puntero se desplaza hacia la izquierda. Por eso se
+        // invierte el signo.
         var signo = objetivo === "codigo" ? -1 : 1;
 
         document.body.classList.add("redimensionando");
@@ -104,10 +106,10 @@
         });
     }
 
-    /* Dash monta el layout después de cargar este script, y en modo debug lo
-       vuelve a montar en cada recarga en caliente. Por eso se delega en
-       document (los handlers sobreviven al remontaje) y se observa el DOM
-       para restaurar los anchos cuando la fila aparece. */
+    /* Dash construye el layout después de cargar este script, y lo reconstruye
+       en cada recarga en modo de depuración. Por ese motivo los manejadores se
+       registran en document, donde sobreviven a la reconstrucción, y se observa
+       el DOM para restaurar los anchos cuando aparece la fila. */
     document.addEventListener("mousedown", function (evento) {
         var divisor = evento.target.closest(".divisor");
         if (!divisor) return;
@@ -115,7 +117,7 @@
         if (fila) iniciarArrastre(evento, fila, divisor);
     });
 
-    // Doble clic en un divisor: vuelve al ancho por omisión de esa columna.
+    // El doble clic en un divisor restablece el ancho por omisión.
     document.addEventListener("dblclick", function (evento) {
         var divisor = evento.target.closest(".divisor");
         if (!divisor) return;

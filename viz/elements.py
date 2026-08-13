@@ -1,13 +1,13 @@
-"""Traduce (grafo, traza, paso actual) -> elementos de Dash Cytoscape.
+"""Convierte (grafo, traza, paso actual) en elementos de Dash Cytoscape.
 
-Esta es la única capa que conoce el formato de eventos de la traza Y el
-formato de elementos de Cytoscape. Los algoritmos no saben que existe;
-Cytoscape no sabe que existen los algoritmos.
+Es la única capa que conoce a la vez el formato de los eventos de la traza y el
+formato de elementos de Cytoscape. Los algoritmos no dependen de ella, y
+Cytoscape no depende de los algoritmos.
 
-Estados de nodo/arista:
-- Persistentes (una vez aplicados, se mantienen): 'visitado', 'finalizado',
-  'solucion', 'ciclo_negativo'.
-- Transitorio (solo mientras se reproduce ESE paso puntual): 'activo'.
+Estados de nodo y de arista:
+- Persistentes, se mantienen una vez aplicados: 'visitado', 'finalizado',
+  'solucion' y 'ciclo_negativo'.
+- Transitorio, se aplica solo durante el paso actual: 'activo'.
 """
 from __future__ import annotations
 
@@ -15,8 +15,11 @@ import networkx as nx
 
 
 def id_arista(u: str, v: str, dirigido: bool) -> str:
-    """Id estable de una arista, consistente sin importar en qué orden
-    la haya recorrido el algoritmo (relevante para grafos no dirigidos)."""
+    """Identificador estable de una arista.
+
+    No depende del orden en que el algoritmo haya recorrido sus extremos, lo
+    que es necesario en grafos no dirigidos.
+    """
     if dirigido:
         return f"{u}__{v}"
     a, b = sorted((str(u), str(v)))
@@ -24,17 +27,18 @@ def id_arista(u: str, v: str, dirigido: bool) -> str:
 
 
 def graph_to_elements(G: nx.Graph, incluir_posiciones: bool = True) -> list[dict]:
-    """Construye los elementos de Cytoscape. Las aristas de un grafo NO
-    dirigido llevan la clase base 'no_dirigido', que la hoja de estilos usa
-    para no dibujarles punta de flecha (ver cytoscape_style.py).
+    """Construye los elementos de Cytoscape.
 
-    `incluir_posiciones` decide si cada nodo viaja con su coordenada guardada.
-    Solo debe activarse con el layout 'preset', que es justamente el que
-    significa "usá las posiciones de la instancia". Con cualquier otro layout
-    las coordenadas guardadas (spring) ya no describen lo que se ve: mandarlas
-    igual hace que Cytoscape las reaplique cada vez que se reemplaza la lista
-    de elementos —o sea, en cada paso de la traza— y el grafo salta desde el
-    layout elegido de vuelta a las posiciones viejas.
+    Las aristas de un grafo no dirigido reciben la clase 'no_dirigido', que la
+    hoja de estilos usa para omitir la punta de flecha (ver cytoscape_style.py).
+
+    El parámetro `incluir_posiciones` determina si cada nodo incluye su
+    coordenada guardada. Solo debe activarse con el layout 'preset', que es el
+    que utiliza las posiciones de la instancia. Con cualquier otro layout, las
+    coordenadas guardadas no corresponden a lo que se muestra: al enviarlas,
+    Cytoscape las vuelve a aplicar cada vez que se reemplaza la lista de
+    elementos, es decir en cada paso de la traza, y el grafo regresa a las
+    posiciones anteriores.
     """
     elementos = []
     for n, datos in G.nodes(data=True):
@@ -70,8 +74,10 @@ _EVENTOS_TRANSITORIOS_ARISTA = {"explorar_arista", "relajar", "descartar_arista"
 
 
 def calcular_estado(trace: list[dict], paso_actual: int, dirigido: bool):
-    """Recorre la traza hasta `paso_actual` (inclusive) y devuelve dos
-    diccionarios: {id_nodo: {clases}} y {id_arista: {clases}}."""
+    """Recorre la traza hasta `paso_actual`, inclusive.
+
+    Devuelve dos diccionarios: {id_nodo: {clases}} y {id_arista: {clases}}.
+    """
     clases_nodo: dict[str, set[str]] = {}
     clases_arista: dict[str, set[str]] = {}
 
@@ -104,13 +110,14 @@ def calcular_estado(trace: list[dict], paso_actual: int, dirigido: bool):
 def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float] | None:
     """Reconstruye la distancia conocida de cada nodo en `paso_actual`.
 
-    Devuelve None si la traza no lleva información de distancia — es el caso de
-    DFS, que no calcula ninguna. Así la etiqueta secundaria aparece sola en los
-    algoritmos donde tiene sentido, sin necesidad de marcarlos en el registro.
+    Devuelve None si la traza no contiene información de distancia, que es el
+    caso de DFS. Así la etiqueta secundaria aparece solo en los algoritmos que
+    calculan distancias, sin necesidad de declararlo en el registro.
 
-    Se reproducen los eventos en orden en vez de guardar el diccionario
-    completo en cada paso: la traza ya viaja al navegador en cada corrida y
-    duplicar el estado por paso la haría crecer de forma cuadrática.
+    Los eventos se reproducen en orden en lugar de guardar el diccionario
+    completo en cada paso. La traza se envía entera al navegador en cada
+    ejecución, y almacenar el estado por paso haría que creciera de forma
+    cuadrática.
     """
     if not trace:
         return None
@@ -120,8 +127,8 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
     tope = max(0, min(paso_actual, len(trace) - 1))
 
     for ev in trace[: tope + 1]:
-        # 'dist' lo emiten los algoritmos al fijar la distancia de un nodo;
-        # 'relajar' trae la nueva distancia del extremo de destino.
+        # Los algoritmos emiten 'dist' al fijar la distancia de un nodo. El
+        # evento 'relajar' incluye la nueva distancia del nodo de destino.
         if "dist" in ev and "nodo" in ev:
             distancias[ev["nodo"]] = ev["dist"]
             hubo_datos = True
@@ -130,9 +137,9 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
             hubo_datos = True
 
     if not hubo_datos:
-        # Puede que el algoritmo sí calcule distancias pero que en los primeros
-        # pasos todavía no haya emitido ninguna: se distingue mirando la traza
-        # entera, no solo el tramo recorrido.
+        # El algoritmo puede calcular distancias y no haber emitido ninguna en
+        # los primeros pasos. Para distinguir ese caso se examina la traza
+        # completa, no solo el tramo recorrido.
         lleva_distancias = any(
             "dist" in ev or (ev["tipo"] == "relajar" and "nueva_dist" in ev) for ev in trace
         )
@@ -142,12 +149,12 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
 
 
 def calcular_iteracion(trace: list[dict], paso_actual: int) -> dict | None:
-    """Estado del contador de iteraciones en `paso_actual`, o None si el
-    algoritmo no trabaja por iteraciones.
+    """Estado del contador de iteraciones en `paso_actual`.
 
-    Solo Bellman-Ford las emite: es el único cuyo costo se explica por cuántas
-    veces repasa todas las aristas, y sin este dato las pasadas son
-    indistinguibles entre sí porque repiten los mismos eventos.
+    Devuelve None si el algoritmo no trabaja por iteraciones. Solo Bellman-Ford
+    las emite: su costo depende del número de veces que recorre todas las
+    aristas, y sin este dato las pasadas son indistinguibles entre sí, porque
+    repiten los mismos eventos.
     """
     if not trace:
         return None
@@ -184,19 +191,19 @@ def calcular_iteracion(trace: list[dict], paso_actual: int) -> dict | None:
 
 
 def texto_iteracion(estado: dict | None) -> str:
-    """Convierte el estado de iteración en la línea que se muestra en la UI."""
+    """Convierte el estado de iteración en el texto que muestra la interfaz."""
     if estado is None:
         return ""
     total = estado["total"]
     if estado["terminado"]:
         if estado["anticipado"]:
             return (
-                f"Iteraciones: {estado['iteracion']} de {total} "
-                f"— cortó antes: una pasada sin cambios"
+                f"Iteraciones: {estado['iteracion']} de {total}. "
+                "Terminó antes por una pasada sin cambios."
             )
-        return f"Iteraciones: {estado['iteracion']} de {total} — completadas"
+        return f"Iteraciones: {estado['iteracion']} de {total}. Completadas."
     if estado["iteracion"] == 0:
-        return f"Iteración 0 de {total} — aún no empieza el bucle"
+        return f"Iteración 0 de {total}. El bucle no ha comenzado."
     return f"Iteración {estado['iteracion']} de {total}"
 
 
@@ -205,17 +212,16 @@ def aplicar_distancias(
     distancias: dict[str, float],
     simbolo_infinito: str = "∞",
 ) -> list[dict]:
-    """Agrega a cada nodo una segunda línea de etiqueta con su distancia.
+    """Añade a cada nodo un segundo renglón de etiqueta con su distancia.
 
-    Cytoscape.js dibuja una sola etiqueta por elemento, así que la "etiqueta
-    secundaria" se implementa como un segundo renglón del mismo texto, y la
-    hoja de estilos lo mueve fuera del nodo (ver cytoscape_style.py). El
-    prefijo 'd=' está para que cada renglón se identifique solo, sin tener que
-    ir a mirar la leyenda.
+    Cytoscape.js dibuja una sola etiqueta por elemento, por lo que el segundo
+    renglón forma parte del mismo texto y la hoja de estilos lo sitúa fuera del
+    nodo (ver cytoscape_style.py). El prefijo 'd=' identifica el renglón sin
+    necesidad de consultar la leyenda.
 
-    Los nodos todavía no alcanzados muestran ∞, que es justamente lo que hace
-    legible el avance de Dijkstra o Bellman-Ford: se ve cuáles siguen fuera del
-    alcance y cuáles ya mejoraron.
+    Los nodos que aún no se han alcanzado muestran el símbolo de infinito, lo
+    que permite distinguir en Dijkstra y Bellman-Ford qué nodos siguen fuera de
+    alcance y cuáles ya tienen una distancia calculada.
     """
     nuevos = []
     for el in elementos:
@@ -248,8 +254,8 @@ def aplicar_clases(
     for el in elementos:
         el = {**el, "data": dict(el["data"])}
         data = el["data"]
-        # Preserva clases "estructurales" ya puestas por graph_to_elements
-        # (p. ej. 'no_dirigido'), y les suma las de estado de la traza.
+        # Conserva las clases estructurales que asignó graph_to_elements, como
+        # 'no_dirigido', y añade las clases de estado que indica la traza.
         clases = set((el.get("classes") or "").split())
         if "source" in data:
             clases |= clases_arista.get(data["id"], set())

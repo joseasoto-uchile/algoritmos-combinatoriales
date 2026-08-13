@@ -1,7 +1,7 @@
-"""Capa de interacción/control: la única parte que sabe de Dash.
+"""Interfaz Dash. Es la única capa que depende de Dash.
 
-Orquesta las otras tres capas (graph_model, algorithms, viz) pero no
-implementa lógica de grafos, de algoritmos ni de estilos por sí misma.
+Coordina las otras tres capas (graph_model, algorithms, viz). No implementa
+lógica de grafos, de algoritmos ni de estilos.
 """
 from __future__ import annotations
 
@@ -33,24 +33,24 @@ from viz.elements import (
 
 LAYOUTS = ["circle", "breadthfirst", "grid", "cose", "preset"]
 
-# Enlace del crédito del pie de página. Apunta al LICENSE del remoto 'origin'
-# (rama main); si el repositorio se mueve, hay que actualizarlo acá.
+# Enlace del pie de página. Apunta al archivo LICENSE del remoto 'origin' en
+# la rama main. Si el repositorio cambia de dirección, actualizar esta línea.
 URL_LICENCIA = (
     "https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE"
 )
 
 # Velocidad de reproducción, en pasos por segundo.
 #
-# Se escribe directamente en un campo numérico, sin deslizador. Un deslizador
-# lineal de 1 a 60 repartía sus valores en ~200 px (unos 3 px por paso), así
-# que pasar de 1 a 2 pasos/seg —justo el tramo lento, el que se usa para
-# seguir el algoritmo con detalle— exigía una precisión absurda.
+# El valor se escribe en un campo numérico. Antes se usaba un deslizador lineal
+# de 1 a 60, que repartía sus valores en unos 200 px, es decir 3 px por unidad.
+# Pasar de 1 a 2 pasos por segundo requería una precisión que no es razonable
+# exigir, y ese es el rango que se usa para seguir el algoritmo en detalle.
 #
-# Tampoco se mantiene un deslizador junto al campo: al escribir un valor que
-# no cae en una de sus posiciones, ambos controles quedan mostrando cosas
-# distintas, y sincronizarlos hace que uno pise lo que el usuario escribió en
-# el otro. Los atajos son botones, que no guardan estado y no tienen ese
-# problema: solo escriben en el campo.
+# Tampoco se mantiene un deslizador junto al campo. Si se escribe un valor que
+# no coincide con ninguna de sus posiciones, los dos controles muestran valores
+# distintos, y sincronizarlos hace que uno sobrescriba lo que el usuario
+# escribió en el otro. Los atajos son botones: no guardan estado propio y solo
+# escriben en el campo.
 VELOCIDAD_MINIMA = 1
 VELOCIDAD_MAXIMA = 100
 VELOCIDAD_INICIAL = 5
@@ -58,11 +58,10 @@ ATAJOS_VELOCIDAD = [1, 5, 15, 50]
 
 
 def _velocidad_valida(valor) -> int:
-    """Normaliza los pasos por segundo escritos a mano.
+    """Normaliza el valor escrito en el campo de velocidad.
 
     El campo puede llegar vacío mientras se escribe, o con un valor fuera de
-    rango si se teclea directo, así que se acota en vez de confiar en los
-    límites del control.
+    rango. Se acota aquí en lugar de confiar en los límites del control.
     """
     try:
         v = int(float(valor))
@@ -76,11 +75,11 @@ server = app.server
 
 
 def _entero(valor, defecto: int) -> int:
-    """Convierte a int tolerando el campo vacío, SIN confundir 0 con vacío.
+    """Convierte a int aceptando el campo vacío, sin confundir 0 con vacío.
 
-    El idiom `int(valor or defecto)` parece equivalente pero no lo es: 0 es
-    falsy, así que un peso mínimo de 0 escrito por el usuario se convertía
-    silenciosamente en el valor por omisión.
+    La expresión `int(valor or defecto)` no es equivalente: en Python 0 es un
+    valor falso, por lo que un peso mínimo de 0 se sustituía por el valor por
+    omisión sin avisar.
     """
     if valor is None or valor == "":
         return defecto
@@ -102,22 +101,22 @@ def _decimal(valor, defecto: float) -> float:
 def _origen_por_omision(G, nodos):
     """Elige el nodo origen que se preselecciona al cambiar de instancia.
 
-    En un grafo dirigido, "conexo" solo garantiza conexidad *débil*: el primer
-    nodo puede no tener ninguna arista saliente, y arrancar ahí produce un
-    recorrido de tres pasos que parece un error de la aplicación. Por eso ahí
-    se prefiere el nodo con más salidas.
+    En un grafo dirigido, la opción "conexo" solo garantiza conexidad débil. El
+    primer nodo puede no tener aristas salientes, y en ese caso el recorrido
+    consta de tres pasos, lo que aparenta un fallo de la aplicación. Por eso se
+    elige el nodo con mayor grado de salida.
 
-    En un grafo no dirigido la heurística no aporta —desde cualquier nodo se
-    alcanza todo su componente— y además estropea los ejemplos con estructura:
-    en el árbol conviene partir de la raíz y no de un nodo interno cualquiera.
-    Se mantiene el primer nodo, saltando los aislados.
+    En un grafo no dirigido ese criterio no aporta, porque desde cualquier nodo
+    se alcanza todo su componente, y empeora los ejemplos con estructura
+    definida: en el árbol conviene partir de la raíz. Se mantiene el primer
+    nodo, omitiendo los que no tienen aristas.
     """
     if not nodos:
         return None
     if G.is_directed():
         return max(nodos, key=lambda n: G.out_degree(n))
-    with_edges = [n for n in nodos if G.degree(n) > 0]
-    return with_edges[0] if with_edges else nodos[0]
+    con_aristas = [n for n in nodos if G.degree(n) > 0]
+    return con_aristas[0] if con_aristas else nodos[0]
 
 
 def _panel_generar():
@@ -158,9 +157,12 @@ def _panel_generar():
 
 
 def _panel_ejemplos():
-    """Instancias con forma conocida (árbol, ciclo, rejilla, DAG...). Un grafo
-    aleatorio sirve para probar, pero para *entender* el recorrido conviene
-    una estructura reconocible."""
+    """Instancias con estructura definida: árbol, ciclo, rejilla y DAG.
+
+    Un grafo aleatorio sirve para probar la aplicación. Para seguir el
+    recorrido de un algoritmo es preferible una estructura conocida, donde el
+    orden de visita es predecible.
+    """
     return html.Div(
         className="panel",
         children=[
@@ -241,7 +243,7 @@ def _panel_layout():
             ),
             html.Div(
                 "Cualquier layout se recalcula solo al elegirlo o al "
-                "apretar 'Centrar' — nunca solo entre pasos. "
+                "apretar 'Centrar', nunca solo entre pasos. "
                 "'preset' usa la posición guardada en la instancia.",
                 className="txt-ayuda",
             ),
@@ -289,7 +291,7 @@ def _panel_pseudocodigo():
             html.Div(
                 id="pseudocodigo-lineas",
                 className="bloque-codigo",
-                children=[html.Div("Elige un algoritmo para verlo acá.", className="txt-ayuda")],
+                children=[html.Div("Elige un algoritmo para ver su pseudocódigo.", className="txt-ayuda")],
             ),
         ],
     )
@@ -308,7 +310,7 @@ def _pie():
             # El crédito es el enlace a la licencia: un clic lleva al LICENSE
             # del repositorio, así el pie no tiene que explicar los términos.
             html.A(
-                "© 2026 José A. Soto — Universidad de Chile",
+                "© 2026 José A. Soto, Universidad de Chile",
                 href=URL_LICENCIA,
                 target="_blank",
                 rel="noopener noreferrer",
@@ -564,8 +566,8 @@ def cargar_ejemplo(n_clicks, clave):
     if not clave:
         raise PreventUpdate
     G = construir_ejemplo(clave)
-    # Estas instancias traen coordenadas pensadas a mano (niveles del árbol,
-    # filas de la rejilla...), así que se fuerza 'preset' para respetarlas.
+    # Estas instancias definen coordenadas explícitas (niveles del árbol,
+    # filas de la rejilla), por lo que se fuerza el layout 'preset'.
     return graph_to_dict(G), None, 0, "preset"
 
 
@@ -715,7 +717,7 @@ def actualizar_opciones(data, alg_actual):
                 className="item-no-disponible",
                 children=[
                     html.Span(e["nombre"], className="nombre-no-disponible"),
-                    html.Span(f" — {e['motivo']}"),
+                    html.Span(f": {e['motivo']}"),
                 ],
             )
             for e in no_disponibles
@@ -793,7 +795,7 @@ def ejecutar(n_clicks, data, alg_id, origen):
         resultado,
         alg_id,
         0,
-        f"{info['nombre']} desde {origen} — {len(trace)} pasos de traza.",
+        f"{info['nombre']} desde {origen}, {len(trace)} pasos de traza.",
         "txt-estado",
         reproducir,
         not reproducir,
@@ -871,10 +873,10 @@ def cambiar_velocidad(pasos_por_segundo):
     prevent_initial_call=True,
 )
 def atajo_velocidad(clicks):
-    """Botones de velocidad rápida: solo escriben en el campo numérico.
+    """Botones de velocidad. Solo escriben en el campo numérico.
 
-    Al no guardar estado propio, no pueden quedar desincronizados con lo que
-    el usuario escriba a mano, que es lo que sí pasaría con un deslizador.
+    Al no guardar estado propio, no pueden quedar desincronizados con el
+    valor que escriba el usuario, a diferencia de un deslizador.
     """
     disparador = ctx.triggered_id
     if not isinstance(disparador, dict):
@@ -914,26 +916,28 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
     elif disparador == "btn-reiniciar":
         paso = 0
 
-    # Tocar un control manual mientras corre la reproducción automática hacía
-    # que el Interval siguiera avanzando y "peleara" con el paso elegido a
-    # mano. Cualquier control manual pausa.
+    # Usar un control manual durante la reproducción automática dejaba el
+    # Interval activo, y este sobrescribía el paso elegido. Cualquier control
+    # manual detiene la reproducción.
     if reproduciendo:
         return paso, False, True, "▶"
     return paso, no_update, no_update, no_update
 
 
 # ---------------------------------------------------------------------------
-# 12) Render de Cytoscape: un único callback para 'elements' y 'layout'.
+# 12) Dibujo de Cytoscape. Un solo callback para 'elements' y 'layout'.
 #
-#    Van juntos a propósito: si se reparten en dos callbacks separados que
-#    escriben sobre el mismo componente, Dash puede despacharlos casi
-#    simultáneamente y Cytoscape.js llega a pisarse (crashea con
-#    "Cannot read properties of null (reading 'isHeadless')"). Por eso se
-#    resuelven acá adentro con no_update: el layout (reposicionar nodos)
-#    solo se recalcula cuando cambia el grafo, el tipo de layout elegido,
-#    o se pide "Centrar" — nunca en cada paso de la traza, porque con
-#    layouts de fuerza dirigida como "cose" eso hace saltar los nodos de
-#    lugar en cada paso y el grafo termina fuera del área visible.
+#    Los dos parámetros se resuelven en el mismo callback de forma
+#    deliberada. Repartidos en dos callbacks que escriben sobre el mismo
+#    componente, Dash puede despacharlos de forma casi simultánea y
+#    Cytoscape.js falla con el error "Cannot read properties of null
+#    (reading 'isHeadless')".
+#
+#    Dentro se decide con no_update cuándo recalcular el layout: solo al
+#    cambiar el grafo, al elegir otro layout o al pulsar "Centrar". No se
+#    recalcula en cada paso de la traza, porque con layouts de fuerza
+#    dirigida como "cose" los nodos cambian de posición en cada paso y el
+#    grafo queda fuera del área visible.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("cyto", "elements"),
@@ -958,7 +962,7 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
     elementos = graph_to_elements(G, incluir_posiciones=(layout_name == "preset"))
     dirigido = G.is_directed()
 
-    texto_paso = "Sin traza — ejecuta un algoritmo."
+    texto_paso = "Sin traza. Ejecuta un algoritmo."
     texto_iter = ""
     if trace:
         paso = max(0, min(paso or 0, len(trace) - 1))
@@ -970,7 +974,7 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
         if distancias is not None:
             elementos = aplicar_distancias(elementos, distancias)
         ev = trace[paso]
-        texto_paso = f"Paso {paso + 1}/{len(trace)} — {ev['tipo']}"
+        texto_paso = f"Paso {paso + 1}/{len(trace)}: {ev['tipo']}"
         texto_iter = texto_iteracion(calcular_iteracion(trace, paso))
     else:
         elementos = aplicar_clases(elementos, {}, {}, origen)
@@ -982,8 +986,8 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
         # layout elegido es el mismo que el de la vez anterior (p. ej. sigue
         # en "circle" tras generar un grafo nuevo), el prop le llega idéntico
         # a dash-cytoscape, no detecta cambio, y no vuelve a ejecutar el
-        # algoritmo — quedan las posiciones internas (spring layout) en vez
-        # de las del layout elegido.
+        # algoritmo, y quedan las posiciones internas del spring layout en
+        # lugar de las del layout elegido.
         nuevo_layout = {
             "name": layout_name or "circle",
             "fit": True,
@@ -999,8 +1003,9 @@ def render_cyto(data, trace, paso, layout_name, n_clicks_centrar, origen):
 
 # ---------------------------------------------------------------------------
 # 13) Popup de instrucciones: qué hace el algoritmo elegido, restricciones
-#     y complejidad. El texto sale de algorithms/registry.py — agregar un
-#     algoritmo nuevo también agrega su popup automáticamente.
+#     y complejidad. El texto proviene de algorithms/registry.py, de modo
+#     que un algoritmo nuevo obtiene su cuadro de información sin cambios
+#     adicionales.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("modal-info", "style"),
@@ -1054,7 +1059,7 @@ def render_pseudocodigo(alg_id):
         for i, texto in enumerate(lineas, start=1)
     ]
     # Los puntos de interrupción son por algoritmo: al cambiar, se limpian.
-    return f"Pseudocódigo — {info['nombre']}", insignia, hijos, []
+    return f"Pseudocódigo: {info['nombre']}", insignia, hijos, []
 
 
 # ---------------------------------------------------------------------------

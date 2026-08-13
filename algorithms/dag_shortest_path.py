@@ -1,5 +1,9 @@
-"""Caminos mínimos en un DAG: orden topológico (Kahn) + relajación en ese
-orden. Ambas fases emiten eventos propios."""
+"""Caminos mínimos en un grafo dirigido acíclico.
+
+Consta de dos fases: orden topológico mediante el algoritmo de Kahn, y
+relajación de las aristas siguiendo ese orden. Cada fase emite sus propios
+eventos.
+"""
 from __future__ import annotations
 
 import math
@@ -14,7 +18,7 @@ def dag_shortest_path_trace(G: nx.Graph, origen: str):
     if not G.is_directed() or not nx.is_directed_acyclic_graph(G):
         raise ValueError("Este algoritmo requiere un grafo dirigido y acíclico (DAG).")
 
-    # Los "linea" corresponden al pseudocódigo en algorithms/registry.py.
+    # El campo "linea" indica la línea del pseudocódigo de registry.py.
     tb = TraceBuilder()
 
     # --- Fase 1: orden topológico (Kahn) ---
@@ -36,8 +40,8 @@ def dag_shortest_path_trace(G: nx.Graph, origen: str):
     distancia = {n: math.inf for n in G.nodes}
     distancia[origen] = 0
     padre = {n: None for n in G.nodes}
-    # 'dist' viaja en el evento para que la visualización pueda reconstruir la
-    # distancia de cada nodo en cualquier paso sin volver a correr el algoritmo.
+    # El campo 'dist' permite que la visualización reconstruya la distancia de
+    # cada nodo en cualquier paso sin volver a ejecutar el algoritmo.
     tb.emit("visitar_nodo", nodo=origen, linea=3, dist=0)
 
     for u in orden:

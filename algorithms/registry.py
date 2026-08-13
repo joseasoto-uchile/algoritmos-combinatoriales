@@ -1,10 +1,14 @@
-"""Registro central de algoritmos disponibles.
+"""Registro de los algoritmos disponibles.
 
-Este es el único lugar que la app Dash consulta para saber qué algoritmos
-ofrecer. Agregar un algoritmo nuevo (p. ej. Prim o Kruskal) significa:
-1. Escribir su módulo con una función `algo_trace(G, origen) -> (resultado, trace)`.
-2. Agregar una entrada aquí.
-No hace falta tocar la capa de visualización (viz/) ni app.py.
+Es el único origen de datos que consulta la aplicación para saber qué
+algoritmos ofrecer. Agregar uno nuevo, por ejemplo Prim o Kruskal, requiere dos
+pasos:
+
+1. Escribir su módulo con una función `algo_trace(G, origen)` que devuelva
+   (resultado, traza).
+2. Añadir una entrada en este registro.
+
+No es necesario modificar la capa de visualización ni app.py.
 """
 from __future__ import annotations
 
@@ -26,11 +30,11 @@ ALGORITMOS = {
         "requiere_dag": False,
         "complejidad": "O(V + E)",
         "descripcion": (
-            "Recorre el grafo en anchura desde el nodo origen: explora primero "
-            "todos los vecinos directos antes de avanzar al siguiente nivel, "
-            "usando una cola FIFO.\n\n"
-            "No considera el peso de las aristas — el árbol que construye es "
-            "el de menor número de saltos, no el de menor costo.\n\n"
+            "Recorre el grafo en anchura desde el nodo origen. Explora todos "
+            "los vecinos directos antes de avanzar al siguiente nivel, "
+            "mediante una cola FIFO.\n\n"
+            "No considera el peso de las aristas. El árbol resultante es el "
+            "de menor número de aristas, no el de menor costo.\n\n"
             "Complejidad: O(V + E)."
         ),
         "pseudocodigo": [
@@ -56,11 +60,10 @@ ALGORITMOS = {
         "requiere_dag": False,
         "complejidad": "O(V + E)",
         "descripcion": (
-            "Recorre el grafo en profundidad desde el nodo origen: avanza por "
-            "una rama hasta el final antes de retroceder (backtrack) y probar "
-            "otra.\n\n"
-            "No calcula caminos mínimos; construye un árbol de descubrimiento "
-            "con tiempos de entrada/salida por nodo.\n\n"
+            "Recorre el grafo en profundidad desde el nodo origen. Avanza por "
+            "una rama hasta agotarla antes de retroceder y explorar otra.\n\n"
+            "No calcula caminos mínimos. Construye un árbol de descubrimiento "
+            "con los tiempos de entrada y de salida de cada nodo.\n\n"
             "Complejidad: O(V + E)."
         ),
         "pseudocodigo": [
@@ -82,14 +85,14 @@ ALGORITMOS = {
         "requiere_dag": False,
         "complejidad": "O((V + E) log V)",
         "descripcion": (
-            "Calcula el camino más corto (por peso acumulado) desde el "
-            "origen a todos los demás nodos usando una cola de prioridad: "
-            "en cada paso extrae el nodo no finalizado con menor distancia "
-            "tentativa y relaja sus aristas salientes.\n\n"
-            "Requiere que todos los pesos sean no negativos — con negativos "
-            "el resultado puede ser incorrecto, por eso no se ofrece en esos "
-            "grafos (usa Bellman-Ford).\n\n"
-            "Complejidad: O((V + E) log V) con heap binario."
+            "Calcula el camino de menor peso acumulado desde el origen hasta "
+            "los demás nodos, mediante una cola de prioridad. En cada paso "
+            "extrae el nodo no finalizado con menor distancia tentativa y "
+            "relaja sus aristas salientes.\n\n"
+            "Requiere pesos no negativos. Con pesos negativos el resultado "
+            "puede ser incorrecto, por lo que no se ofrece en esos grafos. En "
+            "ese caso se usa Bellman-Ford.\n\n"
+            "Complejidad: O((V + E) log V) con montículo binario."
         ),
         "pseudocodigo": [
             "función Dijkstra(G, origen):",
@@ -115,12 +118,12 @@ ALGORITMOS = {
         "requiere_dag": False,
         "complejidad": "O(V · E)",
         "descripcion": (
-            "Calcula caminos mínimos desde el origen relajando TODAS las "
+            "Calcula caminos mínimos desde el origen relajando todas las "
             "aristas del grafo, V-1 veces.\n\n"
-            "Más lento que Dijkstra, pero admite pesos negativos; una pasada "
-            "extra permite detectar ciclos de peso negativo (en ese caso no "
-            "existe un camino mínimo bien definido para los nodos alcanzados "
-            "por el ciclo, y se marcan en rojo).\n\n"
+            "Es más lento que Dijkstra, pero admite pesos negativos. Una "
+            "pasada adicional detecta ciclos de peso negativo. Los nodos "
+            "alcanzados por un ciclo de ese tipo no tienen camino mínimo "
+            "definido, y se marcan en rojo.\n\n"
             "Complejidad: O(V · E)."
         ),
         "pseudocodigo": [
@@ -145,12 +148,13 @@ ALGORITMOS = {
         "requiere_dag": True,
         "complejidad": "O(V + E)",
         "descripcion": (
-            "Calcula caminos mínimos en un grafo dirigido acíclico (DAG) en "
-            "dos fases: primero un orden topológico (algoritmo de Kahn), "
-            "luego relaja las aristas siguiendo ese orden, una sola vez.\n\n"
-            "Al no haber ciclos no hace falta reintentar relajaciones como "
-            "en Bellman-Ford — es el método más eficiente cuando el grafo es "
-            "un DAG, y admite pesos negativos sin problema.\n\n"
+            "Calcula caminos mínimos en un grafo dirigido acíclico en dos "
+            "fases. Primero obtiene un orden topológico con el algoritmo de "
+            "Kahn, y después relaja las aristas siguiendo ese orden, una sola "
+            "vez.\n\n"
+            "Al no haber ciclos no es necesario repetir las relajaciones como "
+            "en Bellman-Ford. Es el método de menor costo cuando el grafo es "
+            "un DAG, y admite pesos negativos.\n\n"
             "Complejidad: O(V + E)."
         ),
         "pseudocodigo": [
@@ -170,12 +174,12 @@ ALGORITMOS = {
 
 
 def motivo_no_disponible(info: dict, G: nx.Graph) -> str | None:
-    """Devuelve el motivo por el que `info` no aplica al grafo `G`, o None
-    si sí aplica.
+    """Devuelve el motivo por el que `info` no es aplicable al grafo `G`.
 
-    Existe para que la UI pueda *explicar* la ausencia: antes el algoritmo
-    simplemente desaparecía del desplegable y no había forma de saber si
-    faltaba por una restricción real o por un error.
+    Devuelve None si el algoritmo es aplicable. La interfaz usa este texto para
+    indicar por qué un algoritmo no está disponible. Antes desaparecía del
+    desplegable sin explicación, y no era posible distinguir una restricción
+    del algoritmo de un error de la aplicación.
     """
     tiene_negativos = any(d.get("weight", 1) < 0 for _, _, d in G.edges(data=True))
     es_dag = G.is_directed() and nx.is_directed_acyclic_graph(G)
@@ -190,9 +194,10 @@ def motivo_no_disponible(info: dict, G: nx.Graph) -> str | None:
 
 
 def estado_algoritmos(G: nx.Graph) -> list[dict]:
-    """Registro completo anotado con disponibilidad, en orden de definición.
+    """Registro completo con la disponibilidad de cada algoritmo.
 
-    Cada elemento: {"id", "nombre", "disponible": bool, "motivo": str | None}.
+    Conserva el orden de definición. Cada elemento tiene la forma
+    {"id", "nombre", "disponible": bool, "motivo": str | None}.
     """
     estado = []
     for kid, info in ALGORITMOS.items():
@@ -209,9 +214,11 @@ def estado_algoritmos(G: nx.Graph) -> list[dict]:
 
 
 def algoritmos_disponibles(G: nx.Graph) -> dict:
-    """Filtra el registro según las propiedades del grafo actual, para no
-    ofrecer en la UI un algoritmo que no aplica (p. ej. Dijkstra con pesos
-    negativos, o caminos en DAG sobre un grafo con ciclos)."""
+    """Filtra el registro según las propiedades del grafo actual.
+
+    Evita ofrecer algoritmos que no son aplicables, como Dijkstra sobre un
+    grafo con pesos negativos o caminos en DAG sobre un grafo con ciclos.
+    """
     return {
         kid: info
         for kid, info in ALGORITMOS.items()

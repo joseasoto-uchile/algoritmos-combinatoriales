@@ -1,9 +1,10 @@
-"""Hoja de estilos de Cytoscape: un selector por clase de estado.
-Cambiar look-and-feel se hace solo acá, sin tocar la lógica.
+"""Hoja de estilos de Cytoscape, con un selector por clase de estado.
 
-Los colores viven en COLORES y la leyenda de la interfaz se arma a partir de
-ESTADOS_LEYENDA, para que no puedan quedar desfasados: si acá se cambia un
-color, la leyenda cambia sola.
+Es el único archivo que define la apariencia. La lógica no depende de él.
+
+Los colores están en el diccionario COLORES y la leyenda de la interfaz se
+construye a partir de ESTADOS_LEYENDA. De ese modo un cambio de color se
+refleja en la leyenda sin editarla por separado.
 """
 
 COLORES = {
@@ -22,7 +23,7 @@ COLORES = {
     "origen_borde": "#f57f17",
 }
 
-# (clave, título, explicación, color de relleno, color de borde)
+# Formato: (clave, título, descripción, color de relleno, color de borde)
 ESTADOS_LEYENDA = [
     ("base", "Sin visitar", "Todavía no alcanzado", COLORES["base"], COLORES["base_borde"]),
     ("origen", "Origen", "Nodo de partida elegido", COLORES["base"], COLORES["origen_borde"]),
@@ -66,7 +67,7 @@ STYLESHEET = [
         },
     },
     {
-        # Grafo no dirigido: sin punta de flecha.
+        # Grafo no dirigido: las aristas no llevan punta de flecha.
         "selector": "edge.no_dirigido",
         "style": {"target-arrow-shape": "none", "source-arrow-shape": "none"},
     },
@@ -137,24 +138,24 @@ STYLESHEET = [
             "width": 4,
         },
     },
-    # --- Etiqueta con la distancia calculada hasta el momento ---
+    # --- Etiqueta con la distancia calculada hasta el paso actual ---
     #
-    # Va FUERA del nodo, debajo. Las dos alternativas que parecían más
-    # naturales no sirven:
+    # La etiqueta se sitúa debajo del nodo, no dentro. Se descartaron dos
+    # alternativas:
     #   - dentro de un nodo de tamaño fijo, una distancia de tres o más cifras
-    #     se desborda del círculo;
-    #   - hacer que el nodo crezca con el texto arregla el desborde pero deja
-    #     los nodos de tamaños distintos, que se lee peor.
-    # Fuera del nodo el tamaño queda uniforme y el texto nunca se corta.
+    #     sobrepasa el borde del círculo;
+    #   - ajustar el tamaño del nodo al texto evita ese problema, pero produce
+    #     nodos de tamaños distintos.
+    # Fuera del nodo, el tamaño es uniforme y el texto no se recorta.
     #
-    # Cytoscape.js dibuja UNA sola etiqueta por elemento, así que el nombre del
-    # nodo viaja en el mismo texto (primer renglón) en vez de quedar dentro del
-    # círculo. Por eso también comparte color: no hay forma nativa de pintar
-    # cada renglón distinto.
+    # Cytoscape.js dibuja una sola etiqueta por elemento, por lo que el nombre
+    # del nodo forma el primer renglón del mismo texto en lugar de quedar
+    # dentro del círculo. Por el mismo motivo ambos renglones comparten color:
+    # no existe una propiedad para asignar un color por renglón.
     #
-    # Esta regla va al final a propósito: los estados de arriba ponen texto
-    # blanco para que se lea dentro de un nodo oscuro, pero acá el texto cae
-    # sobre el fondo del lienzo y tiene que volver a ser oscuro.
+    # Esta regla se declara al final de forma deliberada. Los estados
+    # anteriores fijan texto blanco para que se lea sobre un nodo oscuro, pero
+    # aquí el texto queda sobre el fondo del lienzo y debe ser oscuro.
     {
         "selector": "node.con_distancia",
         "style": {
