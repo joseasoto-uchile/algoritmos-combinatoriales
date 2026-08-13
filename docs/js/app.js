@@ -26,8 +26,8 @@ const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 /* --- Utilidades de lectura de formulario -------------------------------- */
 function entero(valor, defecto) {
-    // No se usa `valor || defecto`. En JavaScript 0 es un valor falso, y un
-    // peso mínimo de 0 se sustituiría por el valor por omisión sin avisar.
+    // En JavaScript 0 es un valor falso, por lo que `valor || defecto` no
+    // sirve: sustituiría un 0 escrito por el usuario.
     if (valor === null || valor === undefined || valor === '') return defecto;
     const n = parseInt(valor, 10);
     return Number.isNaN(n) ? defecto : n;
@@ -43,13 +43,11 @@ function velocidadValida(valor) {
     return Math.min(Math.max(n, VELOCIDAD_MINIMA), VELOCIDAD_MAXIMA);
 }
 
-/* Rellena un elemento select mediante la API del DOM, no con innerHTML.
+/* Rellena un elemento select mediante la API del DOM.
  *
- * Los identificadores de nodo proceden del archivo que carga el usuario.
- * Concatenarlos dentro de innerHTML permitía inyectar HTML: un nodo llamado
- *     "><img src=x onerror="...">
- * ejecutaba código al abrir el archivo. Con textContent el navegador trata el
- * valor como texto y no lo interpreta como marcado.
+ * Los identificadores de nodo proceden del archivo que carga el usuario y no
+ * deben concatenarse dentro de innerHTML: permitiría inyectar HTML. Con
+ * textContent el navegador trata el valor como texto.
  */
 function llenarDesplegable(select, pares) {
     select.replaceChildren(...pares.map(([valor, etiqueta]) => {
@@ -76,9 +74,9 @@ function origenPorOmision(G) {
 /* --- Render del grafo ---------------------------------------------------- */
 function elementosActuales() {
     const layout = $('#dd-layout').value;
-    // Solo el layout 'preset' utiliza las coordenadas guardadas. Con cualquier
-    // otro layout, enviarlas hace que Cytoscape las vuelva a aplicar en cada
-    // paso y el grafo regrese a las posiciones anteriores.
+    // Solo el layout 'preset' utiliza las coordenadas guardadas. Cytoscape
+    // aplica las que recibe en cada actualización de elementos, es decir en
+    // cada paso de la traza.
     let elementos = grafoAElementos(estado.G, layout === 'preset');
     if (estado.traza) {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
@@ -99,8 +97,8 @@ function recalcularLayout() {
 }
 
 /* Redibuja el estado sin recalcular las posiciones. Cytoscape conserva las
- * coordenadas de los nodos existentes, por lo que solo cambian las clases y las
- * etiquetas. Es lo que evita que el grafo cambie de disposición entre pasos. */
+ * coordenadas de los nodos existentes, de modo que solo cambian las clases y
+ * las etiquetas. */
 function pintarEstado() {
     const elementos = elementosActuales();
     const porId = new Map(elementos.map((e) => [e.data.id, e]));
@@ -169,7 +167,7 @@ function generarInstancia() {
         cargarGrafo(G);
     } catch (e) {
         // Con parámetros incoherentes se muestra el motivo y se conserva el
-        // grafo anterior, en lugar de dejar la aplicación sin instancia.
+        // grafo anterior.
         err.textContent = e.message;
         err.className = 'txt-error';
     }
@@ -213,13 +211,10 @@ function ejecutar() {
         salida.textContent = `${info.nombre} desde ${origen}, ${traza.length} pasos de traza.`;
         salida.className = 'txt-estado';
         pintarEstado();
-        // La animación empieza sin intervención adicional. Ejecutar el
-        // algoritmo y después pulsar reproducir eran dos acciones para una
-        // sola intención.
+        // La animación empieza sin necesidad de pulsar reproducir.
         reproducir();
     } catch (e) {
-        // En caso de error no se modifica la reproducción. Si había una
-        // animación en curso de una ejecución anterior, continúa igual.
+        // En caso de error no se modifica la reproducción en curso.
         salida.textContent = `Error: ${e.message}`;
         salida.className = 'txt-error';
     }
@@ -238,8 +233,8 @@ function pausar() {
 
 function reproducir() {
     if (!estado.traza || estado.traza.length < 2) return;
-    // Con la traza terminada, el primer ciclo detectaba el final y volvía a
-    // detenerse, sin efecto visible. Ahora la reproducción vuelve al principio.
+    // Con la traza terminada se vuelve al principio. De lo contrario el primer
+    // ciclo detecta el final y detiene la reproducción.
     if (estado.paso >= estado.traza.length - 1) estado.paso = 0;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
@@ -268,8 +263,8 @@ function avanzarAutomatico() {
 
 function controlPaso(delta) {
     if (!estado.traza) return;
-    // Usar un control manual durante la animación dejaba el temporizador
-    // activo, y este sobrescribía el paso elegido.
+    // Un control manual detiene la reproducción. De lo contrario el
+    // temporizador sobrescribe el paso elegido.
     if (estado.reproduciendo) pausar();
     estado.paso = delta === null ? 0
         : Math.max(0, Math.min(estado.paso + delta, estado.traza.length - 1));
@@ -297,8 +292,7 @@ function renderPseudocodigo() {
 function resaltarPseudocodigo() {
     let lineaActiva = null;
     // Solo se resalta si la traza corresponde al algoritmo mostrado. Al
-    // cambiar el desplegable sin volver a ejecutar, el pseudocódigo visible no
-    // se corresponde con los pasos guardados.
+    // cambiar el desplegable sin volver a ejecutar, no se corresponden.
     if (estado.traza && $('#dd-algoritmo').value === estado.algEjecutado) {
         const p = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
         lineaActiva = estado.traza[p].linea;
@@ -407,9 +401,8 @@ function activarDivisores() {
 
 /* --- Arranque ------------------------------------------------------------ */
 function iniciar() {
-    // Estos tres se rellenan con constantes del código, no con datos del
-    // usuario. Se construyen igualmente con la API del DOM para no dejar el
-    // patrón de innerHTML en el archivo.
+    // Estos tres se rellenan con constantes del código. Se construyen con la
+    // API del DOM para mantener un solo patrón en el archivo.
     llenarDesplegable($('#dd-layout'), LAYOUTS.map((l) => [l, l]));
     $('#dd-layout').value = 'circle';
     llenarDesplegable($('#dd-ejemplo'), [
@@ -502,8 +495,7 @@ function iniciar() {
                 salida.textContent = `Cargado: ${archivo.name}`;
                 salida.className = 'txt-estado';
             } catch (e) {
-                // El mensaje se muestra en rojo con el motivo. Antes aparecía
-                // en gris y se confundía con una carga correcta.
+                // El mensaje de error se muestra en rojo, con el motivo.
                 salida.textContent = e instanceof SyntaxError
                     ? `JSON inválido: ${archivo.name} no es un archivo JSON bien formado.`
                     : e.message;

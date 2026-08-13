@@ -4,10 +4,9 @@
  * detrás de docs/js/grafo.js y docs/js/algoritmos.js y ejecuta el resultado con
  * Node, de modo que Grafo y ALGORITMOS ya están definidos.
  *
- * La comparación es evento por evento, no solo del resultado final. Lo que
- * muestra la aplicación es el recorrido, de modo que dos implementaciones que
- * lleguen a las mismas distancias por caminos distintos producirían animaciones
- * diferentes.
+ * La comparación es evento por evento. La aplicación muestra el recorrido, no
+ * solo el resultado, de modo que dos implementaciones que lleguen a las mismas
+ * distancias por caminos distintos producen animaciones diferentes.
  */
 'use strict';
 
@@ -27,11 +26,9 @@ function normalizar(ev) {
     return JSON.stringify(o);
 }
 
-/* Los archivos malformados forman la otra parte del contrato. Si las dos
- * versiones no los rechazan con el mismo mensaje, un mismo archivo se comporta
- * de forma distinta en cada una. Ocurrió antes: Python fusionaba aristas
- * repetidas y creaba los nodos ausentes, y JavaScript no. Esta comparación no
- * lo detectaba porque solo examinaba instancias bien formadas. */
+/* Los archivos malformados forman la otra parte del contrato: las dos
+ * versiones deben rechazarlos con el mismo mensaje. En caso contrario, un mismo
+ * archivo produce grafos distintos en cada una. */
 function compararRechazos(casos) {
     const fallos = [];
     for (const { nombre, datos, mensajePython } of casos) {
@@ -42,9 +39,8 @@ function compararRechazos(casos) {
             mensajeJs = e.message;
         }
         // Si mensajePython es null, Python acepta el archivo. Es el caso de los
-        // identificadores que contienen marcado: son texto válido y deben
-        // aceptarse en las dos versiones. El riesgo estaba en cómo se dibujaban,
-        // no en el dato.
+        // identificadores que contienen marcado: son texto válido y las dos
+        // versiones deben aceptarlos.
         if (mensajeJs !== mensajePython) {
             const desc = (m) => (m === null ? '(lo acepta)' : m);
             fallos.push({

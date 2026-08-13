@@ -15,14 +15,14 @@ Los algoritmos emiten la misma traza de eventos que los de `algorithms/`: los
 mismos tipos, los mismos campos y los mismos números de línea del pseudocódigo.
 La equivalencia se comprueba comparando evento por evento sobre 12 instancias.
 
-Dos diferencias entre los lenguajes hicieron necesarios estos ajustes:
+Dos diferencias entre los lenguajes obligan a estos ajustes:
 
 - La cola de prioridad de Dijkstra desempata por nombre de nodo, igual que
   `heapq` en Python, donde los elementos son tuplas `(distancia, nodo)`.
 - El diccionario `padre` de Dijkstra es un `Map` y no un objeto. Las claves
   numéricas de un objeto se recorren en orden ascendente por especificación del
-  lenguaje, no en orden de inserción, y las aristas de la solución se emitían en
-  un orden distinto.
+  lenguaje, no en orden de inserción, y las aristas de la solución deben
+  emitirse en el orden en que se relajaron.
 
 Para ejecutar la comprobación, desde la raíz del repositorio:
 
@@ -40,7 +40,7 @@ impide además que un manejador de eventos en línea llegue a ejecutarse.
 
 Al modificar la interfaz, no usar `innerHTML` con datos procedentes del archivo
 que carga el usuario. Los identificadores de nodo son datos de entrada: un nodo
-llamado `"><img src=x onerror=...>` ejecutaba código al abrir el archivo.
+llamado `"><img src=x onerror=...>` inyecta marcado si se concatena.
 
 `Grafo.desdeObjeto` valida el archivo antes de construir el grafo y lo rechaza
 con un mensaje que indica el problema. Las reglas coinciden con las de
@@ -52,10 +52,10 @@ con un mensaje que indica el problema. Las reglas coinciden con las de
 2. En Settings, Pages, seleccionar esa rama y la carpeta `/docs`.
 
 No requiere compilación ni dependencias externas. Cytoscape está incluido en
-`js/cytoscape.min.js`, versión 3.30.2, en lugar de cargarse desde un CDN: un
-bloqueo de red del CDN dejaba la página sin contenido, y así funciona sin
-conexión. Para actualizarlo, descargar la versión nueva sobre ese archivo y
-subir el valor de `?v=` de su etiqueta en `index.html`.
+`js/cytoscape.min.js`, versión 3.30.2, y no se carga desde un CDN, de modo que
+la página funciona sin acceso a red externa. Para actualizarlo, descargar la
+versión nueva sobre ese archivo y subir el valor de `?v=` de su etiqueta en
+`index.html`.
 
 El archivo `.gitattributes` marca `js/cytoscape.min.js` como binario para que
 git no modifique sus fines de línea. De ese modo su hash sigue coincidiendo con
@@ -66,8 +66,8 @@ el del archivo publicado por el CDN:
 ## Caché del navegador
 
 Al modificar cualquier archivo de `js/` o `css/`, incrementar el valor de `?v=`
-en las etiquetas correspondientes de `index.html`. Sin ese cambio los visitantes
-siguen ejecutando la versión anterior desde la caché.
+en las etiquetas correspondientes de `index.html`. En caso contrario los
+visitantes ejecutan la versión anterior desde la caché.
 
 ## Ejecución local
 

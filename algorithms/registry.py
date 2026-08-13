@@ -176,10 +176,8 @@ ALGORITMOS = {
 def motivo_no_disponible(info: dict, G: nx.Graph) -> str | None:
     """Devuelve el motivo por el que `info` no es aplicable al grafo `G`.
 
-    Devuelve None si el algoritmo es aplicable. La interfaz usa este texto para
-    indicar por qué un algoritmo no está disponible. Antes desaparecía del
-    desplegable sin explicación, y no era posible distinguir una restricción
-    del algoritmo de un error de la aplicación.
+    Devuelve None si el algoritmo es aplicable. La interfaz muestra este texto
+    junto al algoritmo que no ofrece.
     """
     tiene_negativos = any(d.get("weight", 1) < 0 for _, _, d in G.edges(data=True))
     es_dag = G.is_directed() and nx.is_directed_acyclic_graph(G)

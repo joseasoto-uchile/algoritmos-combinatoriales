@@ -34,10 +34,9 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
     n = len(nodos)
     total_iteraciones = max(n - 1, 0)
     for i in range(total_iteraciones):
-        # Marca el comienzo de cada pasada. La interfaz lo usa para mostrar el
-        # número de iteración actual. El número de pasadas determina el costo
-        # del algoritmo, y sin este evento las pasadas son indistinguibles,
-        # porque todas repiten los mismos eventos sobre las mismas aristas.
+        # Marca el comienzo de cada pasada. Es el único evento que distingue
+        # una pasada de otra, ya que todas repiten los mismos eventos sobre las
+        # mismas aristas. La interfaz lo usa para mostrar la iteración actual.
         tb.emit(
             "inicio_iteracion",
             iteracion=i + 1,
@@ -57,9 +56,8 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
             else:
                 tb.emit("descartar_arista", u=u, v=v, linea=5)
         if not hubo_cambio:
-            # Si una pasada completa no produce cambios, las siguientes tampoco
-            # los producirían. El algoritmo termina antes de las V-1 pasadas y
-            # lo indica en la traza.
+            # Una pasada sin cambios implica que las siguientes tampoco los
+            # producirán. El algoritmo termina y lo indica en la traza.
             tb.emit(
                 "fin_iteraciones",
                 iteracion=i + 1,
@@ -78,14 +76,12 @@ def bellman_ford_trace(G: nx.Graph, origen: str):
         )
 
     # Pasada adicional: toda arista que aún se puede relajar indica un ciclo de
-    # peso negativo. Marcar solo esos extremos es insuficiente, porque el ciclo
-    # completo y todos los nodos alcanzables desde él tampoco tienen distancia
-    # mínima definida. Por eso se propaga hacia adelante desde los detectados.
-    # Para el recorrido se usan dict y list, no set. La iteración de un set de
+    # peso negativo. La marca se propaga hacia adelante desde esos extremos,
+    # porque el ciclo completo y los nodos alcanzables desde él tampoco tienen
+    # distancia mínima definida.
+    # El orden de marcado debe ser reproducible entre ejecuciones. Se usan dict
+    # y list, que conservan el orden de inserción. La iteración de un set de
     # cadenas sigue el orden del hash, que Python aleatoriza en cada proceso.
-    # Con sets, el orden de marcado cambiaba entre ejecuciones sobre el mismo
-    # grafo. El conjunto final era correcto, pero la animación no se repetía
-    # aunque se fijara la semilla.
     sospechosos = {}
     for u, v, datos in aristas:
         peso = datos.get("weight", 1)

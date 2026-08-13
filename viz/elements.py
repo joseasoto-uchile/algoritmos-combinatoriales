@@ -33,12 +33,10 @@ def graph_to_elements(G: nx.Graph, incluir_posiciones: bool = True) -> list[dict
     hoja de estilos usa para omitir la punta de flecha (ver cytoscape_style.py).
 
     El parámetro `incluir_posiciones` determina si cada nodo incluye su
-    coordenada guardada. Solo debe activarse con el layout 'preset', que es el
-    que utiliza las posiciones de la instancia. Con cualquier otro layout, las
-    coordenadas guardadas no corresponden a lo que se muestra: al enviarlas,
-    Cytoscape las vuelve a aplicar cada vez que se reemplaza la lista de
-    elementos, es decir en cada paso de la traza, y el grafo regresa a las
-    posiciones anteriores.
+    coordenada guardada. Solo debe activarse con el layout 'preset'. Cytoscape
+    aplica las coordenadas recibidas cada vez que se reemplaza la lista de
+    elementos, es decir en cada paso de la traza, y con cualquier otro layout
+    eso desplaza el grafo a las posiciones guardadas.
     """
     elementos = []
     for n, datos in G.nodes(data=True):
@@ -114,10 +112,9 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
     caso de DFS. Así la etiqueta secundaria aparece solo en los algoritmos que
     calculan distancias, sin necesidad de declararlo en el registro.
 
-    Los eventos se reproducen en orden en lugar de guardar el diccionario
-    completo en cada paso. La traza se envía entera al navegador en cada
-    ejecución, y almacenar el estado por paso haría que creciera de forma
-    cuadrática.
+    Los eventos se reproducen en orden. La traza se envía entera al navegador
+    en cada ejecución, y almacenar el diccionario completo por paso haría que
+    creciera de forma cuadrática.
     """
     if not trace:
         return None
@@ -138,8 +135,7 @@ def calcular_distancias(trace: list[dict], paso_actual: int) -> dict[str, float]
 
     if not hubo_datos:
         # El algoritmo puede calcular distancias y no haber emitido ninguna en
-        # los primeros pasos. Para distinguir ese caso se examina la traza
-        # completa, no solo el tramo recorrido.
+        # los primeros pasos, de modo que se examina la traza completa.
         lleva_distancias = any(
             "dist" in ev or (ev["tipo"] == "relajar" and "nueva_dist" in ev) for ev in trace
         )
@@ -254,8 +250,8 @@ def aplicar_clases(
     for el in elementos:
         el = {**el, "data": dict(el["data"])}
         data = el["data"]
-        # Conserva las clases estructurales que asignó graph_to_elements, como
-        # 'no_dirigido', y añade las clases de estado que indica la traza.
+        # Une las clases estructurales de graph_to_elements, como
+        # 'no_dirigido', con las de estado que indica la traza.
         clases = set((el.get("classes") or "").split())
         if "source" in data:
             clases |= clases_arista.get(data["id"], set())

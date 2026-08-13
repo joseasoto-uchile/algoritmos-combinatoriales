@@ -1,21 +1,18 @@
-"""Verifica que la versión JavaScript produzca las MISMAS trazas que Python.
+"""Comprueba que la versión JavaScript produzca las mismas trazas que Python.
 
-El repositorio mantiene dos implementaciones a propósito (ver README): la de
-Dash para desarrollar en Python y la estática de docs/ para publicar. Eso solo
-es sostenible si algo comprueba que no se separen, porque el primer cambio
-hecho en una sola las desincroniza sin que nadie se entere.
+El repositorio mantiene dos implementaciones de la misma aplicación (ver
+README). Este script verifica que no diverjan.
 
 Uso:
 
     python herramientas/verificar_paridad.py
 
-Devuelve código de salida 0 si todas las trazas coinciden, 1 si alguna difiere.
-Requiere Node.js en el PATH.
+Devuelve 0 si todas las trazas coinciden y 1 si alguna difiere. Requiere
+Node.js en el PATH.
 
-Los grafos aleatorios se generan en Python y se le PASAN a JavaScript
-serializados, en vez de generarlos a ambos lados: los generadores de números
-aleatorios de los dos lenguajes son distintos y con la misma semilla darían
-instancias distintas, así que no se podría comparar nada.
+Los grafos aleatorios se generan en Python y se pasan a JavaScript
+serializados. Los generadores de números aleatorios de los dos lenguajes son
+distintos y con la misma semilla producen instancias distintas.
 """
 from __future__ import annotations
 
@@ -59,10 +56,9 @@ def _origen(G):
 def _saneable(valor):
     """Reemplaza los infinitos por una cadena antes de serializar.
 
-    json.dump escribe `Infinity` para float('inf'), que NO es JSON válido:
-    JSON.parse de JavaScript lo rechaza. Aparece en el evento 'fin', dentro de
-    las distancias de los nodos inalcanzables. Ese campo queda fuera de la
-    comparación de todos modos, pero tiene que poder viajar.
+    json.dump escribe `Infinity` para float('inf'), que no es JSON válido y
+    JSON.parse rechaza. Aparece en el evento 'fin', en las distancias de los
+    nodos inalcanzables.
     """
     if isinstance(valor, float):
         if valor == float("inf"):
@@ -81,9 +77,8 @@ def _saneable(valor):
     return valor
 
 
-# Archivos malformados: se comprueba que AMBAS versiones los rechacen con el
-# mismo mensaje. Es lo que faltaba: comparar solo instancias bien formadas dejó
-# pasar que cada versión "reparaba" los archivos rotos a su manera.
+# Archivos malformados. Las dos versiones deben rechazarlos con el mismo
+# mensaje.
 CASOS_INVALIDOS = [
     ("peso no numerico", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
                           "aristas": [{"origen": "0", "destino": "1", "weight": "diez"}]}),
@@ -106,8 +101,8 @@ CASOS_INVALIDOS = [
     ("no es objeto", [1, 2, 3]),
     ("arista sin origen", {"dirigido": True, "nodos": [{"id": "0"}],
                            "aristas": [{"destino": "0", "weight": 1}]}),
-    # El XSS que motivó todo esto: el identificador con marcado tiene que
-    # comportarse igual en las dos versiones (aceptado como texto literal).
+    # Identificador que contiene marcado HTML. Las dos versiones deben
+    # aceptarlo como texto.
     ("id con marcado", {"dirigido": True,
                         "nodos": [{"id": '"><img src=x onerror="alert(1)">'}, {"id": "1"}],
                         "aristas": [{"origen": '"><img src=x onerror="alert(1)">',
@@ -135,10 +130,10 @@ def construir_referencia() -> dict:
 
     for nombre, G0 in instancias:
         datos = graph_to_dict(G0)
-        # Round-trip por el diccionario antes de ejecutar: es lo que hace la
-        # app Dash en cada callback, y es lo único comparable contra la versión
-        # JS, que parte de ese mismo diccionario. Sin esto, el orden de la
-        # lista de adyacencia difiere y las trazas divergen sin que haya error.
+        # Se reconstruye el grafo desde el diccionario antes de ejecutar, que
+        # es lo que hace la aplicación Dash en cada callback y el punto de
+        # partida de la versión JavaScript. El orden de la lista de adyacencia
+        # depende de ese paso.
         G = graph_from_dict(datos)
         origen = _origen(G)
         trazas = {}
@@ -162,9 +157,9 @@ def main() -> int:
     # Clave aparte para que el comparador la separe de las instancias normales.
     referencia["__invalidos__"] = construir_casos_invalidos()
 
-    # Los archivos de docs/js/ son scripts sueltos, sin exports: se concatenan
-    # en uno solo para que las declaraciones de nivel superior (class, const)
-    # queden en el mismo ámbito que el comparador.
+    # Los archivos de docs/js/ son scripts sin exports. Se concatenan en uno
+    # solo para que las declaraciones de nivel superior queden en el mismo
+    # ámbito que el comparador.
     partes = [
         os.path.join(RAIZ, "docs", "js", "grafo.js"),
         os.path.join(RAIZ, "docs", "js", "algoritmos.js"),

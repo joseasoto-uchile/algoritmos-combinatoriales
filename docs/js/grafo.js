@@ -5,9 +5,8 @@
  */
 
 /* Generador de números aleatorios con semilla (mulberry32). JavaScript no
- * incluye uno y Math.random no acepta semilla. Sin esta función las instancias
- * no serían reproducibles y el campo "semilla" de la interfaz no tendría
- * efecto. */
+ * incluye uno y Math.random no acepta semilla. Es lo que hace reproducibles
+ * las instancias generadas. */
 function generadorAleatorio(semilla) {
     let a = (semilla >>> 0) || 0x9e3779b9;
     const siguiente = () => {
@@ -31,24 +30,21 @@ function generadorAleatorio(semilla) {
     };
 }
 
-/* Réplica del identificador que viz.js genera para cada arista. Se duplica en
- * lugar de importarlo porque el modelo no debe depender de la capa de dibujo.
- * Equivale a la función homónima de graph_model/model.py. */
+/* Réplica del identificador que viz.js genera para cada arista. Se duplica
+ * porque el modelo no depende de la capa de dibujo. Equivale a la función
+ * homónima de graph_model/model.py. */
 function idAristaInterno(u, v, dirigido) {
     return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
 }
 
 /* Rechaza un objeto de grafo que no cumple el formato.
  *
- * Aplica las mismas reglas y devuelve los mismos mensajes que
- * graph_model/model.py, porque un archivo debe comportarse igual en las dos
- * versiones. Sin validación, cada una corregía los defectos de forma distinta:
- * Python fusiona aristas repetidas y crea los nodos ausentes, JavaScript no
- * hacía ninguna de las dos cosas, y el mismo archivo producía grafos distintos.
+ * Debe aplicar las mismas reglas y devolver los mismos mensajes que
+ * graph_model/model.py: un archivo tiene que comportarse igual en las dos
+ * versiones.
  *
- * En JavaScript la ausencia de validación tenía peor efecto que en Python: un
- * peso de tipo texto no produce error, se concatena, y Dijkstra devolvía
- * distancias como "0diez2" sin ningún aviso.
+ * La validación es necesaria en JavaScript porque un peso de tipo texto no
+ * produce error, se concatena, y Dijkstra devuelve distancias como "0diez2".
  *
  * Se informa solo el primer problema encontrado.
  */
@@ -211,10 +207,9 @@ class Grafo {
 
 const ESCALA_POSICIONES = 800;
 
-/* Disposición inicial en círculo. La versión Python usa el spring layout de
- * NetworkX, que no está disponible aquí. La diferencia no afecta al resultado:
- * estas coordenadas solo las utiliza el layout 'preset', y en las instancias
- * aleatorias Cytoscape calcula las posiciones. */
+/* Disposición inicial en círculo. Estas coordenadas solo las utiliza el layout
+ * 'preset'. La versión Python usa el spring layout de NetworkX, que no está
+ * disponible aquí. */
 function asignarPosiciones(G) {
     const ids = G.ids;
     const radio = ESCALA_POSICIONES * 0.4;
@@ -266,8 +261,7 @@ function generarAleatorio({
 
     const orden = rng.mezclar([...ids]);
     if (conexo) {
-        // Se construye primero un árbol de conectividad, que garantiza que no
-        // queden nodos aislados antes de repartir las aristas restantes.
+        // Árbol de conectividad. Garantiza que no queden nodos aislados.
         for (let i = 1; i < n; i++) agregar(orden[rng.entero(0, i - 1)], orden[i]);
     }
     const limite = numAristas * 20 + 200;

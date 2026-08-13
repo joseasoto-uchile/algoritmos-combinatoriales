@@ -65,9 +65,8 @@ def generar_aleatorio(
     if dag:
         dirigido = True
 
-    # Validación explícita. Sin ella, un peso_min mayor que peso_max llega a
-    # rng.randint() y produce un error de rango vacío, que no indica al
-    # usuario cuál es el problema. El mismo criterio se aplica a n.
+    # rng.randint() exige peso_min <= peso_max, y el resto de la función exige
+    # al menos un nodo. Se comprueba aquí para devolver el motivo concreto.
     if n < 1:
         raise ValueError("El número de nodos debe ser al menos 1.")
     if peso_min > peso_max:
@@ -90,10 +89,9 @@ def generar_aleatorio(
 
     def peso_aleatorio() -> int:
         if permitir_negativos:
-            # Con pesos negativos se ignora peso_min de forma deliberada y se
-            # sortea en [-peso_max, peso_max]. El objetivo de esta opción es
-            # obtener pesos de ambos signos para comparar Bellman-Ford con
-            # Dijkstra.
+            # Con pesos negativos el sorteo es en [-peso_max, peso_max] y
+            # peso_min no interviene. El propósito de la opción es obtener
+            # pesos de ambos signos.
             w = rng.randint(-abs(peso_max), abs(peso_max))
             return w if w != 0 else 1
         return rng.randint(peso_min, peso_max)
@@ -146,8 +144,8 @@ def generar_aleatorio(
 def graph_to_dict(G: nx.Graph) -> dict:
     """Serializa el grafo (incluyendo posiciones) a un diccionario JSON-able.
 
-    Formato propio y simple en lugar de node_link_data de NetworkX, para no
-    depender de los cambios de API entre versiones de la librería.
+    Usa un formato propio, no node_link_data de NetworkX, para no depender de
+    los cambios de API entre versiones de la biblioteca.
     """
     return {
         "dirigido": G.is_directed(),
@@ -162,9 +160,8 @@ def graph_to_dict(G: nx.Graph) -> dict:
 def _id_arista_interno(u: str, v: str, dirigido: bool) -> str:
     """Réplica del identificador que viz/elements.py genera para cada arista.
 
-    Se duplica en lugar de importarlo porque graph_model no debe depender de
-    la capa de dibujo. Si el formato cambia en viz/, la validación deja de
-    detectar la colisión, pero el resto sigue funcionando.
+    Se duplica porque graph_model no depende de la capa de dibujo. Un cambio de
+    formato en viz/ requiere actualizar también esta función.
     """
     if dirigido:
         return f"{u}__{v}"
@@ -175,16 +172,13 @@ def _id_arista_interno(u: str, v: str, dirigido: bool) -> str:
 def validar_datos_grafo(data) -> None:
     """Rechaza un diccionario de grafo que no cumple el formato.
 
-    La validación ocurre antes de construir el grafo y es estricta: el archivo
-    se acepta completo o se rechaza. La alternativa, corregir los defectos
-    durante la carga, ejecutaba el algoritmo sobre un grafo distinto del que
-    contenía el archivo, y hacía que las versiones Python y JavaScript no
-    coincidieran, porque cada una aplicaba correcciones distintas: NetworkX
-    fusiona aristas repetidas y crea los nodos ausentes, JavaScript no hacía
-    ninguna de las dos cosas.
+    La validación es estricta: el archivo se acepta completo o se rechaza. Con
+    ello los dos ports procesan el mismo archivo de la misma forma, sin que las
+    correcciones automáticas de NetworkX (fusión de aristas repetidas, creación
+    de nodos ausentes) introduzcan diferencias.
 
-    Se informa solo el primer problema encontrado. Los mensajes son idénticos
-    a los de docs/js/grafo.js.
+    Se informa solo el primer problema encontrado. Los mensajes deben coincidir
+    con los de docs/js/grafo.js.
     """
     if not isinstance(data, dict):
         raise ValueError("JSON inválido: el contenido debe ser un objeto.")
@@ -238,8 +232,7 @@ def validar_datos_grafo(data) -> None:
         ids_arista.add(_id_arista_interno(u, v, dirigido))
 
     # Cytoscape exige identificadores únicos entre nodos y aristas. Un nodo
-    # llamado "0__1" coincide con el identificador de la arista 0 -> 1, y uno
-    # de los dos elementos no se dibuja.
+    # llamado "0__1" coincide con el identificador de la arista 0 -> 1.
     choque = ids & ids_arista
     if choque:
         nid = sorted(choque)[0]
@@ -252,10 +245,7 @@ def validar_datos_grafo(data) -> None:
 def graph_from_dict(data: dict) -> nx.Graph:
     """Reconstruye un grafo a partir del diccionario de graph_to_dict.
 
-    Valida antes de construir. Sin validación se aceptaba cualquier entrada y
-    el fallo aparecía más tarde: un peso de tipo texto producía una excepción
-    al calcular qué algoritmos eran aplicables, y la interfaz quedaba sin
-    actualizar y sin mensaje.
+    Valida el diccionario antes de construir el grafo.
     """
     validar_datos_grafo(data)
     G = crear_grafo(dirigido=bool(data.get("dirigido", True)))

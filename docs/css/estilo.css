@@ -46,10 +46,9 @@ body {
     padding-right: 6px;
 }
 
-/* El alto mínimo del lienzo se declara aquí, no en la fila. Declarado en la
-   fila, esta deja de reducirse y alcanza el alto de la columna de controles,
-   con lo que el lienzo crece en exceso. 480 px corresponde a la barra, el
-   lienzo mínimo (240), la leyenda y las separaciones. */
+/* El alto mínimo del lienzo se declara aquí, no en la fila. En la fila haría
+   que esta alcanzara el alto de la columna de controles. 480 px corresponde a
+   la barra, el lienzo mínimo (240), la leyenda y las separaciones. */
 .columna-grafo {
     flex: 1 1 320px;
     min-width: 280px;
@@ -143,7 +142,7 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     border-radius: 6px; width: 34px; height: 30px; cursor: pointer;
 }
 
-/* Algoritmos que el grafo actual no admite: antes desaparecían sin explicación. */
+/* Algoritmos que el grafo actual no admite. Se listan con el motivo. */
 .lista-no-disponibles {
     margin-top: 8px; font-size: 11px; color: #90a4ae;
     border-top: 1px dashed #eceff1; padding-top: 6px;

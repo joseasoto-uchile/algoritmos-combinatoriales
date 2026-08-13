@@ -14,8 +14,7 @@ const COLORES = {
     origen_borde: '#f57f17',
 };
 
-// La leyenda de la interfaz se construye a partir de estos valores, de modo
-// que no puede quedar desfasada de los colores que usa el grafo.
+// La leyenda de la interfaz se construye a partir de estos valores.
 const ESTADOS_LEYENDA = [
     ['Sin visitar', 'Todavía no alcanzado', COLORES.base, COLORES.base_borde],
     ['Origen', 'Nodo de partida elegido', COLORES.base, COLORES.origen_borde],
@@ -53,14 +52,13 @@ const ESTILOS = [
         'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde, width: 4 } },
     { selector: 'edge.activo', style: {
         'line-color': COLORES.activo_borde, 'target-arrow-color': COLORES.activo_borde, width: 4 } },
-    /* La etiqueta de distancia se sitúa debajo del nodo, no dentro. Dentro de
-     * un nodo de tamaño fijo, una distancia de tres o más cifras sobrepasa el
-     * borde, y ajustar el tamaño del nodo al texto produce nodos de tamaños
-     * distintos.
+    /* Cytoscape.js admite una sola etiqueta por elemento. El nombre del nodo y
+     * la distancia son los dos renglones de un mismo texto, situado bajo el
+     * nodo, y comparten color.
      *
-     * Esta regla se declara al final de forma deliberada. Los estados
-     * anteriores fijan texto blanco para que se lea sobre un nodo oscuro, pero
-     * aquí el texto queda sobre el fondo del lienzo y debe ser oscuro. */
+     * Esta regla debe declararse después de las de estado, que fijan texto
+     * blanco para los nodos oscuros. Aquí el texto va sobre el fondo del
+     * lienzo. */
     { selector: 'node.con_distancia', style: {
         'text-wrap': 'wrap', 'line-height': 1.15, 'text-valign': 'bottom',
         'text-halign': 'center', 'text-margin-y': '4px', 'font-size': '11px',
@@ -132,8 +130,7 @@ function calcularEstado(traza, pasoActual, dirigido) {
 function aplicarClases(elementos, clasesNodo, clasesArista, origen = null) {
     return elementos.map((el) => {
         const nuevo = { ...el, data: { ...el.data } };
-        // Conserva las clases estructurales, como 'no_dirigido', y añade las
-        // de estado en lugar de reemplazarlas.
+        // Une las clases estructurales, como 'no_dirigido', con las de estado.
         const clases = new Set((el.classes || '').split(' ').filter(Boolean));
         if ('source' in nuevo.data) {
             (clasesArista.get(nuevo.data.id) || []).forEach((c) => clases.add(c));
@@ -147,9 +144,8 @@ function aplicarClases(elementos, clasesNodo, clasesArista, origen = null) {
 }
 
 /* Reconstruye la distancia conocida de cada nodo en `pasoActual`. Devuelve
- * null si la traza no contiene ninguna, que es el caso de DFS. Así la etiqueta
- * secundaria aparece solo en los algoritmos que calculan distancias, sin
- * necesidad de declararlo en el registro. */
+ * null si la traza no contiene ninguna, que es el caso de DFS. La etiqueta
+ * secundaria aparece solo en los algoritmos que calculan distancias. */
 function calcularDistancias(traza, pasoActual) {
     if (!traza || !traza.length) return null;
     const distancias = new Map();
@@ -162,8 +158,7 @@ function calcularDistancias(traza, pasoActual) {
     }
     if (!hubo) {
         // El algoritmo puede calcular distancias y no haber emitido ninguna
-        // en los primeros pasos. Para distinguirlo se examina la traza
-        // completa.
+        // en los primeros pasos, de modo que se examina la traza completa.
         const lleva = traza.some((ev) => 'dist' in ev || (ev.tipo === 'relajar' && 'nueva_dist' in ev));
         if (!lleva) return null;
     }
@@ -171,9 +166,7 @@ function calcularDistancias(traza, pasoActual) {
 }
 
 /* Estado del contador de iteraciones en `pasoActual`. Devuelve null si el
- * algoritmo no trabaja por iteraciones. Solo Bellman-Ford las emite: su costo
- * depende del número de veces que recorre todas las aristas, y sin este dato
- * las pasadas son indistinguibles, porque repiten los mismos eventos. */
+ * algoritmo no trabaja por iteraciones. Solo Bellman-Ford las emite. */
 function calcularIteracion(traza, pasoActual) {
     if (!traza || !traza.length) return null;
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
@@ -189,8 +182,8 @@ function calcularIteracion(traza, pasoActual) {
         }
     }
     if (estado === null) {
-        // El algoritmo puede iterar y no haber empezado la primera pasada.
-        // Para distinguirlo se examina la traza completa.
+        // El algoritmo puede iterar y no haber empezado la primera pasada, de
+        // modo que se examina la traza completa.
         const primera = traza.find((ev) => ev.tipo === 'inicio_iteracion');
         if (!primera) return null;
         return { iteracion: 0, total: primera.total_iteraciones,
@@ -217,8 +210,7 @@ function aplicarDistancias(elementos, distancias) {
         const v = distancias.get(nuevo.data.id);
         const texto = (v === undefined || v === Infinity) ? '∞' : String(v);
         nuevo.data.dist = texto;
-        // El prefijo 'd=' identifica el renglón sin necesidad de consultar la
-        // leyenda.
+        // El prefijo 'd=' identifica el renglón.
         nuevo.data.label = `${nuevo.data.label}\nd=${texto}`;
         const clases = new Set((el.classes || '').split(' ').filter(Boolean));
         clases.add('con_distancia');
