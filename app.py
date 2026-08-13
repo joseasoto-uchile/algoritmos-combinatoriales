@@ -587,6 +587,7 @@ def describir_ejemplo(clave):
     Output("store-trace", "data", allow_duplicate=True),
     Output("store-paso", "data", allow_duplicate=True),
     Output("txt-archivo", "children"),
+    Output("txt-archivo", "className"),
     Input("upload-json", "contents"),
     State("upload-json", "filename"),
     prevent_initial_call=True,
@@ -597,10 +598,17 @@ def cargar(contenido, nombre_archivo):
     try:
         _, cadena_b64 = contenido.split(",", 1)
         data = json.loads(base64.b64decode(cadena_b64))
-        graph_from_dict(data)  # valida que el formato sea correcto
+        graph_from_dict(data)  # valida el formato; lanza ValueError con el motivo
+    except ValueError as exc:
+        # Archivo mal formado: el mensaje ya nombra el problema concreto.
+        return no_update, no_update, no_update, str(exc), "txt-error"
     except Exception as exc:  # noqa: BLE001
-        return no_update, no_update, no_update, f"No se pudo leer {nombre_archivo}: {exc}"
-    return data, None, 0, f"Cargado: {nombre_archivo}"
+        return (
+            no_update, no_update, no_update,
+            f"No se pudo leer {nombre_archivo}: {type(exc).__name__}: {exc}",
+            "txt-error",
+        )
+    return data, None, 0, f"Cargado: {nombre_archivo}", "txt-estado"
 
 
 # ---------------------------------------------------------------------------
@@ -674,8 +682,16 @@ def exportar_traza(n_json, n_csv, trace, alg_id):
 def actualizar_opciones(data, alg_actual):
     if not data:
         raise PreventUpdate
-    G = graph_from_dict(data)
-    estado = estado_algoritmos(G)
+    try:
+        G = graph_from_dict(data)
+        estado = estado_algoritmos(G)
+    except Exception as exc:  # noqa: BLE001
+        # Segunda capa: 'cargar' ya valida el archivo, pero store-grafo también
+        # lo escriben 'generar' y 'cargar_ejemplo'. Sin esto, un grafo inválido
+        # que llegara por cualquier otra vía dejaba los desplegables sin
+        # actualizar y sin ningún mensaje: parecía que la app se había colgado.
+        aviso = html.Div(f"No se pudo preparar el grafo: {exc}", className="txt-error")
+        return [], None, [], None, aviso
 
     disponibles = [e for e in estado if e["disponible"]]
     opciones_alg = [{"label": e["nombre"], "value": e["id"]} for e in disponibles]
