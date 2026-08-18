@@ -24,10 +24,17 @@ de menor largo.
 
 ## Interfaz
 
-Las tablas T y Π se muestran una junto a otra, ambas de tamaño |V| por k+1. Se
-dibujan completas desde el principio y cada celda se rellena cuando el algoritmo
-la termina, siguiendo el orden del pseudocódigo: columna a columna y, dentro de
+Las tablas T y Π se muestran una junto a otra, ambas de tamaño |V| por k+1.
+
+La primera línea del algoritmo asigna +∞ a toda T y ⊥ a todo Π, y las tablas lo
+reflejan: desde el primer paso aparecen completas con esos valores, en gris
+claro. Cada celda pasa a color normal cuando el algoritmo fija su valor
+definitivo, siguiendo el orden del pseudocódigo: columna a columna y, dentro de
 cada columna, nodo a nodo.
+
+El panel de las tablas tiene alto limitado y cada tabla se desplaza por dentro,
+con los encabezados de fila y de columna fijos. Así una instancia con k grande
+no reduce el espacio del grafo.
 
 Π[b,i] es el penúltimo nodo de un paseo óptimo. Vale ⊥ cuando i = 0 o cuando
 T[b,i] es +∞, es decir cuando no existe tal paseo. La casilla de la barra oculta

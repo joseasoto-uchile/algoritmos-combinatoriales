@@ -100,17 +100,22 @@ function estadoTablas(traza, pasoActual, ids, k) {
         T[b] = new Array(k + 1).fill(Infinity);
         Pi[b] = new Array(k + 1).fill(null);
     }
-    // Celdas cuyo valor ya es definitivo, en formato "nodo|columna". Una celda
-    // terminada con valor +infinito debe distinguirse de una que aun no se
-    // calcula, y ambas tienen el mismo valor en T.
+    // La primera linea del algoritmo asigna +infinito a toda la tabla y el
+    // simbolo de indefinido a todo Pi. A partir de ese evento las dos tablas
+    // se muestran completas.
+    let inicializado = false;
+    // Celdas cuyo valor ya es definitivo, en formato "nodo|columna". Se
+    // distinguen de las que siguen en su valor inicial, que tambien es
+    // +infinito.
     const calculadas = new Set();
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let p = 0; p <= tope; p++) {
         const ev = traza[p];
         if (ev.tipo === 'inicializar') {
-            for (const b of ids) calculadas.add(b + '|0');
+            inicializado = true;
         } else if (ev.tipo === 'caso_base') {
             T[ev.nodo][ev.columna] = ev.valor;
+            for (const b of ids) calculadas.add(b + '|0');
         } else if (ev.tipo === 'mejorar') {
             T[ev.nodo][ev.columna] = ev.valor;
             Pi[ev.nodo][ev.columna] = ev.a;
@@ -118,7 +123,7 @@ function estadoTablas(traza, pasoActual, ids, k) {
             calculadas.add(ev.nodo + '|' + ev.columna);
         }
     }
-    return { T, Pi, calculadas };
+    return { T, Pi, calculadas, inicializado };
 }
 
 /* Columna que el algoritmo está calculando en `pasoActual`, o 0 si aún no ha

@@ -238,15 +238,56 @@ body {
     border-radius: 6px;
 }
 
-/* --- Tabla T --- */
-.panel-tabla { flex: 0 0 auto; }
-.tabla-envoltura { overflow-x: auto; }
+/* --- Tablas T y Pi --- */
 
-/* T y Pi se muestran una junto a otra. Si no caben, la segunda pasa debajo. */
-.par-tablas { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
-.bloque-tabla { min-width: 0; }
+/* El panel no debe crecer con el tamano de las tablas: con k grande o muchos
+   nodos empujaria el grafo fuera de la vista. Se limita su alto y el
+   desplazamiento ocurre dentro de cada tabla. */
+.panel-tabla {
+    flex: 0 0 auto;
+    max-height: 44vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.par-tablas {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.bloque-tabla {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+}
+
 .bloque-tabla[hidden] { display: none; }
-.bloque-tabla h2 { margin: 0 0 6px; }
+.bloque-tabla h2 { margin: 0 0 6px; flex: 0 0 auto; }
+
+.tabla-envoltura {
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+    border: 1px solid var(--gris);
+    border-radius: 4px;
+}
+
+/* Encabezados fijos: al desplazarse por una tabla grande se conserva la
+   referencia de nodo y de columna. */
+#tabla-t thead th, #tabla-pi thead th { position: sticky; top: 0; z-index: 2; }
+#tabla-t th.fila-nodo, #tabla-pi th.fila-nodo { position: sticky; left: 0; z-index: 1; }
+#tabla-t thead th.esquina, #tabla-pi thead th.esquina { left: 0; z-index: 3; }
+
+/* Celdas que aun conservan el valor inicial de la primera linea del
+   algoritmo, frente a las que el algoritmo ya fijo. */
+#tabla-t td.pendiente, #tabla-pi td.pendiente { color: #CBD5E1; }
 
 #tabla-t, #tabla-pi {
     border-collapse: collapse;

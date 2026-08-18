@@ -101,6 +101,7 @@ function pintarTabla() {
     estado.T = tablas ? tablas.T : null;
     estado.Pi = tablas ? tablas.Pi : null;
     const calculadas = tablas ? tablas.calculadas : new Set();
+    const inicializado = tablas ? tablas.inicializado : false;
 
     const colActual = estado.traza ? columnaActual(estado.traza, estado.paso) : -1;
     const ev = estado.traza
@@ -135,9 +136,10 @@ function pintarTabla() {
         const i = Number(td.dataset.columna);
         const clases = clasesDe(b, i);
         td.replaceChildren();
-        if (estado.T && calculadas.has(b + '|' + i)) {
+        if (inicializado) {
             td.append(textoValor(estado.T[b][i]));
             if (estado.T[b][i] === Infinity) clases.push('infinito');
+            if (!calculadas.has(b + '|' + i)) clases.push('pendiente');
         }
         td.className = clases.join(' ');
     }
@@ -150,10 +152,11 @@ function pintarTabla() {
         const i = Number(td.dataset.columna);
         const clases = clasesDe(b, i);
         td.replaceChildren();
-        if (estado.Pi && calculadas.has(b + '|' + i)) {
+        if (inicializado) {
             const v = estado.Pi[b][i];
             td.append(v === null ? '⊥' : v);
             if (v === null) clases.push('indefinido');
+            if (!calculadas.has(b + '|' + i)) clases.push('pendiente');
         }
         td.className = clases.join(' ');
     }
