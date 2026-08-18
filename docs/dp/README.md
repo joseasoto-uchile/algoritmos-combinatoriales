@@ -24,9 +24,14 @@ de menor largo.
 
 ## Interfaz
 
-La tabla T se dibuja completa desde el principio. Cada celda se rellena cuando
-el algoritmo la termina, siguiendo el orden del pseudocódigo: columna a columna
-y, dentro de cada columna, nodo a nodo.
+Las tablas T y Π se muestran una junto a otra, ambas de tamaño |V| por k+1. Se
+dibujan completas desde el principio y cada celda se rellena cuando el algoritmo
+la termina, siguiendo el orden del pseudocódigo: columna a columna y, dentro de
+cada columna, nodo a nodo.
+
+Π[b,i] es el penúltimo nodo de un paseo óptimo. Vale ⊥ cuando i = 0 o cuando
+T[b,i] es +∞, es decir cuando no existe tal paseo. La casilla de la barra oculta
+la tabla Π si no se necesita.
 
 Al pulsar una celda (b,i) con i mayor o igual que 1 se marcan las celdas
 (a,i-1) para todo a en N⁻(b), junto con los arcos correspondientes del grafo, y
@@ -39,7 +44,6 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
 ## Controles
 
 - Reproducción paso a paso, con avance y retroceso por columna completa.
-- Casilla para mostrar Π dentro de cada celda.
 - Reconstrucción del paseo óptimo (Algoritmo 3) para el destino elegido, con la
   opción de marcarlo en el grafo.
 - Exportación de la tabla T en CSV.

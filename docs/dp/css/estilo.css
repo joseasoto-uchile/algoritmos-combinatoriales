@@ -242,13 +242,20 @@ body {
 .panel-tabla { flex: 0 0 auto; }
 .tabla-envoltura { overflow-x: auto; }
 
-#tabla-t {
+/* T y Pi se muestran una junto a otra. Si no caben, la segunda pasa debajo. */
+.par-tablas { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.bloque-tabla { min-width: 0; }
+.bloque-tabla[hidden] { display: none; }
+.bloque-tabla h2 { margin: 0 0 6px; }
+
+#tabla-t, #tabla-pi {
     border-collapse: collapse;
     font-family: Consolas, "Courier New", monospace;
     font-size: 13px;
 }
 
-#tabla-t th, #tabla-t td {
+#tabla-t th, #tabla-t td,
+#tabla-pi th, #tabla-pi td {
     border: 1px solid #94A3B8;
     min-width: 46px;
     height: 30px;
@@ -256,52 +263,44 @@ body {
     padding: 2px 6px;
 }
 
-#tabla-t thead th {
+#tabla-t thead th, #tabla-pi thead th {
     background: var(--fondo);
     font-weight: 700;
     border-bottom-width: 2px;
 }
 
-#tabla-t thead th.esquina { background: var(--azul-oscuro); color: #fff; }
-#tabla-t th.fila-nodo { background: var(--fondo); font-weight: 700; }
-#tabla-t tbody td { background: #fff; cursor: pointer; }
-#tabla-t tbody td:hover { outline: 2px solid var(--azul-medio); outline-offset: -2px; }
-#tabla-t td.infinito { color: var(--gris-texto); }
+#tabla-t thead th.esquina, #tabla-pi thead th.esquina { background: var(--azul-oscuro); color: #fff; }
+#tabla-t th.fila-nodo, #tabla-pi th.fila-nodo { background: var(--fondo); font-weight: 700; }
+#tabla-t tbody td, #tabla-pi tbody td { background: #fff; cursor: pointer; }
+#tabla-t tbody td:hover, #tabla-pi tbody td:hover { outline: 2px solid var(--azul-medio); outline-offset: -2px; }
+#tabla-t td.infinito, #tabla-pi td.indefinido { color: var(--gris-texto); }
 
 /* Columna que consulta el algoritmo y columna en cálculo. */
-#tabla-t td.columna-previa { background: var(--celeste); }
-#tabla-t thead th.columna-actual { background: var(--verde-suave); color: var(--verde); }
+#tabla-t td.columna-previa, #tabla-pi td.columna-previa { background: var(--celeste); }
+#tabla-t thead th.columna-actual, #tabla-pi thead th.columna-actual { background: var(--verde-suave); color: var(--verde); }
 
 /* Celda en cálculo y celda de la que se lee el valor. */
-#tabla-t td.celda-activa {
+#tabla-t td.celda-activa, #tabla-pi td.celda-activa {
     background: var(--verde-suave);
     border: 2px solid var(--verde);
     font-weight: 700;
 }
 
-#tabla-t td.celda-fuente {
+#tabla-t td.celda-fuente, #tabla-pi td.celda-fuente {
     background: var(--celeste-fuerte);
     border: 2px solid var(--azul-medio);
 }
 
 /* Selección manual: celda pulsada y las celdas de N-(b) en la columna previa. */
-#tabla-t td.celda-seleccionada {
+#tabla-t td.celda-seleccionada, #tabla-pi td.celda-seleccionada {
     background: var(--verde-suave);
     border: 2px solid var(--verde);
     font-weight: 700;
 }
 
-#tabla-t td.celda-vecina {
+#tabla-t td.celda-vecina, #tabla-pi td.celda-vecina {
     background: var(--celeste-fuerte);
     border: 2px solid var(--azul-medio);
-}
-
-#tabla-t td .pi {
-    display: block;
-    font-size: 9.5px;
-    color: var(--azul-medio);
-    line-height: 1;
-    margin-top: 1px;
 }
 
 .leyenda {

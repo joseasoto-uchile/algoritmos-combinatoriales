@@ -51,15 +51,14 @@ function llenarDesplegable(select, pares) {
 
 /* --- Tabla T ------------------------------------------------------------- */
 
-function construirTabla() {
-    const tabla = $('#tabla-t');
-    const ids = estado.G.ids;
-    const k = estado.k;
-
+/* T y Pi tienen la misma forma, |V| filas por k+1 columnas, y se rellenan a la
+ * vez. Se construyen con la misma funcion para que las celdas de una y otra se
+ * correspondan posicion a posicion. */
+function construirUnaTabla(tabla, titulo, ids, k) {
     const thead = document.createElement('thead');
     const filaEnc = document.createElement('tr');
     const esquina = document.createElement('th');
-    esquina.textContent = 'T';
+    esquina.textContent = titulo;
     esquina.className = 'esquina';
     filaEnc.appendChild(esquina);
     for (let i = 0; i <= k; i++) {
@@ -88,6 +87,12 @@ function construirTabla() {
     tabla.replaceChildren(thead, tbody);
 }
 
+function construirTabla() {
+    const ids = estado.G.ids;
+    construirUnaTabla($('#tabla-t'), 'T', ids, estado.k);
+    construirUnaTabla($('#tabla-pi'), 'Π', ids, estado.k);
+}
+
 function pintarTabla() {
     if (!estado.G) return;
     const tablas = estado.traza
@@ -101,7 +106,7 @@ function pintarTabla() {
     const ev = estado.traza
         ? estado.traza[Math.max(0, Math.min(estado.paso, estado.traza.length - 1))]
         : null;
-    const mostrarPi = $('#chk-pi').checked;
+    $('#bloque-pi').hidden = !$('#chk-pi').checked;
 
     // Celdas de la columna anterior que intervienen en la recurrencia de la
     // celda seleccionada.
@@ -112,35 +117,48 @@ function pintarTabla() {
         }
     }
 
+    // Clases de resaltado, comunes a las dos tablas.
+    const clasesDe = (b, i) => {
+        const c = [];
+        if (i === colActual) c.push('columna-actual');
+        if (i === colActual - 1) c.push('columna-previa');
+        if (ev && ev.nodo === b && ev.columna === i) c.push('celda-activa');
+        if (ev && ev.a === b && ev.columna === i + 1) c.push('celda-fuente');
+        if (vecinos.has(b + '|' + i)) c.push('celda-vecina');
+        if (estado.seleccion && estado.seleccion.nodo === b
+            && estado.seleccion.columna === i) c.push('celda-seleccionada');
+        return c;
+    };
+
     for (const td of $$('#tabla-t tbody td')) {
         const b = td.dataset.nodo;
         const i = Number(td.dataset.columna);
-        const clases = [];
-
-        const calculada = estado.T && calculadas.has(b + '|' + i);
+        const clases = clasesDe(b, i);
         td.replaceChildren();
-        if (calculada) {
+        if (estado.T && calculadas.has(b + '|' + i)) {
             td.append(textoValor(estado.T[b][i]));
             if (estado.T[b][i] === Infinity) clases.push('infinito');
-            if (mostrarPi && estado.Pi[b][i] !== null) {
-                const sub = document.createElement('span');
-                sub.className = 'pi';
-                sub.textContent = estado.Pi[b][i];
-                td.appendChild(sub);
-            }
         }
-
-        if (i === colActual) clases.push('columna-actual');
-        if (i === colActual - 1) clases.push('columna-previa');
-        if (ev && ev.nodo === b && ev.columna === i) clases.push('celda-activa');
-        if (ev && ev.a === b && ev.columna === i + 1) clases.push('celda-fuente');
-        if (vecinos.has(b + '|' + i)) clases.push('celda-vecina');
-        if (estado.seleccion && estado.seleccion.nodo === b
-            && estado.seleccion.columna === i) clases.push('celda-seleccionada');
         td.className = clases.join(' ');
     }
 
-    for (const th of $$('#tabla-t thead th[data-columna]')) {
+    // Pi[b,i] es el penultimo nodo de un paseo optimo. Vale el simbolo de
+    // indefinido cuando i = 0 o cuando T[b,i] es infinito, es decir cuando no
+    // existe tal paseo.
+    for (const td of $$('#tabla-pi tbody td')) {
+        const b = td.dataset.nodo;
+        const i = Number(td.dataset.columna);
+        const clases = clasesDe(b, i);
+        td.replaceChildren();
+        if (estado.Pi && calculadas.has(b + '|' + i)) {
+            const v = estado.Pi[b][i];
+            td.append(v === null ? '⊥' : v);
+            if (v === null) clases.push('indefinido');
+        }
+        td.className = clases.join(' ');
+    }
+
+    for (const th of $$('#tabla-t thead th[data-columna], #tabla-pi thead th[data-columna]')) {
         th.className = Number(th.dataset.columna) === colActual ? 'columna-actual' : '';
     }
 }
@@ -573,6 +591,7 @@ function iniciar() {
         $('#in-velocidad').dispatchEvent(new Event('change'));
     });
     $('#tabla-t').addEventListener('click', alPulsarCelda);
+    $('#tabla-pi').addEventListener('click', alPulsarCelda);
 
     $('#btn-guardar').addEventListener('click', () =>
         descargar('digrafo.json', JSON.stringify(estado.G.aObjeto(), null, 2)));

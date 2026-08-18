@@ -6,7 +6,7 @@
 <title>Programación dinámica: paseos de largo mínimo</title>
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=2">
+<link rel="stylesheet" href="css/estilo.css?v=3">
 <script src="../js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
@@ -86,17 +86,23 @@
           <span class="txt-ayuda">pasos/seg</span>
           <div id="atajos-velocidad" class="atajos"></div>
         </div>
-        <label class="opcion"><input id="chk-pi" type="checkbox"> Mostrar &Pi;</label>
+        <label class="opcion"><input id="chk-pi" type="checkbox" checked> Mostrar tabla &Pi;</label>
       </div>
 
       <div id="cyto"></div>
 
       <div class="panel panel-tabla">
-        <h2>Tabla T</h2>
-        <div class="tabla-envoltura">
-          <table id="tabla-t"></table>
+        <div class="par-tablas">
+          <div class="bloque-tabla">
+            <h2>Tabla T</h2>
+            <div class="tabla-envoltura"><table id="tabla-t"></table></div>
+          </div>
+          <div class="bloque-tabla" id="bloque-pi">
+            <h2>Tabla &Pi;</h2>
+            <div class="tabla-envoltura"><table id="tabla-pi"></table></div>
+          </div>
         </div>
-        <div id="txt-seleccion" class="txt-ayuda">Pulsa una celda de T para ver de qué celdas depende.</div>
+        <div id="txt-seleccion" class="txt-ayuda">Pulsa una celda para ver de qué celdas depende.</div>
         <div class="leyenda">
           <span class="muestra col-previa"></span> columna i-1
           <span class="muestra col-actual"></span> columna en cálculo
@@ -132,6 +138,6 @@
 <script src="js/dp.js?v=2"></script>
 <script src="js/ejemplos.js?v=2"></script>
 <script src="js/viz.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
