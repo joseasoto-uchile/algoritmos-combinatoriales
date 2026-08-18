@@ -6,7 +6,7 @@
 <title>Programación dinámica: paseos de largo mínimo</title>
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=4">
+<link rel="stylesheet" href="css/estilo.css?v=5">
 <script src="../js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
@@ -23,7 +23,7 @@
         <label for="dd-origen">Nodo origen s</label>
         <select id="dd-origen"></select>
         <label for="in-k">Número de arcos k</label>
-        <input id="in-k" type="number" min="0" max="30" step="1" value="4">
+        <input id="in-k" type="number" min="0" max="200" step="1" value="4">
         <button id="btn-ejecutar" class="btn-primario">Ejecutar</button>
         <div id="txt-resultado" class="txt-estado"></div>
       </section>
@@ -38,7 +38,7 @@
       <section class="panel">
         <h2>Generar instancia</h2>
         <label for="in-n">Nodos</label>
-        <input id="in-n" type="number" min="2" max="12" step="1" value="6">
+        <input id="in-n" type="number" min="2" max="200" step="1" value="6">
         <label for="in-densidad">Densidad de arcos (0-1)</label>
         <input id="in-densidad" type="number" min="0" max="1" step="0.05" value="0.35">
         <label for="in-largo-min">Largo mínimo</label>
@@ -49,7 +49,8 @@
         <input id="in-semilla" type="number">
         <button id="btn-generar" class="btn-primario">Generar</button>
         <div id="txt-generar"></div>
-        <div class="txt-ayuda">Todo nodo recibe un loop de largo 0 como preprocesamiento.</div>
+        <div class="txt-ayuda">Todo nodo recibe un loop de largo 0 como preprocesamiento.
+          El número de pasos de la traza es 3 + k(2n + 2m), con un máximo de 400.000.</div>
       </section>
 
       <section class="panel">
@@ -134,10 +135,10 @@
   </footer>
 </div>
 
-<script src="js/digrafo.js?v=4"></script>
-<script src="js/dp.js?v=4"></script>
-<script src="js/ejemplos.js?v=4"></script>
-<script src="js/viz.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/digrafo.js?v=5"></script>
+<script src="js/dp.js?v=5"></script>
+<script src="js/ejemplos.js?v=5"></script>
+<script src="js/viz.js?v=5"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>

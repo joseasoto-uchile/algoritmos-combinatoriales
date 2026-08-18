@@ -9,6 +9,26 @@
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 4;
 const ATAJOS_VELOCIDAD = [1, 4, 15, 50];
 
+const NODOS_MINIMO = 2, NODOS_MAXIMO = 200;
+const K_MINIMO = 0, K_MAXIMO = 200;
+
+/* La traza guarda un evento por cada comparacion del algoritmo. Su tamano es
+ * exactamente 3 + k(2n + 2m + 2), donde m cuenta los loops. El limite acota la
+ * memoria del navegador: 400.000 eventos son unos 40 MB. */
+const EVENTOS_MAXIMO = 400000;
+
+function estimarEventos(n, m, k) { return 3 + k * (2 * n + 2 * m + 2); }
+
+/* Devuelve el valor si esta en rango. Si no, lanza un error con el motivo. No
+ * se acota en silencio: un valor recortado sin aviso produce una instancia
+ * distinta de la que el usuario pidio. */
+function enRango(valor, minimo, maximo, nombre) {
+    if (valor < minimo || valor > maximo) {
+        throw new Error(`${nombre} debe estar entre ${minimo} y ${maximo}. Se recibió ${valor}.`);
+    }
+    return valor;
+}
+
 const estado = {
     G: null,
     origen: null,
@@ -297,7 +317,18 @@ function ejecutar() {
     const salida = $('#txt-resultado');
     try {
         estado.origen = $('#dd-origen').value;
-        estado.k = entero($('#in-k').value, 5);
+        estado.k = enRango(entero($('#in-k').value, 4), K_MINIMO, K_MAXIMO,
+            'El número de arcos k');
+
+        const n = estado.G.ids.length, m = estado.G.arcos.size;
+        const previstos = estimarEventos(n, m, estado.k);
+        if (previstos > EVENTOS_MAXIMO) {
+            throw new Error(
+                `La traza tendría ${previstos.toLocaleString('es')} pasos, por encima del `
+                + `límite de ${EVENTOS_MAXIMO.toLocaleString('es')}. `
+                + `La instancia tiene ${n} nodos y ${m} arcos con k = ${estado.k}. `
+                + 'Reduce k o el número de nodos.');
+        }
         const r = programacionDinamica(estado.G, estado.origen, estado.k);
         estado.traza = r.traza;
         estado.paso = 0;
@@ -415,8 +446,10 @@ function cargarGrafo(G, opciones) {
 function generarInstancia() {
     const salida = $('#txt-generar');
     try {
-        const n = Math.min(Math.max(entero($('#in-n').value, 5), 2), 12);
-        const densidad = Math.min(Math.max(parseFloat($('#in-densidad').value) || 0.35, 0), 1);
+        const n = enRango(entero($('#in-n').value, 6), NODOS_MINIMO, NODOS_MAXIMO,
+            'El número de nodos');
+        const densidad = enRango(parseFloat($('#in-densidad').value) || 0, 0, 1,
+            'La densidad');
         const lmin = entero($('#in-largo-min').value, -2);
         const lmax = entero($('#in-largo-max').value, 8);
         if (lmin > lmax) {
@@ -447,9 +480,11 @@ function generarInstancia() {
             if (u !== v) G.agregarArco(u, v, rng.entero(lmin, lmax));
             intentos++;
         }
-        salida.textContent = '';
-        salida.className = '';
         cargarGrafo(G.agregarLoops(), { origen: ids[0] });
+        const arcosPropios = G.arcos.size - n;   // sin contar los loops
+        salida.textContent = `Instancia con ${n} nodos y ${arcosPropios} arcos, `
+            + `más ${n} loops de largo 0.`;
+        salida.className = 'txt-estado';
     } catch (e) {
         salida.textContent = e.message;
         salida.className = 'txt-error';

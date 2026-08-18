@@ -55,6 +55,21 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
   opción de marcarlo en el grafo.
 - Exportación de la tabla T en CSV.
 
+## Límites
+
+El generador acepta entre 2 y 200 nodos, y k entre 0 y 200. Un valor fuera de
+rango se rechaza con un mensaje: no se acota en silencio, porque un valor
+recortado produce una instancia distinta de la pedida.
+
+La traza guarda un evento por cada comparación del algoritmo. Su tamaño es
+exactamente
+
+    3 + k(2n + 2m + 2)
+
+con m el número de arcos incluidos los loops. Antes de ejecutar se calcula ese
+valor y se rechaza la ejecución si supera 400.000 pasos, que son unos 40 MB.
+Como referencia, 60 nodos con k = 20 producen 54.403 pasos.
+
 ## Instancias
 
 Cinco ejemplos: ciclo de 4 nodos, pesos negativos, ciclo de largo negativo,
