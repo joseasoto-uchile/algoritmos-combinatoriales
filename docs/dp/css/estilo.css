@@ -1,0 +1,389 @@
+/* Paleta de las diapositivas de la clase 04. */
+:root {
+    --fondo: #F8FAFC;
+    --texto: #0F172A;
+    --azul-oscuro: #1E293B;
+    --azul-medio: #2563EB;
+    --celeste: #EFF6FF;
+    --celeste-fuerte: #BFDBFE;
+    --verde: #059669;
+    --verde-suave: #ECFDF5;
+    --naranja: #DC2626;
+    --naranja-suave: #FEF2F2;
+    --gris: #E2E8F0;
+    --gris-texto: #64748B;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    font-size: 14px;
+}
+
+.app {
+    height: 100vh;
+    min-height: 700px;
+    padding: 0 14px 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cabecera {
+    background: var(--azul-oscuro);
+    color: #fff;
+    margin: 0 -14px 10px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.cabecera h1 { font-size: 1.05rem; margin: 0; }
+.cabecera .subtitulo { font-size: 12px; color: #CBD5E1; }
+
+.fila {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.columna-controles {
+    flex: 0 0 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+}
+
+.columna-centro {
+    flex: 1 1 auto;
+    min-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+.columna-derecha {
+    flex: 0 0 330px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.panel {
+    background: #fff;
+    border: 1px solid var(--gris);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+
+.panel h2 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gris-texto);
+}
+
+.panel label { display: block; font-size: 12px; color: var(--gris-texto); margin-top: 6px; }
+
+.panel input[type="number"], .panel select {
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--texto);
+}
+
+.btn-primario {
+    margin-top: 9px;
+    width: 100%;
+    background: var(--azul-medio);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-primario:hover { background: #1D4ED8; }
+
+.panel button:not(.btn-primario) {
+    margin-top: 6px;
+    padding: 5px 9px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--texto);
+}
+
+.btn-archivo {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 5px 9px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    background: #fff;
+}
+
+.txt-estado { margin-top: 7px; font-size: 12px; color: #334155; }
+.txt-ayuda { font-size: 11.5px; color: var(--gris-texto); margin-top: 5px; }
+
+.txt-error {
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--naranja);
+    background: var(--naranja-suave);
+    border-left: 3px solid var(--naranja);
+    padding: 5px 7px;
+    border-radius: 3px;
+}
+
+.txt-formula {
+    margin-top: 6px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: var(--azul-medio);
+    background: var(--celeste);
+    border: 1px solid var(--celeste-fuerte);
+    border-radius: 4px;
+    padding: 5px 7px;
+}
+
+.txt-detalle {
+    margin-top: 6px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #334155;
+}
+
+/* --- Barra de control --- */
+.barra {
+    flex: 0 0 auto;
+    background: #fff;
+    border: 1px solid var(--gris);
+    border-radius: 6px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.grupo-botones { display: flex; gap: 4px; }
+
+.grupo-botones button {
+    padding: 5px 9px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--texto);
+}
+
+.grupo-botones button:hover { border-color: var(--azul-medio); color: var(--azul-medio); }
+
+.grupo-velocidad { display: flex; align-items: center; gap: 6px; }
+
+.entrada-velocidad {
+    width: 56px;
+    padding: 4px 6px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    text-align: right;
+    font-size: 12px;
+}
+
+.atajos { display: flex; gap: 3px; }
+
+.atajos button {
+    padding: 3px 7px;
+    font-size: 11px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: var(--gris-texto);
+}
+
+.atajos button:hover { border-color: var(--azul-medio); color: var(--azul-medio); }
+
+.opcion { font-size: 12px; color: var(--gris-texto); display: flex; align-items: center; gap: 4px; }
+
+#cyto {
+    flex: 1 1 auto;
+    min-height: 220px;
+    background: #fff;
+    border: 1px solid var(--gris);
+    border-radius: 6px;
+}
+
+/* --- Tabla T --- */
+.panel-tabla { flex: 0 0 auto; }
+.tabla-envoltura { overflow-x: auto; }
+
+#tabla-t {
+    border-collapse: collapse;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+}
+
+#tabla-t th, #tabla-t td {
+    border: 1px solid #94A3B8;
+    min-width: 46px;
+    height: 30px;
+    text-align: center;
+    padding: 2px 6px;
+}
+
+#tabla-t thead th {
+    background: var(--fondo);
+    font-weight: 700;
+    border-bottom-width: 2px;
+}
+
+#tabla-t thead th.esquina { background: var(--azul-oscuro); color: #fff; }
+#tabla-t th.fila-nodo { background: var(--fondo); font-weight: 700; }
+#tabla-t tbody td { background: #fff; cursor: pointer; }
+#tabla-t tbody td:hover { outline: 2px solid var(--azul-medio); outline-offset: -2px; }
+#tabla-t td.infinito { color: var(--gris-texto); }
+
+/* Columna que consulta el algoritmo y columna en cálculo. */
+#tabla-t td.columna-previa { background: var(--celeste); }
+#tabla-t thead th.columna-actual { background: var(--verde-suave); color: var(--verde); }
+
+/* Celda en cálculo y celda de la que se lee el valor. */
+#tabla-t td.celda-activa {
+    background: var(--verde-suave);
+    border: 2px solid var(--verde);
+    font-weight: 700;
+}
+
+#tabla-t td.celda-fuente {
+    background: var(--celeste-fuerte);
+    border: 2px solid var(--azul-medio);
+}
+
+/* Selección manual: celda pulsada y las celdas de N-(b) en la columna previa. */
+#tabla-t td.celda-seleccionada {
+    background: var(--verde-suave);
+    border: 2px solid var(--verde);
+    font-weight: 700;
+}
+
+#tabla-t td.celda-vecina {
+    background: var(--celeste-fuerte);
+    border: 2px solid var(--azul-medio);
+}
+
+#tabla-t td .pi {
+    display: block;
+    font-size: 9.5px;
+    color: var(--azul-medio);
+    line-height: 1;
+    margin-top: 1px;
+}
+
+.leyenda {
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--gris-texto);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.leyenda .muestra {
+    display: inline-block;
+    width: 15px;
+    height: 13px;
+    border: 1px solid #94A3B8;
+    vertical-align: middle;
+    margin: 0 4px 0 10px;
+}
+
+.leyenda .col-previa { background: var(--celeste); }
+.leyenda .col-actual { background: var(--verde-suave); }
+.leyenda .vecina { background: var(--celeste-fuerte); border-color: var(--azul-medio); }
+.leyenda .activa { background: var(--verde-suave); border: 2px solid var(--verde); }
+
+/* --- Pseudocódigo --- */
+.panel-codigo { flex: 0 0 auto; }
+
+.bloque-codigo {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    background: #FAFBFC;
+    border: 1px solid #EEF2F6;
+    border-radius: 5px;
+    padding: 4px 0;
+}
+
+.linea-codigo {
+    padding: 1px 8px;
+    white-space: pre-wrap;
+    color: #334155;
+    border-left: 3px solid transparent;
+}
+
+.num-linea { display: inline-block; width: 18px; color: #94A3B8; user-select: none; }
+
+.linea-activa {
+    background: #FEF9C3;
+    border-left-color: #CA8A04;
+    color: var(--texto);
+    font-weight: 600;
+}
+
+/* --- Pie --- */
+.pie {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 5px;
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px solid var(--gris);
+    font-size: 10px;
+    color: #94A3B8;
+}
+
+.pie-credito {
+    color: var(--gris-texto);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dotted #CBD5E1;
+}
+
+.pie-credito:hover { color: var(--azul-medio); }
+.pie-asistencia { font-style: italic; }
+
+/* En ventanas estrechas las tres columnas no caben en una fila. */
+@media (max-width: 1100px) {
+    .app { height: auto; min-height: 100vh; }
+    .fila { flex-direction: column; }
+    .columna-controles, .columna-derecha { flex: 0 0 auto; width: 100%; overflow-y: visible; }
+    .columna-centro { flex: 0 0 auto; width: 100%; }
+    #cyto { min-height: 380px; }
+}

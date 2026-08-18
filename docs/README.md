@@ -69,6 +69,13 @@ Al modificar cualquier archivo de `js/` o `css/`, incrementar el valor de `?v=`
 en las etiquetas correspondientes de `index.html`. En caso contrario los
 visitantes ejecutan la versión anterior desde la caché.
 
+## Segunda aplicación: programación dinámica
+
+`dp/` contiene un visualizador independiente del Algoritmo 2 de la clase 04,
+que tabula las tablas T y Π para paseos de largo mínimo con exactamente k
+arcos. No comparte código con esta aplicación, solo `js/cytoscape.min.js`.
+Queda publicado en la ruta `/dp/` del mismo sitio. Ver `dp/README.md`.
+
 ## Ejecución local
 
 ```bash

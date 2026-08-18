@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programación dinámica: paseos de largo mínimo</title>
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<link rel="stylesheet" href="css/estilo.css?v=2">
+<script src="../js/cytoscape.min.js?v=3.30.2"></script>
+</head>
+<body>
+<div class="app">
+  <header class="cabecera">
+    <h1>Paseos de largo mínimo por programación dinámica</h1>
+    <span class="subtitulo">MA3705, clase 04. Algoritmo 2: tabulación de T y &Pi;</span>
+  </header>
+
+  <div class="fila">
+    <div class="columna-controles">
+      <section class="panel">
+        <h2>Ejecución</h2>
+        <label for="dd-origen">Nodo origen s</label>
+        <select id="dd-origen"></select>
+        <label for="in-k">Número de arcos k</label>
+        <input id="in-k" type="number" min="0" max="30" step="1" value="4">
+        <button id="btn-ejecutar" class="btn-primario">Ejecutar</button>
+        <div id="txt-resultado" class="txt-estado"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Instancias de ejemplo</h2>
+        <select id="dd-ejemplo"></select>
+        <div id="txt-ejemplo" class="txt-ayuda"></div>
+        <button id="btn-ejemplo" class="btn-primario">Cargar ejemplo</button>
+      </section>
+
+      <section class="panel">
+        <h2>Generar instancia</h2>
+        <label for="in-n">Nodos</label>
+        <input id="in-n" type="number" min="2" max="12" step="1" value="6">
+        <label for="in-densidad">Densidad de arcos (0-1)</label>
+        <input id="in-densidad" type="number" min="0" max="1" step="0.05" value="0.35">
+        <label for="in-largo-min">Largo mínimo</label>
+        <input id="in-largo-min" type="number" step="1" value="-2">
+        <label for="in-largo-max">Largo máximo</label>
+        <input id="in-largo-max" type="number" step="1" value="8">
+        <label for="in-semilla">Semilla (opcional)</label>
+        <input id="in-semilla" type="number">
+        <button id="btn-generar" class="btn-primario">Generar</button>
+        <div id="txt-generar"></div>
+        <div class="txt-ayuda">Todo nodo recibe un loop de largo 0 como preprocesamiento.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Reconstrucción</h2>
+        <label for="dd-destino">Nodo destino t</label>
+        <select id="dd-destino"></select>
+        <div id="txt-paseo" class="txt-ayuda">Disponible al terminar el cálculo.</div>
+        <button id="btn-marcar-paseo">Marcar en el grafo</button>
+      </section>
+
+      <section class="panel">
+        <h2>Archivo</h2>
+        <label class="btn-archivo">Cargar JSON<input id="in-cargar" type="file" accept=".json" hidden></label>
+        <button id="btn-guardar">Guardar JSON</button>
+        <button id="btn-tabla-csv">Tabla T en CSV</button>
+        <div id="txt-archivo" class="txt-estado"></div>
+      </section>
+    </div>
+
+    <div class="columna-centro">
+      <div class="barra">
+        <div class="grupo-botones">
+          <button id="btn-reiniciar" title="Reiniciar">&#9198;</button>
+          <button id="btn-col-anterior" title="Columna anterior">&laquo;</button>
+          <button id="btn-anterior" title="Paso anterior">&#9194;</button>
+          <button id="btn-play" title="Reproducir o pausar">&#9654;</button>
+          <button id="btn-siguiente" title="Paso siguiente">&#9193;</button>
+          <button id="btn-col-siguiente" title="Columna siguiente">&raquo;</button>
+          <button id="btn-centrar" title="Centrar el grafo">Centrar</button>
+        </div>
+        <div class="grupo-velocidad">
+          <span class="txt-ayuda">Velocidad</span>
+          <input id="in-velocidad" type="number" min="1" max="100" step="1" class="entrada-velocidad">
+          <span class="txt-ayuda">pasos/seg</span>
+          <div id="atajos-velocidad" class="atajos"></div>
+        </div>
+        <label class="opcion"><input id="chk-pi" type="checkbox"> Mostrar &Pi;</label>
+      </div>
+
+      <div id="cyto"></div>
+
+      <div class="panel panel-tabla">
+        <h2>Tabla T</h2>
+        <div class="tabla-envoltura">
+          <table id="tabla-t"></table>
+        </div>
+        <div id="txt-seleccion" class="txt-ayuda">Pulsa una celda de T para ver de qué celdas depende.</div>
+        <div class="leyenda">
+          <span class="muestra col-previa"></span> columna i-1
+          <span class="muestra col-actual"></span> columna en cálculo
+          <span class="muestra vecina"></span> celdas de N&#8315;(b)
+          <span class="muestra activa"></span> celda actual
+        </div>
+      </div>
+    </div>
+
+    <div class="columna-derecha">
+      <section class="panel panel-codigo">
+        <h2>Algoritmo 2</h2>
+        <div id="pseudocodigo" class="bloque-codigo"></div>
+        <div class="txt-ayuda">Complejidad O(k(n+m)).</div>
+      </section>
+      <section class="panel">
+        <h2>Paso actual</h2>
+        <div id="txt-paso" class="txt-estado"></div>
+        <div id="txt-detalle" class="txt-detalle"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="pie">
+    <a class="pie-credito" href="https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE"
+       target="_blank" rel="noopener noreferrer">&copy; 2026 Jos&eacute; A. Soto, Universidad de Chile</a>
+    <span>&middot; Uso educativo &middot;</span>
+    <span class="pie-asistencia">Asistido por Claude (Anthropic)</span>
+  </footer>
+</div>
+
+<script src="js/digrafo.js?v=2"></script>
+<script src="js/dp.js?v=2"></script>
+<script src="js/ejemplos.js?v=2"></script>
+<script src="js/viz.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
+</body>
+</html>
