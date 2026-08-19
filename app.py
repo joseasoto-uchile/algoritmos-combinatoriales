@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import math
 import io
 import json
 import os
@@ -44,6 +45,7 @@ URL_LICENCIA = (
 # escriben en el campo.
 VELOCIDAD_MINIMA = 1
 VELOCIDAD_MAXIMA = 100
+INTERVALO_MINIMO_MS = 16
 VELOCIDAD_INICIAL = 5
 ATAJOS_VELOCIDAD = [1, 5, 15, 50]
 
@@ -59,6 +61,16 @@ def _velocidad_valida(valor) -> int:
     except (TypeError, ValueError):
         return VELOCIDAD_INICIAL
     return min(max(v, VELOCIDAD_MINIMA), VELOCIDAD_MAXIMA)
+
+
+def _pasos_por_disparo(valor) -> int:
+    """Pasos que avanza cada tick del Interval.
+
+    El navegador no entrega ticks fiables por debajo de INTERVALO_MINIMO_MS.
+    Para las velocidades que lo exigirían se avanzan varios pasos por tick.
+    """
+    pps = _velocidad_valida(valor)
+    return max(1, math.ceil(pps * INTERVALO_MINIMO_MS / 1000))
 
 app = Dash(__name__)
 app.title = "Visualizador de Algoritmos sobre Grafos"
@@ -819,17 +831,22 @@ def alternar_play(n_clicks, reproduciendo, trace, paso):
     State("store-paso", "data"),
     State("store-trace", "data"),
     State("store-breakpoints", "data"),
+    State("in-velocidad", "value"),
     prevent_initial_call=True,
 )
-def avanzar_automatico(n_intervals, paso, trace, breakpoints):
+def avanzar_automatico(n_intervals, paso, trace, breakpoints, velocidad):
     if not trace:
         raise PreventUpdate
-    paso = (paso or 0) + 1
-    if paso >= len(trace) - 1:
-        return len(trace) - 1, False, True, "▶"
-    # Punto de interrupción: la reproducción se detiene con el paso visible.
-    if breakpoints and trace[paso].get("linea") in breakpoints:
-        return paso, False, True, "▶"
+    fin = len(trace) - 1
+    paso = paso or 0
+    for _ in range(_pasos_por_disparo(velocidad)):
+        paso += 1
+        if paso >= fin:
+            return fin, False, True, "▶"
+        # Punto de interrupción: la reproducción se detiene con el paso
+        # visible. Se comprueba en cada paso intermedio del tick.
+        if breakpoints and trace[paso].get("linea") in breakpoints:
+            return paso, False, True, "▶"
     return paso, no_update, no_update, no_update
 
 
@@ -838,11 +855,9 @@ def avanzar_automatico(n_intervals, paso, trace, breakpoints):
     Input("in-velocidad", "value"),
 )
 def cambiar_velocidad(pasos_por_segundo):
-    # El campo son pasos por segundo y dcc.Interval espera milisegundos, de
-    # modo que se invierte. El mínimo de 16 ms corresponde a unos 60 cuadros por
-    # segundo, el límite del navegador.
+    # El campo son pasos por segundo y dcc.Interval espera milisegundos.
     pps = _velocidad_valida(pasos_por_segundo)
-    return max(16, round(1000 / pps))
+    return round(1000 * _pasos_por_disparo(pasos_por_segundo) / pps)
 
 
 @app.callback(
@@ -904,16 +919,12 @@ def controles_paso(n_sig, n_ant, n_rei, paso, trace, reproduciendo):
 # ---------------------------------------------------------------------------
 # 12) Dibujo de Cytoscape. Un solo callback para 'elements' y 'layout'.
 #
-#    Los dos parámetros deben resolverse en el mismo callback. Repartidos en
-#    dos callbacks que escriben sobre el mismo componente, Dash puede
-#    despacharlos de forma casi simultánea y Cytoscape.js falla con el error
-#    "Cannot read properties of null (reading 'isHeadless')".
+#    Los dos parámetros del mismo componente se resuelven en un único
+#    despacho de Dash.
 #
-#    Dentro se decide con no_update cuándo recalcular el layout: solo al
-#    cambiar el grafo, al elegir otro layout o al pulsar "Centrar". No se
-#    recalcula en cada paso de la traza, porque con layouts de fuerza
-#    dirigida como "cose" los nodos cambian de posición en cada paso y el
-#    grafo queda fuera del área visible.
+#    El layout se recalcula solo al cambiar el grafo, al elegir otro layout o
+#    al pulsar "Centrar". Los layouts de fuerza dirigida como "cose" asignan
+#    posiciones nuevas en cada ejecución.
 # ---------------------------------------------------------------------------
 @app.callback(
     Output("cyto", "elements"),
