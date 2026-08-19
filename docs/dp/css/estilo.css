@@ -8,6 +8,7 @@
     --celeste-fuerte: #BFDBFE;
     --verde: #059669;
     --verde-suave: #ECFDF5;
+    --verde-medio: #A7F3D0;
     --naranja: #DC2626;
     --naranja-suave: #FEF2F2;
     --gris: #E2E8F0;
@@ -332,6 +333,14 @@ body {
     border: 2px solid var(--azul-medio);
 }
 
+/* Celda que el paseo reconstruido ocupa en cada columna. Va antes de la
+   selección manual para que una celda pulsada conserve su propio resaltado. */
+#tabla-t td.celda-paseo, #tabla-pi td.celda-paseo {
+    background: var(--verde-medio);
+    border: 2px solid var(--verde);
+    font-weight: 700;
+}
+
 /* Selección manual: celda pulsada y las celdas de N-(b) en la columna previa. */
 #tabla-t td.celda-seleccionada, #tabla-pi td.celda-seleccionada {
     background: var(--verde-suave);
@@ -366,6 +375,7 @@ body {
 .leyenda .col-actual { background: var(--verde-suave); }
 .leyenda .vecina { background: var(--celeste-fuerte); border-color: var(--azul-medio); }
 .leyenda .activa { background: var(--verde-suave); border: 2px solid var(--verde); }
+.leyenda .paseo { background: var(--verde-medio); border: 2px solid var(--verde); }
 
 /* --- Pseudocódigo --- */
 .panel-codigo { flex: 0 0 auto; }

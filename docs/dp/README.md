@@ -54,8 +54,11 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
   botón de reproducir ejecuta el algoritmo si aún no se ha ejecutado, o si
   cambiaron el origen o k desde la última ejecución.
 - Velocidad en pasos por segundo, con atajos de 1, 4, 15, 50 y 100.
-- Reconstrucción del paseo óptimo (Algoritmo 3) para el destino elegido, con la
-  opción de marcarlo en el grafo.
+- Reconstrucción del paseo óptimo (Algoritmo 3) para el destino elegido. Al
+  terminar el cálculo el paseo queda marcado en el digrafo y en las dos tablas:
+  en la columna i se marca la celda del nodo que el paseo ocupa en esa columna.
+  Seleccionar una celda tiene prioridad sobre ese marcado y lo devuelve al
+  soltar la selección.
 - Exportación de la tabla T en CSV.
 
 ## Límites
@@ -80,7 +83,11 @@ Como referencia, 60 nodos con k = 20 producen 54.403 pasos.
 ## Instancias
 
 Cinco ejemplos: ciclo de 4 nodos, pesos negativos, ciclo de largo negativo,
-camino dirigido e instancia con nodos inalcanzables. El generador aleatorio
+camino dirigido e instancia con nodos inalcanzables.
+
+En la instancia de pesos negativos el arco (t,c) tiene largo -3 y el arco (c,t)
+largo 2, de modo que el ciclo c → t → c mide -1. El paseo óptimo a t da vueltas
+a ese ciclo y T decrece cada dos columnas. El generador aleatorio
 construye primero un camino dirigido, de modo que todos los nodos son
 alcanzables desde el primero.
 

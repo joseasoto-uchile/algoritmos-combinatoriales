@@ -32,10 +32,13 @@ function enRango(valor, minimo, maximo, nombre) {
 const estado = {
     G: null,
     origen: null,
-    k: 5,
+    k: K_POR_OMISION,
     traza: null,
     T: null,
     Pi: null,
+    calculadas: new Set(),
+    inicializado: false,
+    paseo: null,
     paso: 0,
     reproduciendo: false,
     temporizador: null,
@@ -113,15 +116,28 @@ function construirTabla() {
     construirUnaTabla($('#tabla-pi'), 'Π', ids, estado.k);
 }
 
-function pintarTabla() {
-    if (!estado.G) return;
-    const tablas = estado.traza
+function recalcularTablas() {
+    const tablas = estado.G && estado.traza
         ? estadoTablas(estado.traza, estado.paso, estado.G.ids, estado.k)
         : null;
     estado.T = tablas ? tablas.T : null;
     estado.Pi = tablas ? tablas.Pi : null;
-    const calculadas = tablas ? tablas.calculadas : new Set();
-    const inicializado = tablas ? tablas.inicializado : false;
+    estado.calculadas = tablas ? tablas.calculadas : new Set();
+    estado.inicializado = tablas ? tablas.inicializado : false;
+}
+
+/* El paseo optimo solo esta definido con la tabla completa: Pi[t,k] necesita
+ * todas las columnas. */
+function recalcularPaseo() {
+    estado.paseo = estado.T && estado.paso >= estado.traza.length - 1
+        ? reconstruirPaseo(estado.T, estado.Pi, $('#dd-destino').value, estado.k)
+        : null;
+}
+
+function pintarTabla() {
+    if (!estado.G) return;
+    const calculadas = estado.calculadas;
+    const inicializado = estado.inicializado;
 
     const colActual = estado.traza ? columnaActual(estado.traza, estado.paso) : -1;
     const ev = estado.traza
@@ -145,6 +161,7 @@ function pintarTabla() {
         if (i === colActual - 1) c.push('columna-previa');
         if (ev && ev.nodo === b && ev.columna === i) c.push('celda-activa');
         if (ev && ev.a === b && ev.columna === i + 1) c.push('celda-fuente');
+        if (estado.paseo && estado.paseo[i] === b) c.push('celda-paseo');
         if (vecinos.has(b + '|' + i)) c.push('celda-vecina');
         if (estado.seleccion && estado.seleccion.nodo === b
             && estado.seleccion.columna === i) c.push('celda-seleccionada');
@@ -198,6 +215,7 @@ function pintarGrafo() {
         }
     } else {
         [clasesNodo, clasesArco] = clasesPaso(estado.traza, estado.paso, estado.origen);
+        if (estado.paseo) marcarPaseo(clasesNodo, clasesArco, estado.paseo);
     }
     aplicarClases(estado.cy, clasesNodo, clasesArco);
 }
@@ -265,6 +283,8 @@ function resaltarPseudocodigo() {
 }
 
 function pintarTodo() {
+    recalcularTablas();
+    recalcularPaseo();
     pintarTabla();
     pintarGrafo();
     actualizarEstadoTexto();
@@ -277,38 +297,32 @@ function pintarTodo() {
 
 function actualizarPaseo() {
     const salida = $('#txt-paseo');
+    const t = $('#dd-destino').value;
     if (!estado.traza || !estado.T || estado.paso < estado.traza.length - 1) {
         salida.textContent = 'Disponible al terminar el cálculo.';
         salida.className = 'txt-ayuda';
         return;
     }
-    const t = $('#dd-destino').value;
-    const W = reconstruirPaseo(estado.T, estado.Pi, t, estado.k);
-    if (W === null) {
+    if (estado.paseo === null) {
         salida.textContent = 'No existe paseo de ' + estado.k + ' arcos entre '
             + estado.origen + ' y ' + t + '.';
         salida.className = 'txt-error';
         return;
     }
-    salida.textContent = W.join(' → ') + '   (largo ' + textoValor(estado.T[t][estado.k]) + ')';
+    salida.textContent = estado.paseo.join(' → ')
+        + '   (largo ' + textoValor(estado.T[t][estado.k]) + ')';
     salida.className = 'txt-formula';
 }
 
-function marcarPaseoEnGrafo() {
-    if (!estado.traza || !estado.T || estado.paso < estado.traza.length - 1) return;
-    const t = $('#dd-destino').value;
-    const W = reconstruirPaseo(estado.T, estado.Pi, t, estado.k);
-    if (!W) return;
-    estado.seleccion = null;
-    const clasesNodo = new Map(), clasesArco = new Map();
-    const agregar = (m, clave, c) => {
+/* Anade la clase del paseo sobre los mapas de clases que ya trae el paso
+ * actual. Un paseo puede repetir nodos y arcos; el conjunto los absorbe. */
+function marcarPaseo(clasesNodo, clasesArco, W) {
+    const agregar = (m, clave) => {
         if (!m.has(clave)) m.set(clave, new Set());
-        m.get(clave).add(c);
+        m.get(clave).add('paseo');
     };
-    W.forEach((n) => agregar(clasesNodo, n, 'paseo'));
-    for (let j = 0; j + 1 < W.length; j++) agregar(clasesArco, idArco(W[j], W[j + 1]), 'paseo');
-    if (estado.origen) agregar(clasesNodo, estado.origen, 'origen');
-    aplicarClases(estado.cy, clasesNodo, clasesArco);
+    W.forEach((n) => agregar(clasesNodo, n));
+    for (let j = 0; j + 1 < W.length; j++) agregar(clasesArco, idArco(W[j], W[j + 1]));
 }
 
 /* --- Ejecución y reproducción -------------------------------------------- */
@@ -621,11 +635,7 @@ function iniciar() {
     $('#btn-col-anterior').addEventListener('click', () => saltarColumna(-1));
     $('#btn-centrar').addEventListener('click', recalcularLayout);
     $('#chk-pi').addEventListener('change', pintarTabla);
-    $('#dd-destino').addEventListener('change', () => {
-        actualizarPaseo();
-        marcarPaseoEnGrafo();
-    });
-    $('#btn-marcar-paseo').addEventListener('click', marcarPaseoEnGrafo);
+    $('#dd-destino').addEventListener('change', pintarTodo);
     $('#in-velocidad').addEventListener('change', () => {
         if (estado.reproduciendo) {
             clearInterval(estado.temporizador);

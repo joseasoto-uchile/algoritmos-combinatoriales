@@ -17,7 +17,7 @@ function _pesosNegativos() {
     const pos = { 's': [90, 270], 'a': [280, 130], 'b': [280, 410], 'c': [470, 270], 't': [650, 270] };
     for (const [id, p] of Object.entries(pos)) G.agregarNodo(id, { pos: p });
     [['s', 'a', 4], ['s', 'b', 2], ['a', 'c', -3], ['b', 'c', 3],
-     ['c', 't', 2], ['b', 'a', 1], ['t', 'c', 5]]
+     ['c', 't', 2], ['b', 'a', 1], ['t', 'c', -3]]
         .forEach(([u, v, l]) => G.agregarArco(u, v, l));
     return G.agregarLoops();
 }
@@ -62,7 +62,7 @@ const EJEMPLOS = {
         constructor: _pesosNegativos,
         origen: 's',
         k: 6,
-        descripcion: 'Contiene un arco de largo -3. No hay ciclos de largo negativo.',
+        descripcion: 'El ciclo c → t → c tiene largo -1: T decrece cada dos columnas.',
     },
     ciclo_negativo: {
         nombre: 'Ciclo de largo negativo',

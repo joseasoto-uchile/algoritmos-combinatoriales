@@ -6,7 +6,7 @@
 <title>Programación dinámica: paseos de largo mínimo</title>
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=8">
+<link rel="stylesheet" href="css/estilo.css?v=9">
 <script src="../js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
@@ -59,7 +59,7 @@
         <label for="dd-destino">Nodo destino t</label>
         <select id="dd-destino"></select>
         <div id="txt-paseo" class="txt-ayuda">Disponible al terminar el cálculo.</div>
-        <button id="btn-marcar-paseo">Marcar en el grafo</button>
+        <div class="txt-ayuda">El paseo queda marcado en el digrafo y en las tablas.</div>
       </section>
 
       <section class="panel">
@@ -110,6 +110,7 @@
           <span class="muestra col-actual"></span> columna en cálculo
           <span class="muestra vecina"></span> celdas de N&#8315;(b)
           <span class="muestra activa"></span> celda actual
+          <span class="muestra paseo"></span> paseo reconstruido
         </div>
       </div>
     </div>
@@ -136,10 +137,10 @@
   </footer>
 </div>
 
-<script src="js/digrafo.js?v=8"></script>
-<script src="js/dp.js?v=8"></script>
-<script src="js/ejemplos.js?v=8"></script>
-<script src="js/viz.js?v=8"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/digrafo.js?v=9"></script>
+<script src="js/dp.js?v=9"></script>
+<script src="js/ejemplos.js?v=9"></script>
+<script src="js/viz.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>
