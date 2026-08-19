@@ -1,14 +1,12 @@
 """Utilidad compartida para que cada algoritmo emita su traza de eventos.
 
-La traza es la pieza clave de la arquitectura: separa el *cómputo* del
-algoritmo de su *animación*. Cada algoritmo produce una lista de eventos
-como:
+La traza separa el cómputo del algoritmo de su animación. Cada algoritmo
+produce una lista de eventos:
 
     {"tipo": "relajar", "u": "A", "v": "B", "nueva_dist": 7, "paso": 4}
 
-y la capa de visualización (viz/elements.py) es la única que sabe cómo
-traducir esos eventos en estilos de nodos/aristas. Así se puede agregar
-un algoritmo nuevo sin tocar la capa visual.
+viz/elements.py es la única capa que traduce esos eventos en estilos de nodos y
+aristas, de modo que un algoritmo nuevo no requiere cambios en ella.
 """
 from __future__ import annotations
 
