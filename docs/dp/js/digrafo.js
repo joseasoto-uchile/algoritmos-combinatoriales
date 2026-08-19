@@ -140,5 +140,12 @@ function validarDatos(datos) {
         if (typeof a.largo !== 'number' || !Number.isFinite(a.largo)) {
             throw new Error(`JSON inválido: el arco ${u} -> ${v} tiene un largo no numérico o no finito.`);
         }
+        /* El algoritmo supone loops de largo 0. Con otro largo, un paseo de a
+           lo más k arcos deja de equivaler a uno de exactamente k y la tabla T
+           calcula otra cosa. */
+        if (u === v && a.largo !== LARGO_LOOP) {
+            throw new Error(`JSON inválido: el loop del nodo "${u}" tiene largo ${a.largo}. `
+                + `El algoritmo supone loops de largo ${LARGO_LOOP}.`);
+        }
     }
 }

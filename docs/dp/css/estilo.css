@@ -241,9 +241,8 @@ body {
 
 /* --- Tablas T y Pi --- */
 
-/* El panel no debe crecer con el tamano de las tablas: con k grande o muchos
-   nodos empujaria el grafo fuera de la vista. Se limita su alto y el
-   desplazamiento ocurre dentro de cada tabla. */
+/* Alto limitado. El desplazamiento ocurre dentro de cada tabla, de modo que el
+   panel ocupa lo mismo con cualquier k. */
 .panel-tabla {
     flex: 0 0 auto;
     max-height: 44vh;
@@ -333,8 +332,8 @@ body {
     border: 2px solid var(--azul-medio);
 }
 
-/* Celda que el paseo reconstruido ocupa en cada columna. Va antes de la
-   selección manual para que una celda pulsada conserve su propio resaltado. */
+/* Celda que el paseo reconstruido ocupa en cada columna. La selección manual
+   se define después y por tanto tiene prioridad en la cascada. */
 #tabla-t td.celda-paseo, #tabla-pi td.celda-paseo {
     background: var(--verde-medio);
     border: 2px solid var(--verde);

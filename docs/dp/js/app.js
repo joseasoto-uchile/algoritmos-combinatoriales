@@ -7,6 +7,7 @@
  */
 
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 4;
+const INTERVALO_MINIMO_MS = 16;
 const ATAJOS_VELOCIDAD = [1, 4, 15, 50, 100];
 
 /* La aplicación es de demostración: la matriz de largos del editor tiene n²
@@ -21,9 +22,8 @@ const EVENTOS_MAXIMO = 400000;
 
 function estimarEventos(n, m, k) { return 3 + k * (2 * n + 2 * m + 2); }
 
-/* Devuelve el valor si esta en rango. Si no, lanza un error con el motivo. No
- * se acota en silencio: un valor recortado sin aviso produce una instancia
- * distinta de la que el usuario pidio. */
+/* Devuelve el valor si esta en rango y lanza un error con el motivo si no lo
+ * esta. El valor fuera de rango se rechaza, no se recorta. */
 function enRango(valor, minimo, maximo, nombre) {
     if (valor < minimo || valor > maximo) {
         throw new Error(`${nombre} debe estar entre ${minimo} y ${maximo}. Se recibió ${valor}.`);
@@ -44,6 +44,7 @@ const estado = {
     paso: 0,
     reproduciendo: false,
     temporizador: null,
+    pasosPorDisparo: 1,
     seleccion: null,
     cy: null,
 };
@@ -363,8 +364,18 @@ function ejecutar() {
     }
 }
 
-function intervaloMs() {
-    return Math.max(16, Math.round(1000 / velocidadValida($('#in-velocidad').value)));
+/* setInterval no entrega disparos fiables por debajo de INTERVALO_MINIMO_MS.
+ * Para las velocidades que lo exigirian se avanzan varios pasos por disparo. */
+function cadencia() {
+    const v = velocidadValida($('#in-velocidad').value);
+    const pasos = Math.max(1, Math.ceil((v * INTERVALO_MINIMO_MS) / 1000));
+    return { ms: Math.round((1000 * pasos) / v), pasos };
+}
+
+function arrancarTemporizador() {
+    const c = cadencia();
+    estado.pasosPorDisparo = c.pasos;
+    estado.temporizador = setInterval(avanzarAutomatico, c.ms);
 }
 
 function pausar() {
@@ -382,7 +393,7 @@ function reproducir() {
     estado.seleccion = null;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
-    estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
+    arrancarTemporizador();
 }
 
 /* Reproducir ejecuta el algoritmo si aun no hay traza, o si el origen o k
@@ -400,7 +411,7 @@ function alternarPlay() {
 
 function avanzarAutomatico() {
     if (!estado.traza) { pausar(); return; }
-    estado.paso += 1;
+    estado.paso += estado.pasosPorDisparo;
     if (estado.paso >= estado.traza.length - 1) {
         estado.paso = estado.traza.length - 1;
         pausar();
@@ -418,18 +429,23 @@ function controlPaso(delta) {
     pintarTodo();
 }
 
-/* Avanza o retrocede hasta el primer paso de la columna contigua. */
+/* Primer paso de una columna. El evento inicio_columna marca ese punto. La
+ * columna 0 no tiene ese evento: corresponde al comienzo de la traza. */
+function pasoInicioColumna(columna) {
+    if (columna <= 0) return 0;
+    const traza = estado.traza;
+    for (let p = 0; p < traza.length; p++) {
+        if (traza[p].tipo === 'inicio_columna' && traza[p].columna === columna) return p;
+    }
+    return traza.length - 1;
+}
+
+/* Va al primer paso de la columna contigua. */
 function saltarColumna(direccion) {
     if (!estado.traza) return;
     if (estado.reproduciendo) pausar();
     estado.seleccion = null;
-    const objetivo = columnaActual(estado.traza, estado.paso) + direccion;
-    let p = estado.paso;
-    while (p > 0 && p < estado.traza.length - 1) {
-        p += direccion > 0 ? 1 : -1;
-        if (columnaActual(estado.traza, p) === objetivo) break;
-    }
-    estado.paso = Math.max(0, Math.min(p, estado.traza.length - 1));
+    estado.paso = pasoInicioColumna(columnaActual(estado.traza, estado.paso) + direccion);
     pintarTodo();
 }
 
@@ -525,12 +541,20 @@ function descargar(nombre, contenido, tipo) {
     URL.revokeObjectURL(url);
 }
 
+/* RFC 4180: un campo con coma, comilla o salto de línea va entre comillas, y
+ * las comillas de dentro se duplican. Los nombres de nodo los escribe el
+ * usuario y pueden contener cualquiera de esos caracteres. */
+function campoCSV(valor) {
+    const texto = String(valor);
+    return /[",\r\n]/.test(texto) ? '"' + texto.replace(/"/g, '""') + '"' : texto;
+}
+
 function exportarTablaCSV() {
     const encabezado = ['nodo'];
     for (let i = 0; i <= estado.k; i++) encabezado.push('i=' + i);
     const filas = [encabezado.join(',')];
     for (const b of estado.G.ids) {
-        const fila = [b];
+        const fila = [campoCSV(b)];
         for (let i = 0; i <= estado.k; i++) {
             fila.push(estado.T[b][i] === Infinity ? 'inf' : estado.T[b][i]);
         }
@@ -652,7 +676,7 @@ function iniciar() {
     $('#in-velocidad').addEventListener('change', () => {
         if (estado.reproduciendo) {
             clearInterval(estado.temporizador);
-            estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
+            arrancarTemporizador();
         }
     });
     $('#atajos-velocidad').addEventListener('click', (ev) => {

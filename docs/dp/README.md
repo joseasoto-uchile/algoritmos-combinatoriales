@@ -53,7 +53,9 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
 - Reproducción paso a paso, con avance y retroceso por columna completa. El
   botón de reproducir ejecuta el algoritmo si aún no se ha ejecutado, o si
   cambiaron el origen o k desde la última ejecución.
-- Velocidad en pasos por segundo, con atajos de 1, 4, 15, 50 y 100.
+- Velocidad en pasos por segundo, con atajos de 1, 4, 15, 50 y 100. Por encima
+  de 62 pasos por segundo el temporizador avanza varios pasos por disparo,
+  porque setInterval no baja de forma fiable de 16 ms.
 - Reconstrucción del paseo óptimo (Algoritmo 3) para el destino elegido. Al
   terminar el cálculo el paseo queda marcado en el digrafo y en las dos tablas:
   en la columna i se marca la celda del nodo que el paseo ocupa en esa columna.
@@ -133,8 +135,12 @@ alcanzables desde el primero.
 }
 ```
 
-Los loops no se declaran: los añade el preprocesamiento. `Digrafo.desdeObjeto`
-valida el archivo y lo rechaza con un mensaje que indica el problema.
+Los loops pueden omitirse: `Digrafo.agregarLoops` añade los que falten. Si se
+declaran, su largo debe ser 0, que es la hipótesis del algoritmo; con otro
+largo el archivo se rechaza. Guardar en JSON los escribe de forma explícita.
+
+`Digrafo.desdeObjeto` valida el archivo y lo rechaza con un mensaje que indica
+el problema.
 
 ## Ejecución local
 

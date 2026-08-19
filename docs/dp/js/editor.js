@@ -12,8 +12,8 @@
  */
 
 /* Modelo de trabajo: una fila por nodo, con su posición en el lienzo, y la
- * matriz de valores tal como están escritos. Se guarda el texto y no el número
- * para poder señalar la casilla concreta que no es un largo válido. */
+ * matriz con el texto de cada casilla. Se conserva el texto para poder
+ * señalar en el mensaje la casilla que no es un largo válido. */
 const editor = {
     filas: [],   // [{nombre, pos}]
     L: [],       // L[i][j] = texto de la casilla

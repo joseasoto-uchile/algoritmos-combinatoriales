@@ -90,10 +90,8 @@ function reconstruirPaseo(T, Pi, t, k) {
     return W;
 }
 
-/* Reconstruye T y Pi tal como estaban en `pasoActual`.
- *
- * Se reproducen los eventos en orden. Guardar una copia de la tabla por paso
- * haría que la traza creciera de forma cuadrática. */
+/* Reconstruye T y Pi tal como estaban en `pasoActual`, reproduciendo los
+ * eventos en orden. La traza guarda los cambios, no las tablas. */
 function estadoTablas(traza, pasoActual, ids, k) {
     const T = {}, Pi = {};
     for (const b of ids) {
