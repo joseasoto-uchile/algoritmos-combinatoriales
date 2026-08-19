@@ -37,6 +37,21 @@ function idAristaInterno(u, v, dirigido) {
     return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
 }
 
+/* Lee la clave "dirigido" del objeto del grafo.
+ *
+ * La clave es opcional y su omisión significa dirigido. Equivale a es_dirigido
+ * de graph_model/model.py: con valores por omisión distintos, el mismo archivo
+ * produce grafos distintos en cada versión. */
+function esDirigido(datos) {
+    return datos.dirigido === undefined ? true : Boolean(datos.dirigido);
+}
+
+/* Comprueba que "pos" es una lista de dos números finitos. */
+function posicionValida(pos) {
+    return Array.isArray(pos) && pos.length === 2
+        && pos.every((c) => typeof c === 'number' && Number.isFinite(c));
+}
+
 /* Rechaza un objeto de grafo que no cumple el formato.
  *
  * Debe aplicar las mismas reglas y devolver los mismos mensajes que
@@ -59,7 +74,7 @@ function validarDatosGrafo(datos) {
         }
     }
 
-    const dirigido = Boolean(datos.dirigido);
+    const dirigido = esDirigido(datos);
     const ids = new Set();
     for (const nodo of datos.nodos) {
         if (nodo === null || typeof nodo !== 'object' || !('id' in nodo)) {
@@ -73,6 +88,10 @@ function validarDatosGrafo(datos) {
         if (nid === '') throw new Error('JSON inválido: hay un nodo con el identificador vacío.');
         if (ids.has(nid)) throw new Error(`JSON inválido: el nodo "${nid}" está declarado dos veces.`);
         ids.add(nid);
+        // La capa de dibujo lee pos[0] y pos[1] sin comprobarlos.
+        if ('pos' in nodo && !posicionValida(nodo.pos)) {
+            throw new Error(`JSON inválido: el nodo "${nid}" tiene una posición que no es una lista de dos números.`);
+        }
     }
 
     const vistas = new Set();
@@ -194,7 +213,7 @@ class Grafo {
 
     static desdeObjeto(datos) {
         validarDatosGrafo(datos);
-        const G = new Grafo(Boolean(datos.dirigido));
+        const G = new Grafo(esDirigido(datos));
         for (const n of datos.nodos) {
             G.agregarNodo(n.id, { label: n.label ?? String(n.id), pos: n.pos });
         }

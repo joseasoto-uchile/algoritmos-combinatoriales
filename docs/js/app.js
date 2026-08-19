@@ -320,12 +320,15 @@ function resaltarPseudocodigo() {
 }
 
 /* --- Archivo ------------------------------------------------------------- */
+/* El objeto URL se libera en el siguiente ciclo de eventos. Revocarlo en la
+ * misma vuelta deja la descarga dependiendo de que el navegador capture el
+ * blob de forma sincrona al pulsar. */
 function descargar(nombre, contenido, tipo = 'application/json') {
     const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
     const a = document.createElement('a');
     a.href = url; a.download = nombre;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function exportarTrazaCSV() {

@@ -532,13 +532,16 @@ function generarInstancia() {
 
 /* --- Archivo ------------------------------------------------------------- */
 
+/* El objeto URL se libera en el siguiente ciclo de eventos. Revocarlo en la
+ * misma vuelta deja la descarga dependiendo de que el navegador capture el
+ * blob de forma sincrona al pulsar. */
 function descargar(nombre, contenido, tipo) {
     const url = URL.createObjectURL(new Blob([contenido], { type: tipo || 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
     a.download = nombre;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 /* RFC 4180: un campo con coma, comilla o salto de línea va entre comillas, y

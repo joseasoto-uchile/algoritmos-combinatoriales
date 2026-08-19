@@ -108,19 +108,56 @@ CASOS_INVALIDOS = [
                         "nodos": [{"id": '"><img src=x onerror="alert(1)">'}, {"id": "1"}],
                         "aristas": [{"origen": '"><img src=x onerror="alert(1)">',
                                      "destino": "1", "weight": 1}]}),
+    # La capa de dibujo lee pos[0] y pos[1].
+    ("pos que no es lista", {"dirigido": True, "nodos": [{"id": "0", "pos": "hola"}, {"id": "1"}],
+                             "aristas": [{"origen": "0", "destino": "1", "weight": 1}]}),
+    ("pos de un solo numero", {"dirigido": True, "nodos": [{"id": "0", "pos": [1]}, {"id": "1"}],
+                               "aristas": [{"origen": "0", "destino": "1", "weight": 1}]}),
+    ("pos con texto", {"dirigido": True, "nodos": [{"id": "0", "pos": ["x", "y"]}, {"id": "1"}],
+                       "aristas": [{"origen": "0", "destino": "1", "weight": 1}]}),
+    # Archivo valido sin la clave "dirigido": las dos versiones deben tomar el
+    # mismo valor por omision.
+    ("sin la clave dirigido", {"nodos": [{"id": "0"}, {"id": "1"}, {"id": "2"}],
+                               "aristas": [{"origen": "0", "destino": "1", "weight": 1},
+                                           {"origen": "1", "destino": "2", "weight": 1}]}),
 ]
 
 
+def _huella(G) -> dict:
+    """Forma canonica del grafo construido, para compararla entre lenguajes.
+
+    Las posiciones no intervienen: no afectan a ningun algoritmo.
+    """
+    aristas = []
+    for u, v, datos in G.edges(data=True):
+        a, b = (str(u), str(v)) if G.is_directed() else tuple(sorted((str(u), str(v))))
+        aristas.append(f"{a}>{b}:{datos.get('weight', 1)}")
+    return {
+        "dirigido": G.is_directed(),
+        "nodos": sorted(str(n) for n in G.nodes),
+        "aristas": sorted(aristas),
+    }
+
+
 def construir_casos_invalidos() -> list[dict]:
-    """Ejecuta la validación de Python y anota su veredicto para comparar."""
+    """Ejecuta la validación de Python y anota su veredicto para comparar.
+
+    Cuando el archivo se acepta se anota además la forma del grafo construido.
+    Coincidir en el veredicto no basta: las dos versiones pueden aceptar el
+    mismo archivo y construir grafos distintos.
+    """
     casos = []
     for nombre, datos in CASOS_INVALIDOS:
+        huella = None
         try:
-            graph_from_dict(datos)
+            huella = _huella(graph_from_dict(datos))
             mensaje = None
         except ValueError as exc:
             mensaje = str(exc)
-        casos.append({"nombre": nombre, "datos": datos, "mensajePython": mensaje})
+        casos.append({
+            "nombre": nombre, "datos": datos,
+            "mensajePython": mensaje, "huellaPython": huella,
+        })
     return casos
 
 

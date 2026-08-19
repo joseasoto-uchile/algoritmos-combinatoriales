@@ -26,15 +26,30 @@ function normalizar(ev) {
     return JSON.stringify(o);
 }
 
+/* Forma canónica del grafo construido. Equivale a _huella de
+ * verificar_paridad.py. Las posiciones no intervienen: no afectan a ningún
+ * algoritmo. */
+function huella(G) {
+    const aristas = G.aristas.map(({ origen, destino, peso }) => {
+        const [a, b] = G.dirigido ? [origen, destino] : [origen, destino].sort();
+        return `${a}>${b}:${peso}`;
+    });
+    return {
+        dirigido: G.dirigido,
+        nodos: [...G.nodos.keys()].sort(),
+        aristas: aristas.sort(),
+    };
+}
+
 /* Los archivos malformados forman la otra parte del contrato: las dos
- * versiones deben rechazarlos con el mismo mensaje. En caso contrario, un mismo
- * archivo produce grafos distintos en cada una. */
+ * versiones deben rechazarlos con el mismo mensaje. Cuando lo aceptan, además
+ * deben construir el mismo grafo: coincidir en el veredicto no basta. */
 function compararRechazos(casos) {
     const fallos = [];
-    for (const { nombre, datos, mensajePython } of casos) {
-        let mensajeJs = null;
+    for (const { nombre, datos, mensajePython, huellaPython } of casos) {
+        let mensajeJs = null, huellaJs = null;
         try {
-            Grafo.desdeObjeto(datos);
+            huellaJs = huella(Grafo.desdeObjeto(datos));
         } catch (e) {
             mensajeJs = e.message;
         }
@@ -46,6 +61,16 @@ function compararRechazos(casos) {
             fallos.push({
                 nombre,
                 motivo: `veredictos distintos\n      JavaScript: ${desc(mensajeJs)}\n      Python    : ${desc(mensajePython)}`,
+            });
+            continue;
+        }
+        if (mensajeJs === null
+            && JSON.stringify(huellaJs) !== JSON.stringify(huellaPython)) {
+            fallos.push({
+                nombre,
+                motivo: 'las dos lo aceptan pero construyen grafos distintos'
+                    + `\n      JavaScript: ${JSON.stringify(huellaJs)}`
+                    + `\n      Python    : ${JSON.stringify(huellaPython)}`,
             });
         }
     }
