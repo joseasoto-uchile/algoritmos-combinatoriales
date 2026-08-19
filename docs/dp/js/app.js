@@ -223,7 +223,11 @@ function pintarGrafo() {
     aplicarClases(estado.cy, clasesNodo, clasesArco);
 }
 
+/* Cytoscape guarda el tamano del contenedor y solo lo relee con resize(). El
+ * alto de #cyto depende del panel de tablas, que cambia con k y con el numero
+ * de nodos, de modo que hay que releerlo antes de encuadrar. */
 function recalcularLayout() {
+    estado.cy.resize();
     estado.cy.layout({ name: 'preset', fit: true, padding: 40 }).run();
 }
 
@@ -474,9 +478,11 @@ function cargarGrafo(G, opciones) {
 
     estado.cy.elements().remove();
     estado.cy.add(digrafoAElementos(G));
-    recalcularLayout();
 
+    // La tabla se construye antes de encuadrar: su alto determina el que le
+    // queda a #cyto.
     construirTabla();
+    recalcularLayout();
     $('#txt-resultado').textContent = '';
     $('#txt-resultado').className = 'txt-estado';
     pintarTodo();
@@ -729,7 +735,10 @@ function iniciar() {
         salida.className = 'txt-estado';
     });
 
-    window.addEventListener('resize', () => estado.cy.resize());
+    // El alto de #cyto depende del panel de tablas, que cambia al reconstruirlas
+    // con otro k o con otro numero de nodos. El observador cubre eso y tambien
+    // el cambio de tamano de la ventana.
+    new ResizeObserver(() => estado.cy.resize()).observe($('#cyto'));
 
     const inicial = EJEMPLOS.negativos;
     cargarGrafo(construirEjemplo('negativos'), { origen: inicial.origen, k: inicial.k });

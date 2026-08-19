@@ -92,7 +92,11 @@ function elementosActuales() {
     return elementos;
 }
 
+/* Cytoscape guarda el tamano del contenedor y solo lo relee con resize(). El
+ * ancho de #cyto depende de los divisores laterales y su alto de la ventana,
+ * de modo que hay que releerlo antes de encuadrar. */
 function recalcularLayout() {
+    estado.cy.resize();
     estado.cy.layout({
         name: $('#dd-layout').value || 'circle', fit: true, padding: 30, animate: false,
     }).run();
@@ -390,10 +394,7 @@ function activarDivisores() {
         const signo = obj === 'codigo' ? -1 : 1;
         document.body.classList.add('redimensionando');
 
-        const mover = (e) => {
-            aplicar(obj, inicial + signo * (e.clientX - x0));
-            estado.cy.resize();
-        };
+        const mover = (e) => aplicar(obj, inicial + signo * (e.clientX - x0));
         const soltar = () => {
             document.removeEventListener('mousemove', mover);
             document.removeEventListener('mouseup', soltar);
@@ -401,7 +402,6 @@ function activarDivisores() {
             const a = leer();
             a[obj] = parseFloat(getComputedStyle(fila).getPropertyValue(VARIABLE[obj]));
             guardar(a);
-            estado.cy.resize();
         };
         document.addEventListener('mousemove', mover);
         document.addEventListener('mouseup', soltar);
@@ -413,7 +413,6 @@ function activarDivisores() {
         const obj = div.dataset.objetivo;
         aplicar(obj, OMISION[obj]);
         const a = leer(); a[obj] = OMISION[obj]; guardar(a);
-        estado.cy.resize();
     });
 }
 
@@ -534,8 +533,13 @@ function iniciar() {
     });
 
     activarDivisores();
-    window.addEventListener('resize', () => estado.cy.resize());
+    // El tamano de #cyto cambia con la ventana y con los divisores laterales.
+    // Un observador cubre las dos vias.
+    new ResizeObserver(() => estado.cy.resize()).observe($('#cyto'));
     generarInstancia();
+    // En DOMContentLoaded el navegador aun no ha fijado el alto definitivo de
+    // #cyto, de modo que el primer encuadre se repite ya con la pagina medida.
+    requestAnimationFrame(recalcularLayout);
 }
 
 document.addEventListener('DOMContentLoaded', iniciar);

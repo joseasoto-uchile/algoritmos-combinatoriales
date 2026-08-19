@@ -36,6 +36,11 @@ El panel de las tablas tiene alto limitado y cada tabla se desplaza por dentro,
 con los encabezados de fila y de columna fijos. Así una instancia con k grande
 no reduce el espacio del grafo.
 
+El alto de ese panel determina el que le queda al grafo, de modo que las tablas
+se construyen antes de encuadrarlo. Cytoscape guarda el tamaño del contenedor y
+solo lo relee al llamar a `resize()`; un `ResizeObserver` sobre el lienzo se
+encarga de eso.
+
 Π[b,i] es el penúltimo nodo de un paseo óptimo. Vale ⊥ cuando i = 0 o cuando
 T[b,i] es +∞, es decir cuando no existe tal paseo. La casilla de la barra oculta
 la tabla Π si no se necesita.
