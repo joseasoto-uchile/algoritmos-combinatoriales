@@ -3,8 +3,8 @@
 Visualizador del Algoritmo 2 de la clase 04 de MA3705: tabulación de las tablas
 T y Π para el problema de paseos de largo mínimo con exactamente k arcos.
 
-Es una aplicación independiente del visualizador de `docs/`. No comparte código
-con él, solo el archivo `js/cytoscape.min.js`.
+Es una aplicación independiente de la de `docs/visualizador/`. No comparte
+código con ella, solo el archivo `docs/js/cytoscape.min.js`.
 
 ## Modelo
 
@@ -144,13 +144,5 @@ el problema.
 
 ## Ejecución local
 
-```bash
-python -m http.server 8070
-```
-
-desde `docs/`, y abrir <http://127.0.0.1:8070/dp/index.html>.
-
-## Publicación
-
-GitHub Pages sirve todo `docs/`, de modo que esta aplicación queda disponible en
-la ruta `/dp/` del mismo sitio sin configuración adicional.
+Con el servidor de archivos estáticos del README de la raíz en marcha, la
+aplicación queda en <http://127.0.0.1:8060/dp/>.

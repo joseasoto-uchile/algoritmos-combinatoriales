@@ -69,8 +69,5 @@ se comprueban en cada paso intermedio del disparo.
 
 ## Ejecución local
 
-```bash
-python -m http.server 8060
-```
-
-desde `docs/`, y abrir <http://127.0.0.1:8060/visualizador/>.
+Con el servidor de archivos estáticos del README de la raíz en marcha, la
+aplicación queda en <http://127.0.0.1:8060/visualizador/>.
