@@ -73,10 +73,8 @@ La edición ocurre sobre una copia. El digrafo en pantalla no cambia hasta
 pulsar Aplicar, y Cancelar descarta todo. Aplicar reemplaza la instancia y
 borra la traza y las tablas, porque corresponden al digrafo anterior.
 
-El editor admite hasta 20 nodos. La matriz tiene n² casillas y la aplicación
-está pensada para instancias de demostración. Los nodos que ya existían
-conservan su posición en el lienzo, incluso al renombrarlos; los nuevos se
-reparten en un círculo.
+Los nodos que ya existían conservan su posición en el lienzo, incluso al
+renombrarlos; los nuevos se reparten en un círculo.
 
 Aplicar valida antes de reemplazar y no cierra el diálogo si hay un problema.
 Se informa el primero que se encuentra, con la casilla o el nombre concreto:
@@ -88,9 +86,16 @@ Se informa el primero que se encuentra, con la casilla o el nombre concreto:
 
 ## Límites
 
-El generador acepta entre 2 y 200 nodos, y k entre 0 y 200. Un valor fuera de
-rango se rechaza con un mensaje: no se acota en silencio, porque un valor
-recortado produce una instancia distinta de la pedida.
+La aplicación admite entre 2 y 20 nodos, y k entre 0 y 200. El tope de 20 es
+de la aplicación entera, no solo del editor: la matriz de largos tiene n²
+casillas y las tablas T y Π se leen en pantalla completas. Es una herramienta
+de demostración.
+
+El tope rige en las tres vías de entrada. El generador rechaza un valor fuera
+de rango con un mensaje, no lo acorta en silencio, porque un valor recortado
+produce una instancia distinta de la pedida. El editor desactiva el botón de
+agregar al llegar a 20. Un archivo JSON con más de 20 nodos se rechaza al
+cargarlo, indicando cuántos trae.
 
 k vale 6 por omisión. El botón k = n lo iguala al número de nodos de la
 instancia cargada, que es el valor a partir del cual T deja de cambiar si no
@@ -102,8 +107,11 @@ exactamente
     3 + k(2n + 2m + 2)
 
 con m el número de arcos incluidos los loops. Antes de ejecutar se calcula ese
-valor y se rechaza la ejecución si supera 400.000 pasos, que son unos 40 MB.
-Como referencia, 60 nodos con k = 20 producen 54.403 pasos.
+valor y se rechaza la ejecución si supera 400.000 pasos. Con el tope de 20
+nodos ese límite queda fuera de alcance: el caso mayor es el digrafo completo
+con k = 200, que da 176.403 pasos. La comprobación se conserva como
+verificación del cálculo. Como referencia, 20 nodos con densidad 0,35 y k = 20
+producen 6.963 pasos.
 
 ## Instancias
 

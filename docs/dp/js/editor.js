@@ -8,11 +8,8 @@
  * que el arco no existe. La diagonal corresponde a los loops de largo 0 que
  * añade el preprocesamiento y no es editable.
  *
- * El límite de nodos es el del editor, no el del algoritmo: la matriz tiene
- * n² casillas y la aplicación está pensada para instancias de demostración.
+ * El tope de nodos es el de la aplicación, NODOS_MAXIMO.
  */
-
-const EDITOR_NODOS_MAXIMO = 20;
 
 /* Modelo de trabajo: una fila por nodo, con su posición en el lienzo, y la
  * matriz de valores tal como están escritos. Se guarda el texto y no el número
@@ -136,13 +133,13 @@ function _dibujarMatriz() {
     tabla.append(tbody);
 
     document.getElementById('txt-editor-n').textContent =
-        `${n} nodos. Máximo ${EDITOR_NODOS_MAXIMO}.`;
-    document.getElementById('btn-editor-agregar').disabled = n >= EDITOR_NODOS_MAXIMO;
+        `${n} nodos. Máximo ${NODOS_MAXIMO}.`;
+    document.getElementById('btn-editor-agregar').disabled = n >= NODOS_MAXIMO;
 }
 
 function _agregarNodo() {
     _sincronizarDesdeDOM();
-    if (editor.filas.length >= EDITOR_NODOS_MAXIMO) return;
+    if (editor.filas.length >= NODOS_MAXIMO) return;
     const nombre = _nombreLibre(new Set(editor.filas.map((f) => f.nombre)));
     editor.filas.push({ nombre, pos: null });
     editor.L.forEach((fila) => fila.push(''));
@@ -180,7 +177,7 @@ function _posicionesFinales() {
 function _objetoDesdeModelo() {
     const n = editor.filas.length;
     if (n < NODOS_MINIMO) throw new Error(`El digrafo debe tener al menos ${NODOS_MINIMO} nodos.`);
-    if (n > EDITOR_NODOS_MAXIMO) throw new Error(`El editor admite hasta ${EDITOR_NODOS_MAXIMO} nodos.`);
+    if (n > NODOS_MAXIMO) throw new Error(`La aplicación admite hasta ${NODOS_MAXIMO} nodos.`);
 
     const nombres = editor.filas.map((f) => f.nombre.trim());
     const vistos = new Set();
@@ -228,11 +225,7 @@ function _aplicarEditor() {
 function abrirEditor(G, alAplicar) {
     editor.alAplicar = alAplicar;
     _cargarModelo(G);
-    _mensajeEditor(
-        G.ids.length > EDITOR_NODOS_MAXIMO
-            ? `La instancia tiene ${G.ids.length} nodos y el editor admite `
-              + `${EDITOR_NODOS_MAXIMO}. Elimina filas antes de aplicar.`
-            : '');
+    _mensajeEditor('');
     _dibujarMatriz();
     _dialogoEditor().showModal();
     const primera = _tablaEditor().querySelector('input:not([readonly])');

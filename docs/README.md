@@ -76,8 +76,8 @@ que tabula las tablas T y Π para paseos de largo mínimo con exactamente k
 arcos. No comparte código con esta aplicación, solo `js/cytoscape.min.js`.
 Queda publicado en la ruta `/dp/` del mismo sitio. Ver `dp/README.md`.
 
-Incluye un editor de la instancia por matriz de largos, en `dp/js/editor.js`,
-limitado a 20 nodos.
+Incluye un editor de la instancia por matriz de largos, en `dp/js/editor.js`.
+Esa aplicación admite hasta 20 nodos, por ser una herramienta de demostración.
 
 ## Ejecución local
 

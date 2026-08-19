@@ -9,7 +9,9 @@
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 4;
 const ATAJOS_VELOCIDAD = [1, 4, 15, 50, 100];
 
-const NODOS_MINIMO = 2, NODOS_MAXIMO = 200;
+/* La aplicación es de demostración: la matriz de largos del editor tiene n²
+ * casillas y las tablas T y Pi se leen en pantalla completas. */
+const NODOS_MINIMO = 2, NODOS_MAXIMO = 20;
 const K_MINIMO = 0, K_MAXIMO = 200, K_POR_OMISION = 6;
 
 /* La traza guarda un evento por cada comparacion del algoritmo. Su tamano es
@@ -671,7 +673,12 @@ function iniciar() {
         lector.onload = () => {
             const salida = $('#txt-archivo');
             try {
-                cargarGrafo(Digrafo.desdeObjeto(JSON.parse(lector.result)));
+                const G = Digrafo.desdeObjeto(JSON.parse(lector.result));
+                if (G.ids.length > NODOS_MAXIMO) {
+                    throw new Error(`El archivo tiene ${G.ids.length} nodos y la `
+                        + `aplicación admite hasta ${NODOS_MAXIMO}.`);
+                }
+                cargarGrafo(G);
                 salida.textContent = 'Cargado: ' + archivo.name;
                 salida.className = 'txt-estado';
             } catch (e) {
