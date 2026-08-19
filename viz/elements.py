@@ -40,7 +40,9 @@ def graph_to_elements(G: nx.Graph, incluir_posiciones: bool = True) -> list[dict
     """
     elementos = []
     for n, datos in G.nodes(data=True):
-        elemento = {"data": {"id": str(n), "label": datos.get("label", str(n))}}
+        # null equivale a ausente, como el operador ?? de docs/js/viz.js.
+        etiqueta = datos.get("label")
+        elemento = {"data": {"id": str(n), "label": str(n) if etiqueta is None else etiqueta}}
         if incluir_posiciones:
             pos = datos.get("pos", [0, 0])
             elemento["position"] = {"x": pos[0], "y": pos[1]}
