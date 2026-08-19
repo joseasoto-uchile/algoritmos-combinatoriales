@@ -7,10 +7,10 @@
  */
 
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 4;
-const ATAJOS_VELOCIDAD = [1, 4, 15, 50];
+const ATAJOS_VELOCIDAD = [1, 4, 15, 50, 100];
 
 const NODOS_MINIMO = 2, NODOS_MAXIMO = 200;
-const K_MINIMO = 0, K_MAXIMO = 200;
+const K_MINIMO = 0, K_MAXIMO = 200, K_POR_OMISION = 6;
 
 /* La traza guarda un evento por cada comparacion del algoritmo. Su tamano es
  * exactamente 3 + k(2n + 2m + 2), donde m cuenta los loops. El limite acota la
@@ -317,7 +317,7 @@ function ejecutar() {
     const salida = $('#txt-resultado');
     try {
         estado.origen = $('#dd-origen').value;
-        estado.k = enRango(entero($('#in-k').value, 4), K_MINIMO, K_MAXIMO,
+        estado.k = enRango(entero($('#in-k').value, K_POR_OMISION), K_MINIMO, K_MAXIMO,
             'El número de arcos k');
 
         const n = estado.G.ids.length, m = estado.G.arcos.size;
@@ -369,8 +369,15 @@ function reproducir() {
     estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
 }
 
+/* Reproducir ejecuta el algoritmo si aun no hay traza, o si el origen o k
+ * cambiaron desde la ultima ejecucion. */
 function alternarPlay() {
-    if (!estado.traza) return;
+    const kPedido = entero($('#in-k').value, K_POR_OMISION);
+    const origenPedido = $('#dd-origen').value;
+    const desactualizada = !estado.traza
+        || estado.k !== kPedido
+        || estado.origen !== origenPedido;
+    if (desactualizada) { ejecutar(); return; }
     if (estado.reproduciendo) pausar();
     else reproducir();
 }
@@ -431,7 +438,7 @@ function cargarGrafo(G, opciones) {
     $('#dd-origen').value = estado.origen;
     $('#dd-destino').value = ids[ids.length - 1];
     if (k !== null) $('#in-k').value = k;
-    estado.k = entero($('#in-k').value, 5);
+    estado.k = entero($('#in-k').value, K_POR_OMISION);
 
     estado.cy.elements().remove();
     estado.cy.add(digrafoAElementos(G));
@@ -602,6 +609,9 @@ function iniciar() {
         if (!clave) return;
         const info = EJEMPLOS[clave];
         cargarGrafo(construirEjemplo(clave), { origen: info.origen, k: info.k });
+    });
+    $('#btn-k-igual-n').addEventListener('click', () => {
+        $('#in-k').value = estado.G ? estado.G.ids.length : K_POR_OMISION;
     });
     $('#btn-play').addEventListener('click', alternarPlay);
     $('#btn-siguiente').addEventListener('click', () => controlPaso(1));

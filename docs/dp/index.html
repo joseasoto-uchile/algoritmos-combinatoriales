@@ -6,7 +6,7 @@
 <title>Programación dinámica: paseos de largo mínimo</title>
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=5">
+<link rel="stylesheet" href="css/estilo.css?v=8">
 <script src="../js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
@@ -23,7 +23,8 @@
         <label for="dd-origen">Nodo origen s</label>
         <select id="dd-origen"></select>
         <label for="in-k">Número de arcos k</label>
-        <input id="in-k" type="number" min="0" max="200" step="1" value="4">
+        <input id="in-k" type="number" min="0" max="200" step="1" value="6">
+        <button id="btn-k-igual-n" type="button" title="Usar k igual al número de nodos">k = n</button>
         <button id="btn-ejecutar" class="btn-primario">Ejecutar</button>
         <div id="txt-resultado" class="txt-estado"></div>
       </section>
@@ -135,10 +136,10 @@
   </footer>
 </div>
 
-<script src="js/digrafo.js?v=5"></script>
-<script src="js/dp.js?v=5"></script>
-<script src="js/ejemplos.js?v=5"></script>
-<script src="js/viz.js?v=5"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/digrafo.js?v=8"></script>
+<script src="js/dp.js?v=8"></script>
+<script src="js/ejemplos.js?v=8"></script>
+<script src="js/viz.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

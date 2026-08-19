@@ -50,7 +50,10 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
 
 ## Controles
 
-- Reproducción paso a paso, con avance y retroceso por columna completa.
+- Reproducción paso a paso, con avance y retroceso por columna completa. El
+  botón de reproducir ejecuta el algoritmo si aún no se ha ejecutado, o si
+  cambiaron el origen o k desde la última ejecución.
+- Velocidad en pasos por segundo, con atajos de 1, 4, 15, 50 y 100.
 - Reconstrucción del paseo óptimo (Algoritmo 3) para el destino elegido, con la
   opción de marcarlo en el grafo.
 - Exportación de la tabla T en CSV.
@@ -60,6 +63,10 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
 El generador acepta entre 2 y 200 nodos, y k entre 0 y 200. Un valor fuera de
 rango se rechaza con un mensaje: no se acota en silencio, porque un valor
 recortado produce una instancia distinta de la pedida.
+
+k vale 6 por omisión. El botón k = n lo iguala al número de nodos de la
+instancia cargada, que es el valor a partir del cual T deja de cambiar si no
+hay ciclos de largo negativo.
 
 La traza guarda un evento por cada comparación del algoritmo. Su tamaño es
 exactamente

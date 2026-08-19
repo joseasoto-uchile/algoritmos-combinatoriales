@@ -54,14 +54,14 @@ const EJEMPLOS = {
         nombre: 'Ciclo de 4 nodos',
         constructor: _ciclo4,
         origen: '1',
-        k: 5,
+        k: 6,
         descripcion: 'Los loops permiten que T no aumente al avanzar de columna.',
     },
     negativos: {
         nombre: 'Pesos negativos',
         constructor: _pesosNegativos,
         origen: 's',
-        k: 4,
+        k: 6,
         descripcion: 'Contiene un arco de largo -3. No hay ciclos de largo negativo.',
     },
     ciclo_negativo: {
@@ -82,7 +82,7 @@ const EJEMPLOS = {
         nombre: 'Nodos inalcanzables',
         constructor: _inalcanzable,
         origen: 's',
-        k: 4,
+        k: 6,
         descripcion: 'Los nodos u y v no son alcanzables desde s. Su fila queda en +∞.',
     },
 };
