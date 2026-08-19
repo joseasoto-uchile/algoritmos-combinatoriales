@@ -8,6 +8,7 @@
 const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];
 const URL_LICENCIA = 'https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE';
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 5;
+const INTERVALO_MINIMO_MS = 16;
 const ATAJOS_VELOCIDAD = [1, 5, 15, 50];
 
 const estado = {
@@ -17,6 +18,7 @@ const estado = {
     paso: 0,
     reproduciendo: false,
     temporizador: null,
+    pasosPorDisparo: 1,
     breakpoints: new Set(),
     cy: null,
 };
@@ -26,8 +28,8 @@ const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 /* --- Utilidades de lectura de formulario -------------------------------- */
 function entero(valor, defecto) {
-    // En JavaScript 0 es un valor falso, por lo que `valor || defecto` no
-    // sirve: sustituiría un 0 escrito por el usuario.
+    // El 0 es un valor válido del formulario y en JavaScript es falsy, así que
+    // el campo vacío se comprueba de forma explícita.
     if (valor === null || valor === undefined || valor === '') return defecto;
     const n = parseInt(valor, 10);
     return Number.isNaN(n) ? defecto : n;
@@ -221,8 +223,18 @@ function ejecutar() {
 }
 
 /* --- Reproducción -------------------------------------------------------- */
-function intervaloMs() {
-    return Math.max(16, Math.round(1000 / velocidadValida($('#in-velocidad').value)));
+/* setInterval no entrega disparos fiables por debajo de INTERVALO_MINIMO_MS.
+ * Para las velocidades que lo exigirian se avanzan varios pasos por disparo. */
+function cadencia() {
+    const v = velocidadValida($('#in-velocidad').value);
+    const pasos = Math.max(1, Math.ceil((v * INTERVALO_MINIMO_MS) / 1000));
+    return { ms: Math.round((1000 * pasos) / v), pasos };
+}
+
+function arrancarTemporizador() {
+    const c = cadencia();
+    estado.pasosPorDisparo = c.pasos;
+    estado.temporizador = setInterval(avanzarAutomatico, c.ms);
 }
 
 function pausar() {
@@ -233,12 +245,11 @@ function pausar() {
 
 function reproducir() {
     if (!estado.traza || estado.traza.length < 2) return;
-    // Con la traza terminada se vuelve al principio. De lo contrario el primer
-    // ciclo detecta el final y detiene la reproducción.
+    // Con la traza terminada se vuelve al principio.
     if (estado.paso >= estado.traza.length - 1) estado.paso = 0;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
-    estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
+    arrancarTemporizador();
 }
 
 function alternarPlay() {
@@ -249,22 +260,27 @@ function alternarPlay() {
 
 function avanzarAutomatico() {
     if (!estado.traza) { pausar(); return; }
-    estado.paso += 1;
-    if (estado.paso >= estado.traza.length - 1) {
-        estado.paso = estado.traza.length - 1;
-        pausar();
-    } else if (estado.breakpoints.has(estado.traza[estado.paso].linea)) {
+    for (let j = 0; j < estado.pasosPorDisparo; j++) {
+        estado.paso += 1;
+        if (estado.paso >= estado.traza.length - 1) {
+            estado.paso = estado.traza.length - 1;
+            pausar();
+            break;
+        }
         // Punto de interrupción. La reproducción se detiene con el paso
-        // visible, lo que permite examinar el estado del grafo.
-        pausar();
+        // visible, lo que permite examinar el estado del grafo. Se comprueba
+        // en cada paso intermedio del disparo.
+        if (estado.breakpoints.has(estado.traza[estado.paso].linea)) {
+            pausar();
+            break;
+        }
     }
     pintarEstado();
 }
 
 function controlPaso(delta) {
     if (!estado.traza) return;
-    // Un control manual detiene la reproducción. De lo contrario el
-    // temporizador sobrescribe el paso elegido.
+    // Un control manual detiene la reproducción y deja el paso elegido fijo.
     if (estado.reproduciendo) pausar();
     estado.paso = delta === null ? 0
         : Math.max(0, Math.min(estado.paso + delta, estado.traza.length - 1));
@@ -456,7 +472,7 @@ function iniciar() {
     $('#in-velocidad').addEventListener('change', () => {
         if (estado.reproduciendo) {
             clearInterval(estado.temporizador);
-            estado.temporizador = setInterval(avanzarAutomatico, intervaloMs());
+            arrancarTemporizador();
         }
     });
     $('#atajos-velocidad').addEventListener('click', (ev) => {
