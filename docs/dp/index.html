@@ -6,7 +6,7 @@
 <title>Programación dinámica: paseos de largo mínimo</title>
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=9">
+<link rel="stylesheet" href="css/estilo.css?v=10">
 <script src="../js/cytoscape.min.js?v=3.30.2"></script>
 </head>
 <body>
@@ -34,6 +34,13 @@
         <select id="dd-ejemplo"></select>
         <div id="txt-ejemplo" class="txt-ayuda"></div>
         <button id="btn-ejemplo" class="btn-primario">Cargar ejemplo</button>
+      </section>
+
+      <section class="panel">
+        <h2>Edición</h2>
+        <button id="btn-editar" class="btn-primario">Editar</button>
+        <div class="txt-ayuda">Abre la matriz de largos. El digrafo no cambia
+          hasta pulsar Aplicar. Hasta 20 nodos.</div>
       </section>
 
       <section class="panel">
@@ -137,10 +144,31 @@
   </footer>
 </div>
 
-<script src="js/digrafo.js?v=9"></script>
-<script src="js/dp.js?v=9"></script>
-<script src="js/ejemplos.js?v=9"></script>
-<script src="js/viz.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<dialog id="dlg-editor">
+  <h2>Matriz de largos</h2>
+  <p class="txt-ayuda">Cada casilla es el largo del arco de la fila hacia la
+    columna. Una casilla vacía significa que el arco no existe. La diagonal son
+    los loops de largo 0 del preprocesamiento y no se edita. Los nombres de los
+    nodos se escriben en la primera columna.</p>
+  <div class="editor-barra">
+    <button id="btn-editor-agregar" type="button">Agregar nodo</button>
+    <span id="txt-editor-n" class="txt-ayuda"></span>
+  </div>
+  <div class="editor-envoltura">
+    <table id="tabla-editor"></table>
+  </div>
+  <div id="txt-editor"></div>
+  <div class="editor-pie">
+    <button id="btn-editor-cancelar" type="button">Cancelar</button>
+    <button id="btn-editor-aplicar" type="button" class="btn-primario">Aplicar</button>
+  </div>
+</dialog>
+
+<script src="js/digrafo.js?v=10"></script>
+<script src="js/dp.js?v=10"></script>
+<script src="js/ejemplos.js?v=10"></script>
+<script src="js/viz.js?v=10"></script>
+<script src="js/editor.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>

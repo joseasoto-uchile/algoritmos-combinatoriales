@@ -61,6 +61,31 @@ en cálculo en verde y las celdas de N⁻(b) en azul.
   soltar la selección.
 - Exportación de la tabla T en CSV.
 
+## Edición de la instancia
+
+El botón Editar abre un diálogo con la matriz de largos. La fila es el nodo de
+origen y la columna el de destino. Una casilla vacía significa que el arco no
+existe. La diagonal son los loops de largo 0 del preprocesamiento y no se
+edita. Los nombres de los nodos se escriben en la primera columna y la cabecera
+de la columna correspondiente los sigue.
+
+La edición ocurre sobre una copia. El digrafo en pantalla no cambia hasta
+pulsar Aplicar, y Cancelar descarta todo. Aplicar reemplaza la instancia y
+borra la traza y las tablas, porque corresponden al digrafo anterior.
+
+El editor admite hasta 20 nodos. La matriz tiene n² casillas y la aplicación
+está pensada para instancias de demostración. Los nodos que ya existían
+conservan su posición en el lienzo, incluso al renombrarlos; los nuevos se
+reparten en un círculo.
+
+Aplicar valida antes de reemplazar y no cierra el diálogo si hay un problema.
+Se informa el primero que se encuentra, con la casilla o el nombre concreto:
+
+    El nodo de la fila 2 no tiene nombre.
+    El nombre "s" está repetido.
+    El largo del arco s → a no es un número: "diez".
+    el nodo "s__a" choca con el identificador interno del arco s -> a.
+
 ## Límites
 
 El generador acepta entre 2 y 200 nodos, y k entre 0 y 200. Un valor fuera de

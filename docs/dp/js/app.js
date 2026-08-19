@@ -579,6 +579,7 @@ function alPulsarCelda(ev) {
 /* --- Arranque ------------------------------------------------------------ */
 
 function iniciar() {
+    iniciarEditor();
     llenarDesplegable($('#dd-ejemplo'), [
         ['', 'Elegir ejemplo'],
         ...Object.entries(EJEMPLOS).map(([clave, info]) => [clave, info.nombre]),
@@ -623,6 +624,16 @@ function iniciar() {
         if (!clave) return;
         const info = EJEMPLOS[clave];
         cargarGrafo(construirEjemplo(clave), { origen: info.origen, k: info.k });
+    });
+    $('#btn-editar').addEventListener('click', () => {
+        pausar();
+        abrirEditor(estado.G, (G) => {
+            cargarGrafo(G, { origen: estado.origen });
+            $('#txt-resultado').textContent =
+                'Instancia editada: ' + G.ids.length + ' nodos, '
+                + [...G.arcos.values()].filter((a) => a.origen !== a.destino).length
+                + ' arcos sin contar los loops.';
+        });
     });
     $('#btn-k-igual-n').addEventListener('click', () => {
         $('#in-k').value = estado.G ? estado.G.ids.length : K_POR_OMISION;

@@ -116,6 +116,17 @@ function validarDatos(datos) {
         if (ids.has(id)) throw new Error(`JSON inválido: el nodo "${id}" está declarado dos veces.`);
         ids.add(id);
     }
+    /* La capa de dibujo identifica el arco (u,v) como "u__v". Un nodo con ese
+       nombre produce dos elementos con el mismo identificador. */
+    for (const a of datos.arcos) {
+        if (a !== null && typeof a === 'object' && 'origen' in a && 'destino' in a) {
+            const interno = `${a.origen}__${a.destino}`;
+            if (ids.has(interno)) {
+                throw new Error(`JSON inválido: el nodo "${interno}" choca con el `
+                    + `identificador interno del arco ${a.origen} -> ${a.destino}. Renómbralo.`);
+            }
+        }
+    }
     for (const a of datos.arcos) {
         if (a === null || typeof a !== 'object' || !('origen' in a) || !('destino' in a)) {
             throw new Error('JSON inválido: hay un arco sin "origen" o sin "destino".');
