@@ -65,9 +65,9 @@ function origenPorOmision(G) {
     const ids = G.ids;
     if (!ids.length) return null;
     if (G.dirigido) {
-        // En un grafo dirigido, la opción "conexo" solo garantiza conexidad
-        // débil. El primer nodo puede no tener aristas salientes, y en ese caso
-        // el recorrido consta de tres pasos, lo que aparenta un fallo.
+        // Se elige el nodo con mayor grado de salida. La opción "conexo" solo
+        // garantiza conexidad débil, de modo que el primer nodo puede no tener
+        // aristas salientes y producir un recorrido de tres pasos.
         return ids.reduce((mejor, n) => (G.gradoSalida(n) > G.gradoSalida(mejor) ? n : mejor), ids[0]);
     }
     return ids.find((n) => G.vecinos(n).length > 0) ?? ids[0];
