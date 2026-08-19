@@ -1,0 +1,126 @@
+/* Página índice. Comparte la paleta de las diapositivas de la clase 04 con las
+   dos aplicaciones, sin depender de sus hojas de estilo. */
+:root {
+    --fondo: #F8FAFC;
+    --texto: #0F172A;
+    --azul-oscuro: #1E293B;
+    --azul-medio: #2563EB;
+    --gris: #E2E8F0;
+    --gris-texto: #64748B;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.pagina {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.cabecera {
+    background: var(--azul-oscuro);
+    color: #fff;
+    margin: 0 -20px 26px;
+    padding: 18px 24px;
+}
+
+.cabecera h1 { font-size: 1.25rem; margin: 0 0 3px; }
+.cabecera .subtitulo { font-size: 13px; color: #CBD5E1; }
+
+main { flex: 1; }
+
+.lista-apps {
+    list-style: none;
+    counter-reset: app;
+    margin: 0;
+    padding: 0;
+}
+
+.app {
+    counter-increment: app;
+    background: #fff;
+    border: 1px solid var(--gris);
+    border-radius: 6px;
+    padding: 16px 18px 14px 52px;
+    margin-bottom: 14px;
+    position: relative;
+}
+
+.app::before {
+    content: counter(app);
+    position: absolute;
+    left: 18px;
+    top: 16px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--azul-oscuro);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.titulo {
+    display: inline-block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--azul-medio);
+    text-decoration: none;
+    margin-bottom: 4px;
+}
+
+.titulo:hover { text-decoration: underline; }
+
+.descripcion { margin: 4px 0 6px; }
+
+.detalle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--gris-texto);
+}
+
+.nota {
+    font-size: 13px;
+    color: var(--gris-texto);
+    border-left: 3px solid var(--gris);
+    padding-left: 12px;
+    margin: 22px 0 0;
+}
+
+.pie {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 5px;
+    margin-top: 26px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gris);
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+.pie-credito {
+    color: var(--gris-texto);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dotted #CBD5E1;
+}
+
+.pie-credito:hover { color: var(--azul-medio); }
+.pie-asistencia { font-style: italic; }

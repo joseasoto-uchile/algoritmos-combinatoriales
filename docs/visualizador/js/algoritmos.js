@@ -1,8 +1,8 @@
 /* Algoritmos y su registro.
  *
- * Port de algorithms/. Cada algoritmo emite la misma traza de eventos que su
- * equivalente en Python: los mismos tipos, los mismos campos y los mismos
- * números de línea. Por eso la capa de dibujo es idéntica en las dos versiones.
+ * Cada algoritmo emite una traza de eventos con el mismo vocabulario y con el
+ * número de línea del pseudocódigo que le corresponde, de modo que la capa de
+ * dibujo sirve para todos sin distinguir cuál se está ejecutando.
  */
 
 class ConstructorTraza {
@@ -17,10 +17,9 @@ class ConstructorTraza {
  * incluye una, y ordenar un array en cada extracción elevaría el costo de
  * Dijkstra a O(V^2 log V) en los grafos densos.
  *
- * Ante un empate de prioridad desempata por el valor, igual que heapq en
- * Python, donde los elementos son tuplas (distancia, nodo) que se comparan
- * elemento a elemento. El desempate es necesario para que las dos versiones
- * extraigan el mismo nodo y sus trazas coincidan. */
+ * Ante un empate de prioridad desempata por el nombre del nodo. Sin ese
+ * desempate, el nodo que se extrae con distancias iguales depende del orden en
+ * que entraron a la cola y la animación deja de ser reproducible. */
 function _menorQue(a, b) {
     if (a[0] !== b[0]) return a[0] < b[0];
     return String(a[1]) < String(b[1]);
@@ -91,9 +90,8 @@ function bfsTraza(G, origen) {
 }
 
 /* --- DFS ---------------------------------------------------------------- */
-/* Recursivo, igual que algorithms/dfs.py, para que el orden de los eventos
- * coincida en las dos versiones. La profundidad está acotada por el número de
- * nodos, por debajo del límite de pila del navegador. */
+/* Recursivo. La profundidad está acotada por el número de nodos, por debajo
+ * del límite de pila del navegador. */
 function dfsTraza(G, origen) {
     const tb = new ConstructorTraza();
     const visitado = new Set();

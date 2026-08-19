@@ -1,7 +1,6 @@
 /* Modelo de grafo: creación, generación aleatoria, ejemplos y serialización.
  *
- * Port de graph_model/ (model.py y ejemplos.py). Esta capa no depende de los
- * algoritmos ni del dibujo, igual que en la versión Python.
+ * Esta capa no depende de los algoritmos ni del dibujo.
  */
 
 /* Generador de números aleatorios con semilla (mulberry32). JavaScript no
@@ -31,17 +30,14 @@ function generadorAleatorio(semilla) {
 }
 
 /* Réplica del identificador que viz.js genera para cada arista. Se duplica
- * porque el modelo no depende de la capa de dibujo. Equivale a la función
- * homónima de graph_model/model.py. */
+ * porque el modelo no depende de la capa de dibujo. Un cambio de formato en
+ * viz.js requiere actualizar también esta función. */
 function idAristaInterno(u, v, dirigido) {
     return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
 }
 
-/* Lee la clave "dirigido" del objeto del grafo.
- *
- * La clave es opcional y su omisión significa dirigido. Equivale a es_dirigido
- * de graph_model/model.py: con valores por omisión distintos, el mismo archivo
- * produce grafos distintos en cada versión. */
+/* Lee la clave "dirigido" del objeto del grafo. La clave es opcional y su
+ * omisión significa dirigido. */
 function esDirigido(datos) {
     return datos.dirigido === undefined ? true : Boolean(datos.dirigido);
 }
@@ -54,12 +50,9 @@ function posicionValida(pos) {
 
 /* Rechaza un objeto de grafo que no cumple el formato.
  *
- * Debe aplicar las mismas reglas y devolver los mismos mensajes que
- * graph_model/model.py: un archivo tiene que comportarse igual en las dos
- * versiones.
- *
- * La validación es necesaria en JavaScript porque un peso de tipo texto no
- * produce error, se concatena, y Dijkstra devuelve distancias como "0diez2".
+ * La validación del peso es necesaria porque en JavaScript un peso de tipo
+ * texto no produce error: se concatena, y Dijkstra devuelve distancias como
+ * "0diez2".
  *
  * Se informa solo el primer problema encontrado.
  */
@@ -227,8 +220,7 @@ class Grafo {
 const ESCALA_POSICIONES = 800;
 
 /* Disposición inicial en círculo. Estas coordenadas solo las utiliza el layout
- * 'preset'. La versión Python usa el spring layout de NetworkX, que no está
- * disponible aquí. */
+ * 'preset'; los demás las recalculan. */
 function asignarPosiciones(G) {
     const ids = G.ids;
     const radio = ESCALA_POSICIONES * 0.4;

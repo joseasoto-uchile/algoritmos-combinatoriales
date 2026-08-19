@@ -3,161 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visualizador de Algoritmos sobre Grafos</title>
-<!-- Segunda capa contra la inyección de HTML: 'script-src self' impide que un
-     manejador de eventos en línea llegue a ejecutarse. La causa está corregida
-     en app.js, donde los <option> se construyen con la API del DOM.
-     'unsafe-inline' es necesario en estilos porque la leyenda usa atributos
-     style y Cytoscape fija estilos en línea sobre su contenedor.
-     GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
+<title>Algoritmos combinatoriales: visualizadores</title>
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=7">
-<!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
-     dependencia de red externa. Para actualizarlo, descargar la versión nueva
-     sobre este archivo y subir el ?v=. -->
-<script src="js/cytoscape.min.js?v=3.30.2"></script>
+      content="default-src 'self'; script-src 'none'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<link rel="stylesheet" href="indice.css?v=1">
 </head>
 <body>
-<div class="app-contenedor">
-  <h2>Visualizador de Algoritmos sobre Grafos</h2>
+<div class="pagina">
+  <header class="cabecera">
+    <h1>Algoritmos combinatoriales</h1>
+    <span class="subtitulo">MA3705, Universidad de Chile. Visualizadores de algoritmos sobre grafos</span>
+  </header>
 
-  <div class="fila-principal">
-    <!-- Columna de controles: ordenada por frecuencia de uso, no por orden
-         lógico. Sobre una instancia ya dibujada uno elige y ejecuta
-         algoritmos varias veces antes de generar otra instancia. -->
-    <div class="columna-controles">
-      <div class="panel">
-        <h4>Algoritmo</h4>
-        <div class="fila-algoritmo">
-          <select id="dd-algoritmo"></select>
-          <button id="btn-info-algoritmo" class="btn-info" title="Ver cómo funciona este algoritmo">ℹ️</button>
-        </div>
-        <label for="dd-origen">Nodo origen</label>
-        <select id="dd-origen"></select>
-        <div class="txt-ayuda">También puedes hacer clic en un nodo del grafo para elegirlo como origen.</div>
-        <button id="btn-ejecutar" class="btn-primario">Ejecutar</button>
-        <div id="txt-resultado" class="txt-estado"></div>
-        <div id="lista-no-disponibles" class="lista-no-disponibles"></div>
-      </div>
+  <main>
+    <ol class="lista-apps">
+      <li class="app">
+        <a class="titulo" href="dp/index.html">Paseos de largo m&iacute;nimo por programaci&oacute;n din&aacute;mica</a>
+        <p class="descripcion">
+          Algoritmo 2 de la clase 04. Tabula las tablas T y &Pi; columna a columna
+          sobre un digrafo con loops de largo 0. Al pulsar una celda se marcan las
+          celdas de la columna anterior que intervienen en la recurrencia. Incluye
+          reconstrucci&oacute;n del paseo &oacute;ptimo por el Algoritmo 3 y un editor de la
+          instancia por matriz de largos.
+        </p>
+        <p class="detalle">Hasta 20 nodos. Instancias de ejemplo, generador aleatorio y carga de archivo JSON.</p>
+      </li>
 
-      <div class="panel">
-        <h4>Layout</h4>
-        <select id="dd-layout"></select>
-        <div class="txt-ayuda">
-          Cualquier layout se recalcula al elegirlo o al pulsar "Centrar", nunca
-          entre pasos. El layout "preset" usa la posición guardada en la instancia.
-        </div>
-      </div>
+      <li class="app">
+        <a class="titulo" href="visualizador/index.html">Recorridos y caminos m&iacute;nimos</a>
+        <p class="descripcion">
+          BFS, DFS, Dijkstra, Bellman-Ford y caminos m&iacute;nimos en un DAG. Cada
+          algoritmo emite una traza de eventos que se reproduce paso a paso, con el
+          pseudoc&oacute;digo resaltado en la l&iacute;nea en ejecuci&oacute;n y puntos de interrupci&oacute;n
+          por l&iacute;nea.
+        </p>
+        <p class="detalle">Grafos dirigidos y no dirigidos, con pesos negativos y detecci&oacute;n de ciclos de peso negativo.</p>
+      </li>
+    </ol>
 
-      <div class="panel">
-        <h4>Generar instancia</h4>
-        <label for="in-n">Nodos</label>
-        <input id="in-n" type="number" value="10" min="2" max="200" step="1">
-        <label for="in-densidad">Densidad (0-1)</label>
-        <input id="in-densidad" type="number" value="0.3" min="0" max="1" step="0.05">
-        <label for="in-peso-min">Peso mínimo</label>
-        <input id="in-peso-min" type="number" value="1" step="1">
-        <label for="in-peso-max">Peso máximo</label>
-        <input id="in-peso-max" type="number" value="10" step="1">
-        <label><input type="checkbox" class="bandera" value="dirigido" checked> Dirigido</label>
-        <label><input type="checkbox" class="bandera" value="dag"> Forzar DAG</label>
-        <label><input type="checkbox" class="bandera" value="conexo" checked> Conexo</label>
-        <label><input type="checkbox" class="bandera" value="negativos"> Permitir pesos negativos</label>
-        <div class="txt-ayuda">Con pesos negativos se ignora el peso mínimo: se sortea en [-peso máximo, peso máximo].</div>
-        <label for="in-seed">Semilla (opcional)</label>
-        <input id="in-seed" type="number">
-        <button id="btn-generar" class="btn-primario">Generar instancia</button>
-        <div id="txt-generar"></div>
-      </div>
-
-      <div class="panel">
-        <h4>Instancias de ejemplo</h4>
-        <select id="dd-ejemplo"></select>
-        <div id="txt-ejemplo" class="txt-ayuda"></div>
-        <button id="btn-ejemplo" class="btn-primario">Cargar ejemplo</button>
-      </div>
-
-      <div class="panel">
-        <h4>Archivo</h4>
-        <label class="btn-archivo">Cargar JSON<input id="in-cargar" type="file" accept=".json" hidden></label>
-        <button id="btn-guardar">Guardar JSON</button>
-        <div id="txt-archivo" class="txt-estado"></div>
-        <h4 style="margin-top:12px">Exportar traza</h4>
-        <div class="fila-botones">
-          <button id="btn-traza-json">Traza JSON</button>
-          <button id="btn-traza-csv">Traza CSV</button>
-        </div>
-        <div id="txt-traza" class="txt-estado"></div>
-      </div>
-    </div>
-
-    <div class="divisor" data-objetivo="controles" title="Arrastra para redimensionar · doble clic para restablecer"></div>
-
-    <div class="columna-grafo">
-      <div class="toolbar-grafo">
-        <div class="fila-botones">
-          <button id="btn-reiniciar" title="Reiniciar">⏮</button>
-          <button id="btn-anterior" title="Paso anterior">⏪</button>
-          <button id="btn-play" title="Reproducir / Pausar">▶</button>
-          <button id="btn-siguiente" title="Paso siguiente">⏩</button>
-          <button id="btn-centrar" title="Centrar y ajustar vista al grafo">🎯 Centrar</button>
-        </div>
-        <div class="fila-velocidad">
-          <span class="txt-ayuda">Velocidad</span>
-          <input id="in-velocidad" type="number" min="1" max="100" step="1" class="entrada-velocidad">
-          <span class="txt-ayuda">pasos/seg</span>
-          <div id="atajos-velocidad" class="atajos-velocidad"></div>
-        </div>
-        <div id="txt-paso" class="txt-estado"></div>
-        <!-- Solo se llena en algoritmos que iteran sobre todas las aristas
-             (Bellman-Ford); en el resto queda vacio y no ocupa nada. -->
-        <div id="txt-iteracion" class="txt-iteracion"></div>
-      </div>
-
-      <div id="cyto"></div>
-
-      <details class="leyenda" open>
-        <summary>Leyenda</summary>
-        <div id="leyenda-contenido" class="leyenda-contenido"></div>
-      </details>
-    </div>
-
-    <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
-
-    <div class="columna-codigo">
-      <div class="panel panel-codigo">
-        <h4 id="pseudocodigo-titulo">Pseudocódigo</h4>
-        <div id="pseudocodigo-complejidad"></div>
-        <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
-        <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
-      </div>
-    </div>
-  </div>
+    <p class="nota">
+      Las dos aplicaciones se ejecutan por completo en el navegador. No hay
+      servidor: el c&aacute;lculo, la animaci&oacute;n y los archivos que se cargan no salen del
+      equipo.
+    </p>
+  </main>
 
   <footer class="pie">
-    <a id="pie-credito" class="pie-credito" target="_blank" rel="noopener noreferrer"
-       title="Ver la licencia MIT en el repositorio">© 2026 José A. Soto, Universidad de Chile</a>
-    <span>· Uso educativo ·</span>
+    <a class="pie-credito" href="https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE"
+       target="_blank" rel="noopener noreferrer">&copy; 2026 Jos&eacute; A. Soto, Universidad de Chile</a>
+    <span>&middot; Uso educativo &middot;</span>
+    <a class="pie-credito" href="https://github.com/joseasoto-uchile/algoritmos-combinatoriales"
+       target="_blank" rel="noopener noreferrer">C&oacute;digo fuente</a>
+    <span>&middot;</span>
     <span class="pie-asistencia">Asistido por Claude (Anthropic)</span>
   </footer>
 </div>
-
-<div id="modal-info" class="modal-overlay">
-  <div class="modal-contenido">
-    <div class="modal-header">
-      <h3 id="modal-info-titulo"></h3>
-      <button id="btn-cerrar-info" class="btn-cerrar">✕</button>
-    </div>
-    <p id="modal-info-texto"></p>
-  </div>
-</div>
-
-<!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
-     cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=10"></script>
-<script src="js/algoritmos.js?v=10"></script>
-<script src="js/viz.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
 </body>
 </html>

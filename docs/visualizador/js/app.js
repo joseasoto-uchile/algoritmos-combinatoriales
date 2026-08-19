@@ -1,8 +1,8 @@
 /* Capa de interacción. Es la única que accede al DOM.
  *
- * Port de app.py. En la versión Dash cada paso de la traza se resuelve con un
- * callback en el servidor. Aquí todo se calcula en el navegador, por lo que la
- * página se puede publicar como sitio estático en GitHub Pages.
+ * El cálculo ocurre entero en el navegador: la traza se genera al pulsar
+ * Ejecutar y cada paso se reconstruye desde ella, sin peticiones a un
+ * servidor.
  */
 
 const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];

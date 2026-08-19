@@ -1,165 +1,88 @@
-# algoritmos-combinatoriales
+# Algoritmos combinatoriales
 
-Aplicación web para ejecutar paso a paso algoritmos sobre grafos: BFS, DFS,
-Dijkstra, Bellman-Ford y caminos mínimos en DAG.
+Visualizadores de algoritmos sobre grafos para el curso MA3705 de la
+Universidad de Chile. Se ejecutan por completo en el navegador, sin servidor.
 
-Stack: Dash (servidor e interfaz), Dash Cytoscape (dibujo del grafo) y
-NetworkX (estructura de datos y generación de instancias).
+<https://joseasoto-uchile.github.io/algoritmos-combinatoriales/>
 
-## Dos implementaciones
+## Aplicaciones
 
-El repositorio contiene la misma aplicación escrita dos veces:
+`docs/` contiene el sitio publicado. Cada aplicación es independiente: tiene su
+propio HTML, CSS y JavaScript, y no importa código de la otra. Lo único
+compartido es `docs/js/cytoscape.min.js`.
 
-| Implementación | Ubicación | Uso |
-|---|---|---|
-| Python con Dash | raíz del repositorio, en las dos ramas | Desarrollo de los algoritmos |
-| JavaScript | `docs/`, solo en la rama `version-estatica` | Publicación en GitHub Pages |
+### 1. Programación dinámica (`docs/dp/`)
 
-La versión Dash resuelve cada paso de la traza con un callback en el servidor,
-por lo que necesita un proceso Python en ejecución. GitHub Pages solo sirve
-archivos estáticos y no puede alojarla. La versión JavaScript existe por ese
-motivo.
+Algoritmo 2 de la clase 04: tabulación de T y Π para paseos de largo mínimo con
+exactamente k arcos, sobre un digrafo con loops de largo 0. Muestra las dos
+tablas mientras se calculan columna a columna, marca las celdas de las que
+depende una celda al pulsarla, y reconstruye el paseo óptimo por el Algoritmo 3.
+Incluye un editor de la instancia por matriz de largos. Ver `docs/dp/README.md`.
 
-La rama `main` contiene solo la versión Python. La rama `version-estatica`
-contiene esa versión más los directorios `docs/` (port a JavaScript) y
-`herramientas/` (verificador de paridad). Los cambios en los algoritmos se
-hacen en `main` y se trasladan con `git merge main`.
+### 2. Recorridos y caminos mínimos (`docs/visualizador/`)
 
-### Paridad entre ambas
-
-Los algoritmos de `docs/js/algoritmos.js` emiten la misma traza que los de
-`algorithms/`: los mismos tipos de evento, los mismos campos y los mismos
-números de línea del pseudocódigo. Esa igualdad es la condición para que las
-dos versiones muestren la misma animación.
-
-Un cambio aplicado a una sola de las dos rompe esa igualdad. Tras modificar
-cualquier algoritmo, ejecutar desde `version-estatica`:
-
-```bash
-python herramientas/verificar_paridad.py
-```
-
-Compara evento por evento sobre 12 instancias: las 6 de ejemplo y 6 aleatorias
-que cubren grafos dirigidos, no dirigidos, con pesos negativos, DAG y densos.
-Comprueba además que ambas versiones rechacen los mismos 13 archivos inválidos
-con el mismo mensaje. Devuelve 0 si coinciden y 1 con el primer evento distinto
-en caso contrario. Requiere Node.js.
-
-## Instalación
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Ejecución
-
-```bash
-python app.py
-```
-
-Abrir `http://127.0.0.1:8050`. Al cargar la página se genera una instancia
-aleatoria.
-
-Variables de entorno:
-
-- `DASH_TOOLBAR=0` oculta la barra de depuración de Dash y mantiene la recarga
-  automática.
-- `DASH_DEBUG=0` desactiva también la recarga automática.
+BFS, DFS, Dijkstra, Bellman-Ford y caminos mínimos en un DAG. Cada algoritmo
+emite una traza de eventos que la interfaz reproduce paso a paso, con el
+pseudocódigo resaltado y puntos de interrupción por línea. Ver
+`docs/visualizador/README.md`.
 
 ## Arquitectura
 
-El diseño separa cuatro capas que se comunican mediante estructuras de datos
-serializables:
+Las dos aplicaciones siguen el mismo esquema. El algoritmo no dibuja: produce
+una lista de eventos, uno por cada paso que se quiere mostrar.
 
-```
-graph_model/   Modelo de grafo (NetworkX), generación aleatoria, instancias de
-               ejemplo y serialización JSON. No depende de algoritmos ni de la
-               interfaz.
+    {"tipo": "relajar", "u": "A", "v": "B", "nueva_dist": 7, "paso": 4}
 
-algorithms/    Implementación de cada algoritmo (BFS, DFS, Dijkstra,
-               Bellman-Ford, caminos mínimos en DAG). Cada uno recibe un grafo
-               y un nodo origen y devuelve (resultado, traza). La traza es una
-               lista de eventos. No se usan las funciones de NetworkX porque no
-               exponen los pasos intermedios necesarios para la animación.
-               registry.py contiene el catálogo: agregar un algoritmo requiere
-               una función y una entrada en el registro, sin modificar viz/ ni
-               app.py.
+La capa de dibujo es la única que traduce esos eventos en clases de Cytoscape.
+La animación no puede desviarse de lo que el algoritmo hace, porque no existe
+una segunda implementación del algoritmo para la animación.
 
-viz/           Convierte (grafo, traza, paso actual) en elementos y clases de
-               estilo de Cytoscape. Es la única capa que conoce a la vez el
-               formato de los eventos y el de Cytoscape.
+Reproducir un paso hacia atrás no deshace el estado: se reconstruye desde el
+principio de la traza hasta el paso pedido.
 
-app.py         Interfaz Dash: generación y carga de instancias, selección de
-               algoritmo y reproducción paso a paso mediante dcc.Interval.
+## Ejecución local
+
+```bash
+python -m http.server 8060
 ```
 
-La versión JavaScript de `docs/` reproduce estas capas en archivos
-equivalentes: `grafo.js` corresponde a `graph_model/`, `algoritmos.js` a
-`algorithms/`, `viz.js` a `viz/` y `app.js` a `app.py`.
+desde `docs/`, y abrir <http://127.0.0.1:8060/>. Cualquier servidor de archivos
+estáticos sirve; no hay compilación ni dependencias que instalar.
 
-### Formato de la traza
+## Caché del navegador
 
-Cada algoritmo emite eventos con esta forma:
+Al modificar un archivo de `js/` o `css/`, incrementar el valor de `?v=` en la
+etiqueta correspondiente del `index.html` de esa aplicación. En caso contrario
+los visitantes ejecutan la versión anterior desde la caché.
 
-```json
-{"tipo": "explorar_arista", "u": "A", "v": "B", "paso": 3}
-{"tipo": "relajar", "u": "A", "v": "B", "nueva_dist": 7, "paso": 4}
-{"tipo": "nodo_finalizado", "nodo": "A", "paso": 5}
-```
+## Seguridad
 
-`viz/elements.py` distingue dos clases de estado:
+Cada `index.html` declara una Content-Security-Policy con `script-src 'self'`.
+Los identificadores de nodo son datos de entrada: llegan de los archivos que
+carga el usuario y nunca se concatenan dentro de `innerHTML`. Los desplegables y
+las tablas se construyen con la API del DOM.
 
-- Persistente, se acumula y permanece marcado: `visitar_nodo`,
-  `nodo_finalizado`, `arista_solucion` y `ciclo_negativo`.
-- Transitorio, se resalta solo durante ese paso: `explorar_arista`, `relajar`,
-  `descartar_arista` y `procesar_nodo`.
+Cytoscape está incluido en el repositorio, no se carga de un CDN, de modo que
+las páginas funcionan sin acceso a red externa. Versión 3.30.2:
 
-Bellman-Ford emite además `inicio_iteracion` y `fin_iteraciones`, que la
-interfaz usa para mostrar el número de pasada actual y el total.
+    sha256: 83e8c54a6bec655bfd81df07df605649c268af69aeca67a5ea2da54ea42dac81
 
-### Formato de archivo
+`.gitattributes` lo marca como binario para que git no altere sus fines de
+línea y su hash siga coincidiendo con el del archivo publicado por el CDN.
 
-```json
-{
-  "dirigido": true,
-  "nodos": [{"id": "0", "label": "0", "pos": [120.5, 340.2]}],
-  "aristas": [{"origen": "0", "destino": "1", "weight": 4}]
-}
-```
+## Versión Python
 
-La clave `dirigido` es opcional y su omisión significa dirigido. `pos` también
-es opcional; si aparece, debe ser una lista de dos números finitos.
+El repositorio empezó como una aplicación Dash en Python, con los mismos cinco
+algoritmos del visualizador de recorridos y una herramienta que comparaba traza
+a traza las dos implementaciones. Está en la rama `python-deprecado` y no recibe
+mantenimiento. La versión oficial es la de este árbol.
 
-Se guardan las posiciones de cada nodo para que al recargar el archivo el
-dibujo sea el mismo.
+## Publicación
 
-`graph_model.model.validar_datos_grafo` rechaza los archivos que no cumplen el
-formato e indica el problema encontrado. Las reglas son: peso presente,
-numérico y finito; aristas que referencien nodos declarados; identificadores de
-nodo únicos, no vacíos y de tipo texto o número; sin aristas repetidas; y sin
-colisión entre un identificador de nodo y el identificador interno que se
-genera para una arista. Los lazos se aceptan.
+GitHub Pages sirve `docs/` de la rama `main`. GitHub Pages solo admite la raíz
+del repositorio o `docs/` como origen, de ahí el nombre de la carpeta.
 
-## Algoritmos y restricciones
+## Licencia
 
-| Algoritmo | Requiere pesos | Admite negativos | Requiere DAG | Complejidad |
-|---|---|---|---|---|
-| BFS | No | No aplica | No | O(V + E) |
-| DFS | No | No aplica | No | O(V + E) |
-| Dijkstra | Sí | No | No | O((V + E) log V) |
-| Bellman-Ford | Sí | Sí | No | O(V · E) |
-| Camino mínimo en DAG | Sí | Sí | Sí | O(V + E) |
-
-La aplicación filtra el selector de algoritmos según las propiedades del grafo
-cargado e indica el motivo por el que un algoritmo no está disponible.
-
-## Trabajo pendiente
-
-- Prim y Kruskal como módulos nuevos en `algorithms/` y sus entradas en el
-  registro.
-- Layout jerárquico para DAG mediante `dash_cytoscape.load_extra_layouts()` con
-  la extensión `dagre`. Por ahora se ofrece `breadthfirst`.
-- Importación y exportación en formato GraphML.
-- Medición del rendimiento con grafos de más de 100 nodos.
+MIT. Uso educativo. © 2026 José A. Soto, Universidad de Chile.
+Asistido por Claude (Anthropic).
