@@ -1,3 +1,13 @@
+> **Rama deprecada.** Esta rama conserva la aplicación Dash en Python y la
+> herramienta que comparaba sus trazas con las de la versión JavaScript. No
+> recibe mantenimiento. La versión oficial es la de la rama `main`, que contiene
+> solo JavaScript:
+> <https://joseasoto-uchile.github.io/algoritmos-combinatoriales/>
+>
+> Este es el último estado en que las dos implementaciones coincidían traza a
+> traza: 48 trazas, 7.740 eventos y 20 archivos de formato inválido, sin
+> diferencias. Se comprueba con `python herramientas/verificar_paridad.py`.
+
 # algoritmos-combinatoriales
 
 Aplicación web para ejecutar paso a paso algoritmos sobre grafos: BFS, DFS,
