@@ -169,6 +169,29 @@ def _id_arista_interno(u: str, v: str, dirigido: bool) -> str:
     return f"{a}__{b}"
 
 
+def es_dirigido(data) -> bool:
+    """Lee la clave "dirigido" del diccionario del grafo.
+
+    La clave es opcional y su omisión significa dirigido, que es el valor con
+    el que crea_grafo construye por omisión. Se centraliza aquí porque
+    docs/js/grafo.js debe aplicar el mismo criterio: con defectos distintos, el
+    mismo archivo produce grafos distintos en cada versión.
+    """
+    return bool(data.get("dirigido", True))
+
+
+def _posicion_valida(pos) -> bool:
+    """Comprueba que "pos" es una lista de dos números finitos."""
+    if not isinstance(pos, (list, tuple)) or len(pos) != 2:
+        return False
+    return all(
+        isinstance(c, (int, float))
+        and not isinstance(c, bool)
+        and math.isfinite(c)
+        for c in pos
+    )
+
+
 def validar_datos_grafo(data) -> None:
     """Rechaza un diccionario de grafo que no cumple el formato.
 
@@ -188,7 +211,7 @@ def validar_datos_grafo(data) -> None:
         if not isinstance(data[clave], list):
             raise ValueError(f'JSON inválido: "{clave}" debe ser una lista.')
 
-    dirigido = bool(data.get("dirigido", True))
+    dirigido = es_dirigido(data)
 
     ids: set[str] = set()
     for nodo in data["nodos"]:
@@ -202,6 +225,12 @@ def validar_datos_grafo(data) -> None:
         if nid in ids:
             raise ValueError(f'JSON inválido: el nodo "{nid}" está declarado dos veces.')
         ids.add(nid)
+        # La capa de dibujo lee pos[0] y pos[1] sin comprobarlos.
+        if "pos" in nodo and not _posicion_valida(nodo["pos"]):
+            raise ValueError(
+                f'JSON inválido: el nodo "{nid}" tiene una posición que no es '
+                "una lista de dos números."
+            )
 
     vistas: set[tuple[str, str]] = set()
     ids_arista: set[str] = set()
@@ -248,7 +277,7 @@ def graph_from_dict(data: dict) -> nx.Graph:
     Valida el diccionario antes de construir el grafo.
     """
     validar_datos_grafo(data)
-    G = crear_grafo(dirigido=bool(data.get("dirigido", True)))
+    G = crear_grafo(dirigido=es_dirigido(data))
     for nodo in data["nodos"]:
         nid = str(nodo["id"])
         attrs = {k: v for k, v in nodo.items() if k != "id"}

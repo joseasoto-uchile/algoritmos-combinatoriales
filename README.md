@@ -129,6 +129,9 @@ interfaz usa para mostrar el número de pasada actual y el total.
 }
 ```
 
+La clave `dirigido` es opcional y su omisión significa dirigido. `pos` también
+es opcional; si aparece, debe ser una lista de dos números finitos.
+
 Se guardan las posiciones de cada nodo para que al recargar el archivo el
 dibujo sea el mismo.
 
