@@ -180,6 +180,17 @@ def es_dirigido(data) -> bool:
     return bool(data.get("dirigido", True))
 
 
+def peso_arista(arista):
+    """Peso declarado en una arista, o None si no lo tiene.
+
+    Se admite la clave "weight" y su sinónimo "peso". Un valor null equivale a
+    la ausencia de la clave, como el operador ?? de docs/js/grafo.js. Se usa en
+    la validación y en la construcción para que las dos coincidan.
+    """
+    peso = arista.get("weight")
+    return arista.get("peso") if peso is None else peso
+
+
 def _posicion_valida(pos) -> bool:
     """Comprueba que "pos" es una lista de dos números finitos."""
     if not isinstance(pos, (list, tuple)) or len(pos) != 2:
@@ -244,7 +255,7 @@ def validar_datos_grafo(data) -> None:
                     f'JSON inválido: la arista {u} → {v} apunta al nodo "{extremo}", '
                     "que no está declarado."
                 )
-        peso = arista.get("weight", arista.get("peso"))
+        peso = peso_arista(arista)
         if peso is None:
             raise ValueError(f"JSON inválido: la arista {u} → {v} no tiene peso.")
         if isinstance(peso, bool) or not isinstance(peso, (int, float)):
@@ -284,7 +295,8 @@ def graph_from_dict(data: dict) -> nx.Graph:
         G.add_node(nid, **attrs)
     for arista in data["aristas"]:
         u, v = str(arista["origen"]), str(arista["destino"])
-        attrs = {k: v for k, v in arista.items() if k not in ("origen", "destino")}
+        attrs = {k: v for k, v in arista.items() if k not in ("origen", "destino", "peso")}
+        attrs["weight"] = peso_arista(arista)
         G.add_edge(u, v, **attrs)
     return G
 
