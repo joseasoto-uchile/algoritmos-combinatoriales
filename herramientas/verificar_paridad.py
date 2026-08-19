@@ -120,6 +120,14 @@ CASOS_INVALIDOS = [
     ("sin la clave dirigido", {"nodos": [{"id": "0"}, {"id": "1"}, {"id": "2"}],
                                "aristas": [{"origen": "0", "destino": "1", "weight": 1},
                                            {"origen": "1", "destino": "2", "weight": 1}]}),
+    # null equivale a ausente en las dos versiones.
+    ("weight nulo con peso presente",
+     {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
+      "aristas": [{"origen": "0", "destino": "1", "weight": None, "peso": 5}]}),
+    ("solo la clave peso", {"dirigido": True, "nodos": [{"id": "0"}, {"id": "1"}],
+                            "aristas": [{"origen": "0", "destino": "1", "peso": 7}]}),
+    ("label nulo", {"dirigido": True, "nodos": [{"id": "0", "label": None}, {"id": "1"}],
+                    "aristas": [{"origen": "0", "destino": "1", "weight": 1}]}),
 ]
 
 

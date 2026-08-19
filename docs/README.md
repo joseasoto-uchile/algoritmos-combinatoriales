@@ -15,7 +15,7 @@ Los algoritmos emiten la misma traza de eventos que los de `algorithms/`: los
 mismos tipos, los mismos campos y los mismos números de línea del pseudocódigo.
 La equivalencia se comprueba comparando evento por evento sobre 12 instancias.
 
-Dos diferencias entre los lenguajes obligan a estos ajustes:
+Cuatro diferencias entre los lenguajes obligan a estos ajustes:
 
 - La cola de prioridad de Dijkstra desempata por nombre de nodo, igual que
   `heapq` en Python, donde los elementos son tuplas `(distancia, nodo)`.
@@ -23,6 +23,19 @@ Dos diferencias entre los lenguajes obligan a estos ajustes:
   numéricas de un objeto se recorren en orden ascendente por especificación del
   lenguaje, no en orden de inserción, y las aristas de la solución deben
   emitirse en el orden en que se relajaron.
+- El valor por omisión de `dirigido` se lee con una función, `esDirigido` y
+  `es_dirigido`, en lugar de convertir el valor directamente. `Boolean(undefined)`
+  es `false` y `dict.get("dirigido", True)` es `True`, de modo que un archivo
+  sin esa clave producía un grafo dirigido en una versión y no dirigido en la
+  otra.
+- `null` equivale a la ausencia de la clave al leer `weight` y `label`. El
+  operador `??` de JavaScript ya se comporta así; `dict.get` solo mira si la
+  clave existe.
+
+La comprobación no se limita a los mensajes de rechazo. Cuando las dos
+versiones aceptan un archivo, compara además el grafo construido: nodos,
+aristas con su peso y si es dirigido. Coincidir en el veredicto no basta, ya
+que dos versiones pueden aceptar el mismo archivo y construir grafos distintos.
 
 Para ejecutar la comprobación, desde la raíz del repositorio:
 
