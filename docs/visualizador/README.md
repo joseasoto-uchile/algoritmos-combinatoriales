@@ -94,6 +94,13 @@ usar `innerHTML` con datos procedentes del archivo que carga el usuario: un
 nodo llamado `"><img src=x onerror=...>` inyecta marcado si se concatena. Los
 elementos `<option>` se construyen con `document.createElement` y `textContent`.
 
+## Altura de la barra
+
+El texto del paso ocupa una línea de alto fija y no cambia con su contenido. La
+barra de control está encima del lienzo del grafo, de modo que cualquier cambio
+en su alto encoge o agranda el lienzo y mueve el grafo en mitad de la
+animación. Lo mismo vale para el contador de iteraciones de Bellman-Ford.
+
 ## Reproducción
 
 La velocidad se expresa en pasos por segundo. `setInterval` no entrega disparos

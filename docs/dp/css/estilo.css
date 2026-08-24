@@ -550,3 +550,16 @@ body {
     font-size: 13px;
     color: var(--texto);
 }
+
+/* La expresión de la celda seleccionada ocupa siempre una línea de alto. Si
+   saltara de renglón, el panel de tablas crecería y el lienzo del grafo
+   encogería, moviendo el grafo. Una expresión con muchos vecinos no se recorta:
+   se desplaza en horizontal dentro de su propia línea. */
+#txt-seleccion {
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    line-height: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+}

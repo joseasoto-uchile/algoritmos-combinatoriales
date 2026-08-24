@@ -56,6 +56,11 @@ encarga de eso.
 T[b,i] es +∞, es decir cuando no existe tal paseo. La casilla de la barra oculta
 la tabla Π si no se necesita.
 
+La expresión del mínimo ocupa una línea de alto fija. Está dentro de la misma
+columna que el grafo, de modo que si saltara de renglón encogería el lienzo y
+movería el grafo. Una expresión con muchos vecinos no se recorta: se desplaza
+en horizontal dentro de su línea.
+
 Al pulsar una celda (b,i) con i mayor o igual que 1 se marcan las celdas
 (a,i-1) para todo a en N⁻(b), junto con los arcos correspondientes del grafo, y
 se muestra la expresión completa del mínimo. Volver a pulsar la misma celda
