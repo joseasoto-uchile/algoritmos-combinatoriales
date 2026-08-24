@@ -11,6 +11,7 @@ const COLORES = {
     solucion: '#66bb6a', solucion_borde: '#2e7d32',
     ciclo_negativo: '#ef5350', ciclo_negativo_borde: '#b71c1c',
     activo: '#ffb74d', activo_borde: '#e65100',
+    procesada: '#cfd8dc',
     origen_borde: '#f57f17',
 };
 
@@ -21,6 +22,7 @@ const ESTADOS_LEYENDA = [
     ['Visitado', 'Descubierto, aún puede mejorar', COLORES.visitado, COLORES.visitado_borde],
     ['Finalizado', 'Procesado por completo', COLORES.finalizado, COLORES.finalizado_borde],
     ['Activo', 'Lo que ocurre en este paso', COLORES.activo, COLORES.activo_borde],
+    ['Arista procesada', 'Ya examinada, no se vuelve a mirar', COLORES.procesada, COLORES.procesada],
     ['Solución', 'Parte del árbol de caminos', COLORES.solucion, COLORES.solucion_borde],
     ['Ciclo negativo', 'Sin distancia mínima definida', COLORES.ciclo_negativo, COLORES.ciclo_negativo_borde],
 ];
@@ -48,6 +50,9 @@ const ESTILOS = [
         'border-width': '4px', 'border-color': COLORES.origen_borde, 'border-style': 'double' } },
     { selector: 'node.activo', style: {
         'background-color': COLORES.activo, 'border-color': COLORES.activo_borde, 'border-width': '4px' } },
+    { selector: 'edge.procesada', style: {
+        'line-color': COLORES.procesada, 'target-arrow-color': COLORES.procesada,
+        width: 1.5, color: '#90a4ae' } },
     { selector: 'edge.solucion', style: {
         'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde, width: 4 } },
     { selector: 'edge.activo', style: {
@@ -100,13 +105,19 @@ const EVENTOS_PERSISTENTES_NODO = {
 };
 const EVENTOS_TRANSITORIOS_ARISTA = new Set(['explorar_arista', 'relajar', 'descartar_arista']);
 
-function calcularEstado(traza, pasoActual, dirigido) {
+/* En los algoritmos que no vuelven sobre una arista, la que ya se examinó
+ * queda marcada para distinguirla de las que aún faltan. Bellman-Ford recorre
+ * todas las aristas en cada pasada, de modo que ahí no se aplica. */
+function calcularEstado(traza, pasoActual, dirigido, aristasNoSeRevisitan = false) {
     const clasesNodo = new Map(), clasesArista = new Map();
     const agregar = (m, k, c) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(c); };
     const tope = traza.length ? Math.max(0, Math.min(pasoActual, traza.length - 1)) : -1;
 
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
+        if (aristasNoSeRevisitan && EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) {
+            agregar(clasesArista, idArista(ev.u, ev.v, dirigido), 'procesada');
+        }
         if (EVENTOS_PERSISTENTES_NODO[ev.tipo]) {
             agregar(clasesNodo, ev.nodo, EVENTOS_PERSISTENTES_NODO[ev.tipo]);
         } else if (ev.tipo === 'arista_solucion') {
@@ -217,4 +228,40 @@ function aplicarDistancias(elementos, distancias) {
         nuevo.classes = [...clases].sort().join(' ');
         return nuevo;
     });
+}
+
+/* Estado de los vectores D y Π en `pasoActual`, reconstruido desde la traza.
+ *
+ * Devuelve null si el algoritmo no los mantiene. Los eventos guardan los
+ * cambios, no una copia de los vectores, de modo que se reproducen en orden.
+ *
+ * `S` es el conjunto de nodos ya cerrados, `activo` el que el algoritmo eligió
+ * en este paso y `destino` aquel cuya casilla se está evaluando. */
+function calcularVectores(traza, pasoActual, ids) {
+    if (!traza || !traza.length) return null;
+    const D = new Map(ids.map((v) => [v, Infinity]));
+    const Pi = new Map(ids.map((v) => [v, null]));
+    const S = new Set();
+    let inicializado = false, activo = null, destino = null, interrumpido = false;
+
+    const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
+    for (let i = 0; i <= tope; i++) {
+        const ev = traza[i];
+        switch (ev.tipo) {
+            case 'inicializar': inicializado = true; break;
+            case 'visitar_nodo': if ('dist' in ev) D.set(ev.nodo, ev.dist); break;
+            case 'relajar': D.set(ev.v, ev.nueva_dist); Pi.set(ev.v, ev.u); break;
+            case 'nodo_finalizado': S.add(ev.nodo); break;
+            case 'interrumpir': interrumpido = true; break;
+            default: break;
+        }
+    }
+    if (!inicializado) return null;
+
+    const ev = traza[tope];
+    if (ev.tipo === 'procesar_nodo') activo = ev.nodo;
+    else if (EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) { activo = ev.u; destino = ev.v; }
+    else if (ev.tipo === 'nodo_finalizado' || ev.tipo === 'interrumpir') activo = ev.nodo;
+
+    return { D, Pi, S, activo, destino, interrumpido };
 }

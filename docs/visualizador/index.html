@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=13">
+<link rel="stylesheet" href="css/estilo.css?v=16">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -117,6 +117,17 @@
 
       <div id="cyto"></div>
 
+      <!-- Solo aparece en los algoritmos que mantienen los vectores D y Pi. -->
+      <section id="panel-vectores" class="panel-vectores" hidden>
+        <div class="vectores-cabecera">
+          <h4>Vectores</h4>
+          <span id="txt-vectores" class="txt-ayuda"></span>
+        </div>
+        <div class="vectores-envoltura">
+          <table id="tabla-vectores"></table>
+        </div>
+      </section>
+
       <details class="leyenda" open>
         <summary>Leyenda</summary>
         <div id="leyenda-contenido" class="leyenda-contenido"></div>
@@ -155,9 +166,9 @@
 
 <!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
      cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=13"></script>
-<script src="js/algoritmos.js?v=13"></script>
-<script src="js/viz.js?v=13"></script>
-<script src="js/app.js?v=13"></script>
+<script src="js/grafo.js?v=16"></script>
+<script src="js/algoritmos.js?v=16"></script>
+<script src="js/viz.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>

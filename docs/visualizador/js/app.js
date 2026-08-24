@@ -82,7 +82,9 @@ function elementosActuales() {
     let elementos = grafoAElementos(estado.G, layout === 'preset');
     if (estado.traza) {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-        const [cn, ca] = calcularEstado(estado.traza, paso, estado.G.dirigido);
+        const info = ALGORITMOS[estado.algEjecutado] || {};
+        const [cn, ca] = calcularEstado(estado.traza, paso, estado.G.dirigido,
+            Boolean(info.aristasNoSeRevisitan));
         elementos = aplicarClases(elementos, cn, ca, $('#dd-origen').value);
         const d = calcularDistancias(estado.traza, paso);
         if (d !== null) elementos = aplicarDistancias(elementos, d);
@@ -118,6 +120,7 @@ function pintarEstado() {
     });
     actualizarTextoPaso();
     resaltarPseudocodigo();
+    pintarVectores();
 }
 
 function reconstruirGrafo({ recalcular = true } = {}) {
@@ -126,6 +129,83 @@ function reconstruirGrafo({ recalcular = true } = {}) {
     if (recalcular) recalcularLayout();
     actualizarTextoPaso();
     resaltarPseudocodigo();
+    pintarVectores();
+}
+
+/* --- Vectores D y Pi ------------------------------------------------------ */
+
+/* Una fila por vector, una columna por nodo. Se reconstruyen desde la traza en
+ * cada paso, igual que las clases del grafo. */
+function pintarVectores() {
+    const panel = $('#panel-vectores');
+    const info = ALGORITMOS[estado.algEjecutado] || {};
+    const mostrar = Boolean(info.vectores) && estado.traza
+        && $('#dd-algoritmo').value === estado.algEjecutado;
+    // Aparecer o desaparecer cambia el alto de #cyto. Se reencuadra la vista,
+    // sin volver a correr el layout, que movería los nodos.
+    const cambia = panel.hidden === mostrar;
+    panel.hidden = !mostrar;
+    // En el cuadro siguiente, cuando el navegador ya midio la pagina con el
+    // panel puesto o quitado.
+    if (cambia && estado.cy) {
+        requestAnimationFrame(() => {
+            estado.cy.resize();
+            estado.cy.fit(undefined, 30);
+        });
+    }
+    if (!mostrar) return;
+
+    const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
+    const v = calcularVectores(estado.traza, paso, estado.G.ids);
+    const tabla = $('#tabla-vectores');
+    if (v === null) { panel.hidden = true; return; }
+
+    const ids = estado.G.ids;
+    const clasesDe = (id) => {
+        const c = [];
+        if (v.S.has(id)) c.push('en-S');
+        if (id === v.activo) c.push('activo');
+        if (id === v.destino) c.push('destino');
+        return c.join(' ');
+    };
+
+    const thead = document.createElement('thead');
+    const filaEnc = document.createElement('tr');
+    const esquina = document.createElement('th');
+    esquina.className = 'esquina';
+    esquina.textContent = 'v';
+    filaEnc.append(esquina);
+    for (const id of ids) {
+        const th = document.createElement('th');
+        th.textContent = id;
+        th.className = clasesDe(id);
+        filaEnc.append(th);
+    }
+    thead.append(filaEnc);
+
+    const tbody = document.createElement('tbody');
+    for (const [nombre, mapa, vacio] of [['D', v.D, '∞'], ['Π', v.Pi, '⊥']]) {
+        const tr = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = nombre;
+        th.className = 'fila-nombre';
+        tr.append(th);
+        for (const id of ids) {
+            const td = document.createElement('td');
+            const valor = mapa.get(id);
+            const indefinido = valor === undefined || valor === null || valor === Infinity;
+            td.textContent = indefinido ? vacio : String(valor);
+            td.className = [clasesDe(id), indefinido ? 'indefinido' : ''].filter(Boolean).join(' ');
+            tr.append(td);
+        }
+        tbody.append(tr);
+    }
+    tabla.replaceChildren(thead, tbody);
+
+    const cerrados = [...v.S];
+    $('#txt-vectores').textContent = v.interrumpido
+        ? `S = {${cerrados.join(', ')}}. El ciclo se interrumpió: los nodos que faltan son inalcanzables.`
+        : `S = {${cerrados.join(', ')}}, ${cerrados.length} de ${ids.length} nodos cerrados.`;
 }
 
 function actualizarTextoPaso() {
@@ -274,7 +354,7 @@ function avanzarAutomatico() {
         // Punto de interrupción. La reproducción se detiene con el paso
         // visible, lo que permite examinar el estado del grafo. Se comprueba
         // en cada paso intermedio del disparo.
-        if (estado.breakpoints.has(estado.traza[estado.paso].linea)) {
+        if (lineasDelPaso(estado.traza[estado.paso]).some((n) => estado.breakpoints.has(n))) {
             pausar();
             break;
         }
@@ -308,18 +388,25 @@ function renderPseudocodigo() {
     resaltarPseudocodigo();
 }
 
+/* Un paso puede ejecutar más de una línea, como la relajación, que asigna D y
+ * Π. El campo llega entonces como lista. */
+function lineasDelPaso(ev) {
+    if (Array.isArray(ev.linea)) return ev.linea;
+    return ev.linea === undefined ? [] : [ev.linea];
+}
+
 function resaltarPseudocodigo() {
-    let lineaActiva = null;
+    let activas = [];
     // Solo se resalta si la traza corresponde al algoritmo mostrado. Al
     // cambiar el desplegable sin volver a ejecutar, no se corresponden.
     if (estado.traza && $('#dd-algoritmo').value === estado.algEjecutado) {
         const p = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-        lineaActiva = estado.traza[p].linea;
+        activas = lineasDelPaso(estado.traza[p]);
     }
     $$('#pseudocodigo-lineas .linea-codigo').forEach((el) => {
         const n = Number(el.dataset.linea);
         el.classList.toggle('linea-breakpoint', estado.breakpoints.has(n));
-        el.classList.toggle('linea-activa', n === lineaActiva);
+        el.classList.toggle('linea-activa', activas.includes(n));
     });
 }
 

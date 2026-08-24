@@ -268,3 +268,52 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     padding: 3px 8px;
     white-space: nowrap;
 }
+
+/* --- Vectores D y Pi --- */
+.panel-vectores {
+    flex: 0 0 auto;
+    background: #fff;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+}
+
+.vectores-cabecera {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.vectores-cabecera h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #607d8b; }
+
+/* Con muchos nodos la tabla se desplaza por dentro y no ensancha la columna. */
+.vectores-envoltura { overflow-x: auto; }
+
+#tabla-vectores {
+    border-collapse: collapse;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+}
+
+#tabla-vectores th, #tabla-vectores td {
+    border: 1px solid #b0bec5;
+    min-width: 40px;
+    height: 26px;
+    padding: 1px 6px;
+    text-align: center;
+    background: #fff;
+}
+
+#tabla-vectores thead th { background: #eceff1; font-weight: 700; border-bottom-width: 2px; }
+#tabla-vectores thead th.esquina { background: #37474f; color: #fff; }
+#tabla-vectores th.fila-nombre { background: #eceff1; font-weight: 700; }
+#tabla-vectores td.indefinido { color: #90a4ae; }
+
+/* Nodos ya cerrados, el elegido en este paso y aquel cuya casilla se evalúa. */
+#tabla-vectores .en-S { background: #e8eaf6; }
+#tabla-vectores td.en-S { color: #3949ab; }
+#tabla-vectores .activo { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; font-weight: 700; }
+#tabla-vectores .destino { background: #e3f2fd; box-shadow: inset 0 0 0 2px #1976d2; }

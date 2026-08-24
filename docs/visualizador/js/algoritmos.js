@@ -13,51 +13,6 @@ class ConstructorTraza {
     }
 }
 
-/* Cola de prioridad mínima, implementada como montículo binario. JavaScript no
- * incluye una, y ordenar un array en cada extracción elevaría el costo de
- * Dijkstra a O(V^2 log V) en los grafos densos.
- *
- * Ante un empate de prioridad desempata por el nombre del nodo. Sin ese
- * desempate, el nodo que se extrae con distancias iguales depende del orden en
- * que entraron a la cola y la animación deja de ser reproducible. */
-function _menorQue(a, b) {
-    if (a[0] !== b[0]) return a[0] < b[0];
-    return String(a[1]) < String(b[1]);
-}
-
-class ColaPrioridad {
-    constructor() { this.datos = []; }
-    get vacia() { return this.datos.length === 0; }
-    push(prioridad, valor) {
-        this.datos.push([prioridad, valor]);
-        let i = this.datos.length - 1;
-        while (i > 0) {
-            const padre = (i - 1) >> 1;
-            if (!_menorQue(this.datos[i], this.datos[padre])) break;
-            [this.datos[padre], this.datos[i]] = [this.datos[i], this.datos[padre]];
-            i = padre;
-        }
-    }
-    pop() {
-        const tope = this.datos[0];
-        const ultimo = this.datos.pop();
-        if (this.datos.length) {
-            this.datos[0] = ultimo;
-            let i = 0;
-            for (;;) {
-                const izq = 2 * i + 1, der = 2 * i + 2;
-                let menor = i;
-                if (izq < this.datos.length && _menorQue(this.datos[izq], this.datos[menor])) menor = izq;
-                if (der < this.datos.length && _menorQue(this.datos[der], this.datos[menor])) menor = der;
-                if (menor === i) break;
-                [this.datos[menor], this.datos[i]] = [this.datos[i], this.datos[menor]];
-                i = menor;
-            }
-        }
-        return tope;
-    }
-}
-
 /* --- BFS ---------------------------------------------------------------- */
 function bfsTraza(G, origen) {
     const tb = new ConstructorTraza();
@@ -85,7 +40,7 @@ function bfsTraza(G, origen) {
         }
         tb.emitir('nodo_finalizado', { nodo: u, linea: 11 });
     }
-    tb.emitir('fin', { distancias: distancia, padres: padre });
+    tb.emitir('fin', { distancias: distancia, padres: padre, linea: 11 });
     return [{ distancias: distancia, padres: padre }, tb.traza];
 }
 
@@ -118,55 +73,77 @@ function dfsTraza(G, origen) {
         tb.emitir('nodo_finalizado', { nodo: u, linea: 7 });
     };
     visitar(origen);
-    tb.emitir('fin', { padres: padre, descubrimiento, finalizacion });
+    tb.emitir('fin', { padres: padre, descubrimiento, finalizacion, linea: 7 });
     return [{ padres: padre, descubrimiento, finalizacion }, tb.traza];
 }
 
 /* --- Dijkstra ------------------------------------------------------------ */
+/* Version basica: en cada vuelta se elige por barrido el nodo de V \ S con D
+ * minimo, sin cola de prioridad. Es el pseudocodigo de la clase.
+ *
+ * El barrido desempata por el nombre del nodo. Sin ese desempate, con dos
+ * nodos a la misma distancia el elegido dependeria del orden de la lista de
+ * nodos y la animacion dejaria de ser reproducible. */
+function _elegirMinimo(ids, D, S) {
+    let mejor = null;
+    for (const v of ids) {
+        if (S.has(v)) continue;
+        if (mejor === null || D[v] < D[mejor]
+            || (D[v] === D[mejor] && String(v) < String(mejor))) mejor = v;
+    }
+    return mejor;
+}
+
 function dijkstraTraza(G, origen) {
     if (G.tienePesosNegativos()) {
         throw new Error('Dijkstra no admite pesos negativos; usa Bellman-Ford.');
     }
     const tb = new ConstructorTraza();
-    const distancia = { [origen]: 0 };
-    /* Map y no un objeto: los nodos se insertan en 'padre' a medida que se
-     * relajan, y las aristas de la solución se emiten en ese orden. Un objeto
-     * con claves numéricas las recorre en orden ascendente por especificación
-     * del lenguaje, no en orden de inserción. */
-    const padre = new Map([[origen, null]]);
-    const finalizado = new Set();
-    const cola = new ColaPrioridad();
-    cola.push(0, origen);
+    const ids = G.ids;
+    const D = {}, Pi = {};
+    for (const v of ids) { D[v] = Infinity; Pi[v] = null; }
+    tb.emitir('inicializar', { linea: 2 });
 
-    tb.emitir('visitar_nodo', { nodo: origen, linea: 2, dist: 0 });
-    while (!cola.vacia) {
-        const [d, u] = cola.pop();
-        if (finalizado.has(u)) continue;
-        finalizado.add(u);
-        tb.emitir('procesar_nodo', { nodo: u, distancia: d, linea: 6 });
-        for (const { v, peso } of G.vecinos(u)) {
-            tb.emitir('explorar_arista', { u, v, peso, linea: 9 });
-            const nueva = distancia[u] + peso;
-            if (!(v in distancia) || nueva < distancia[v]) {
-                distancia[v] = nueva;
-                padre.set(v, u);
-                cola.push(nueva, v);
-                tb.emitir('relajar', { u, v, nueva_dist: nueva, linea: 10 });
-                if (!finalizado.has(v)) {
-                    tb.emitir('visitar_nodo', { nodo: v, linea: 11, dist: nueva });
-                }
+    D[origen] = 0;
+    /* Map y no un objeto: los nodos se insertan a medida que se relajan, y las
+     * aristas de la solucion se emiten en ese orden. Un objeto con claves
+     * numericas las recorre en orden ascendente por especificacion del
+     * lenguaje, no en orden de insercion. */
+    const padre = new Map([[origen, null]]);
+    const S = new Set();
+    tb.emitir('visitar_nodo', { nodo: origen, linea: 3, dist: 0 });
+
+    while (S.size < ids.length) {
+        const a = _elegirMinimo(ids, D, S);
+        tb.emitir('procesar_nodo', { nodo: a, distancia: D[a], linea: [4, 5] });
+        if (D[a] === Infinity) {
+            // Los nodos que quedan son inalcanzables desde el origen.
+            tb.emitir('interrumpir', { nodo: a, restantes: ids.length - S.size, linea: 6 });
+            break;
+        }
+        for (const { v: b, peso } of G.vecinos(a)) {
+            tb.emitir('explorar_arista', { u: a, v: b, peso, linea: [7, 8] });
+            const candidato = D[a] + peso;
+            if (candidato < D[b]) {
+                D[b] = candidato;
+                Pi[b] = a;
+                padre.set(b, a);
+                tb.emitir('relajar', { u: a, v: b, nueva_dist: candidato, linea: [9, 10] });
+                if (!S.has(b)) tb.emitir('visitar_nodo', { nodo: b, linea: 9, dist: candidato });
             } else {
-                tb.emitir('descartar_arista', { u, v, linea: 9 });
+                tb.emitir('descartar_arista', { u: a, v: b, linea: 8 });
             }
         }
-        tb.emitir('nodo_finalizado', { nodo: u, linea: 6 });
+        S.add(a);
+        tb.emitir('nodo_finalizado', { nodo: a, linea: 11 });
     }
+
     for (const [v, p] of padre) {
         if (p !== null) tb.emitir('arista_solucion', { u: p, v, linea: 12 });
     }
     const padresObj = Object.fromEntries(padre);
-    tb.emitir('fin', { distancias: distancia, padres: padresObj });
-    return [{ distancias: distancia, padres: padresObj }, tb.traza];
+    tb.emitir('fin', { distancias: D, padres: padresObj, linea: 12 });
+    return [{ distancias: D, padres: padresObj }, tb.traza];
 }
 
 /* --- Bellman-Ford -------------------------------------------------------- */
@@ -249,7 +226,7 @@ function bellmanFordTraza(G, origen) {
     for (const [v, p] of Object.entries(padre)) {
         if (p !== null && !cicloNegativo.has(v)) tb.emitir('arista_solucion', { u: p, v, linea: 10 });
     }
-    tb.emitir('fin', { distancias: distancia, padres: padre, ciclo_negativo: [...cicloNegativo] });
+    tb.emitir('fin', { distancias: distancia, padres: padre, ciclo_negativo: [...cicloNegativo], linea: 10 });
     return [{ distancias: distancia, padres: padre, ciclo_negativo: cicloNegativo }, tb.traza];
 }
 
@@ -286,7 +263,7 @@ function dagCaminoMinimoTraza(G, origen) {
     for (const [v, p] of Object.entries(padre)) {
         if (p !== null) tb.emitir('arista_solucion', { u: p, v, linea: 10 });
     }
-    tb.emitir('fin', { distancias: distancia, padres: padre, orden_topologico: orden });
+    tb.emitir('fin', { distancias: distancia, padres: padre, orden_topologico: orden, linea: 10 });
     return [{ distancias: distancia, padres: padre, orden_topologico: orden }, tb.traza];
 }
 
@@ -332,25 +309,28 @@ const ALGORITMOS = {
     },
     dijkstra: {
         id: 'dijkstra', nombre: 'Dijkstra (camino mínimo)', funcion: dijkstraTraza,
-        permiteNegativos: false, requiereDag: false, complejidad: 'O((V + E) log V)',
-        descripcion: 'Calcula el camino de menor peso acumulado desde el origen mediante una '
-            + 'cola de prioridad. En cada paso extrae el nodo no finalizado con menor distancia '
-            + 'tentativa y relaja sus aristas salientes.\n\n'
+        permiteNegativos: false, requiereDag: false, complejidad: 'O(V² + E)',
+        vectores: true, aristasNoSeRevisitan: true,
+        descripcion: 'Calcula el camino de menor peso acumulado desde el origen. En cada '
+            + 'vuelta elige el nodo de V∖S con D mínimo y relaja sus arcos salientes. El '
+            + 'nodo elegido entra en S y no se vuelve a tocar.\n\n'
+            + 'La elección del mínimo es por barrido sobre V∖S, sin cola de prioridad, '
+            + 'que es la versión del pseudocódigo de la clase.\n\n'
             + 'Requiere pesos no negativos. Con pesos negativos el resultado puede ser '
             + 'incorrecto, por lo que no se ofrece en esos grafos.',
         pseudocodigo: [
-            'función Dijkstra(G, origen):',
-            '  distancia[origen] ← 0; el resto ← infinito',
-            '  Q ← cola de prioridad con todos los nodos',
-            '  mientras Q no vacía:',
-            '    u ← extraer nodo con menor distancia',
-            '    marcar u como finalizado',
-            '    para cada vecino v de u:',
-            '      peso ← G[u][v]',
-            '      si distancia[u] + peso < distancia[v]:',
-            '        distancia[v] ← distancia[u] + peso; padre[v] ← u',
-            '        actualizar v en Q',
-            '  reconstruir árbol de caminos mínimos con padre[]',
+            'Dijkstra(G, s, ℓ)',
+            '  D[v] ← +∞;  Π[v] ← ⊥  para todo v ∈ V',
+            '  D[s] ← 0;  S ← ∅',
+            '  mientras S ≠ V:',
+            '      elegir a ∈ V∖S que minimice D[a]',
+            '      si D[a] = +∞: interrumpir el ciclo',
+            '      para cada (a,b) ∈ δ⁺(a):',
+            '          si D[a] + ℓ(a,b) < D[b]:',
+            '              D[b] ← D[a] + ℓ(a,b)',
+            '              Π[b] ← a',
+            '      S ← S ∪ {a}',
+            '  devolver (D, Π)',
         ],
     },
     bellman_ford: {
