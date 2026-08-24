@@ -5,7 +5,8 @@
  * s y b. Pi[b][i] es un penúltimo nodo de algún paseo óptimo, o null.
  *
  * Cada paso emite un evento. El campo "linea" indica la línea del pseudocódigo
- * que aparece en PSEUDOCODIGO.
+ * que aparece en PSEUDOCODIGO, o la lista de líneas si el paso ejecuta varias.
+ * Todos los eventos lo llevan: un paso sin línea deja el pseudocódigo apagado.
  */
 
 const PSEUDOCODIGO = [
@@ -41,7 +42,7 @@ function programacionDinamica(G, s, k) {
         T[b] = new Array(k + 1).fill(Infinity);
         Pi[b] = new Array(k + 1).fill(null);
     }
-    tb.emitir('inicializar', { linea: 3 });
+    tb.emitir('inicializar', { linea: [2, 3] });
 
     T[s][0] = 0;
     tb.emitir('caso_base', { nodo: s, columna: 0, valor: 0, linea: 4 });
@@ -56,19 +57,19 @@ function programacionDinamica(G, s, k) {
                 const candidato = previo === Infinity ? Infinity : previo + arco.largo;
                 tb.emitir('examinar', {
                     a, nodo: b, columna: i, largo: arco.largo,
-                    previo, candidato, actual: T[b][i], linea: 8,
+                    previo, candidato, actual: T[b][i], linea: [7, 8],
                 });
                 if (candidato < T[b][i]) {
                     T[b][i] = candidato;
                     Pi[b][i] = a;
-                    tb.emitir('mejorar', { a, nodo: b, columna: i, valor: candidato, linea: 9 });
+                    tb.emitir('mejorar', { a, nodo: b, columna: i, valor: candidato, linea: [9, 10] });
                 } else {
                     tb.emitir('descartar', { a, nodo: b, columna: i, candidato, linea: 8 });
                 }
             }
-            tb.emitir('fin_celda', { nodo: b, columna: i, valor: T[b][i], pi: Pi[b][i] });
+            tb.emitir('fin_celda', { nodo: b, columna: i, valor: T[b][i], pi: Pi[b][i], linea: 6 });
         }
-        tb.emitir('fin_columna', { columna: i, total: k });
+        tb.emitir('fin_columna', { columna: i, total: k, linea: 5 });
     }
 
     tb.emitir('fin', { linea: 11 });

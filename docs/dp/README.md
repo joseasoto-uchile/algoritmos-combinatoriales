@@ -16,6 +16,17 @@ columna.
 No se admiten arcos paralelos. Si el mismo par aparece dos veces, se conserva el
 de menor largo.
 
+## Pseudocódigo
+
+Cada evento de la traza lleva la línea o las líneas que ejecuta, de modo que
+ningún paso deja el pseudocódigo apagado. Un paso enciende varias líneas cuando
+ejecuta varias: la inicialización recorre el bucle doble y asigna, examinar un
+vecino toma el siguiente `a` y evalúa la condición, y una mejora asigna T y Π.
+Cerrar una celda vuelve al bucle de `b` y cerrar una columna al de `i`.
+
+La única línea que no se enciende nunca es la primera, que declara la entrada y
+no es un paso de ejecución.
+
 ## Recurrencia
 
     T[b,0] = 0 si b = s, y +∞ en caso contrario
@@ -113,12 +124,11 @@ exactamente
 
     3 + k(2n + 2m + 2)
 
-con m el número de arcos incluidos los loops. Antes de ejecutar se calcula ese
-valor y se rechaza la ejecución si supera 400.000 pasos. Con el tope de 20
-nodos ese límite queda fuera de alcance: el caso mayor es el digrafo completo
-con k = 200, que da 176.403 pasos. La comprobación se conserva como
-verificación del cálculo. Como referencia, 20 nodos con densidad 0,35 y k = 20
-producen 6.963 pasos.
+con m el número de arcos incluidos los loops. Con los topes de 20 nodos y
+k = 200 el caso mayor es el digrafo completo, que da 168.403 pasos. La
+aplicación rechaza una ejecución que supere 400.000, límite que con esos topes
+no se alcanza y que la interfaz por tanto no menciona. Como referencia, 20
+nodos con densidad 0,35 y k = 20 producen 6.963 pasos.
 
 ## Instancias
 

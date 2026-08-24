@@ -16,8 +16,11 @@ const NODOS_MINIMO = 2, NODOS_MAXIMO = 20;
 const K_MINIMO = 0, K_MAXIMO = 200, K_POR_OMISION = 6;
 
 /* La traza guarda un evento por cada comparacion del algoritmo. Su tamano es
- * exactamente 3 + k(2n + 2m + 2), donde m cuenta los loops. El limite acota la
- * memoria del navegador: 400.000 eventos son unos 40 MB. */
+ * exactamente 3 + k(2n + 2m + 2), donde m cuenta los loops.
+ *
+ * Con NODOS_MAXIMO = 20 y K_MAXIMO = 200 el caso mayor es el digrafo completo,
+ * que da 168.403 eventos, de modo que el limite no se alcanza. Se conserva
+ * porque es lo que acotaria la memoria si esos topes subieran. */
 const EVENTOS_MAXIMO = 400000;
 
 function estimarEventos(n, m, k) { return 3 + k * (2 * n + 2 * m + 2); }
@@ -278,14 +281,18 @@ function actualizarEstadoTexto() {
     $('#txt-detalle').textContent = describirEvento(ev);
 }
 
+/* Un evento puede ejecutar más de una línea, como la mejora, que asigna T y Π.
+ * El campo llega entonces como lista. */
 function resaltarPseudocodigo() {
-    let activa = null;
+    let activas = [];
     if (estado.traza) {
         const p = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-        activa = estado.traza[p].linea;
+        const linea = estado.traza[p].linea;
+        if (Array.isArray(linea)) activas = linea;
+        else if (linea !== undefined) activas = [linea];
     }
     $$('#pseudocodigo .linea-codigo').forEach((el) => {
-        el.classList.toggle('linea-activa', Number(el.dataset.linea) === activa);
+        el.classList.toggle('linea-activa', activas.includes(Number(el.dataset.linea)));
     });
 }
 
