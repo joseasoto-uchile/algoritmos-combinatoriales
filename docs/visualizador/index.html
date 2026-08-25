@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visualizador de Algoritmos sobre Grafos</title>
+<title>SSSP: caminos mínimos en digrafos</title>
 <!-- Segunda capa contra la inyección de HTML: 'script-src self' impide que un
      manejador de eventos en línea llegue a ejecutarse. La causa está corregida
      en app.js, donde los <option> se construyen con la API del DOM.
@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=20">
+<link rel="stylesheet" href="css/estilo.css?v=21">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -20,7 +20,7 @@
 </head>
 <body>
 <div class="app-contenedor">
-  <h2>Visualizador de Algoritmos sobre Grafos</h2>
+  <h2>SSSP: caminos mínimos desde un origen en digrafos</h2>
 
   <div class="fila-principal">
     <!-- Columna de controles: ordenada por frecuencia de uso, no por orden
@@ -60,7 +60,6 @@
         <input id="in-peso-min" type="number" value="1" step="1">
         <label for="in-peso-max">Peso máximo</label>
         <input id="in-peso-max" type="number" value="10" step="1">
-        <label><input type="checkbox" class="bandera" value="dirigido" checked> Dirigido</label>
         <label><input type="checkbox" class="bandera" value="dag"> Forzar DAG</label>
         <label><input type="checkbox" class="bandera" value="conexo" checked> Conexo</label>
         <label><input type="checkbox" class="bandera" value="negativos"> Permitir pesos negativos</label>
@@ -143,9 +142,8 @@
         <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
       </div>
 
-      <!-- Plegada por omision: ocupa una linea hasta que se abre. El estado
-           queda guardado. -->
-      <details class="leyenda">
+      <!-- El estado queda guardado entre visitas. -->
+      <details class="leyenda" open>
         <summary>Leyenda de colores</summary>
         <div id="leyenda-contenido" class="leyenda-contenido"></div>
       </details>
@@ -172,9 +170,9 @@
 
 <!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
      cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=17"></script>
-<script src="js/algoritmos.js?v=17"></script>
-<script src="js/viz.js?v=17"></script>
-<script src="js/app.js?v=19"></script>
+<script src="js/grafo.js?v=20"></script>
+<script src="js/algoritmos.js?v=20"></script>
+<script src="js/viz.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
 </body>
 </html>

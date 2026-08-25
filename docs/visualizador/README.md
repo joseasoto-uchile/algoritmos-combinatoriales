@@ -1,7 +1,15 @@
-# Recorridos y caminos mínimos
+# SSSP: caminos mínimos desde un origen
 
-Visualizador de cinco algoritmos sobre grafos: BFS, DFS, Dijkstra,
-Bellman-Ford y caminos mínimos en un DAG.
+Visualizador de cinco algoritmos sobre digrafos: BFS, DFS, Dijkstra,
+Bellman-Ford y caminos mínimos en un DAG por orden topológico.
+
+La aplicación trabaja solo con digrafos. Un archivo que declare
+`"dirigido": false` se rechaza en lugar de convertirlo: el grafo resultante no
+sería el que el usuario escribió.
+
+La lista de algoritmos los muestra todos siempre. Los que no aplican a la
+instancia cargada quedan desactivados, con el motivo en el título de la opción,
+en lugar de desaparecer de la lista.
 
 ## Algoritmos
 
@@ -20,6 +28,29 @@ mínimos en un DAG emiten `orden_topologico_nodo` durante la primera fase.
 Dijkstra rechaza los pesos negativos con un mensaje en lugar de devolver un
 resultado incorrecto. Los caminos mínimos en un DAG rechazan un grafo que no
 sea dirigido y acíclico.
+
+## Vectores D y Π
+
+Bajo el grafo hay una tabla con los vectores que mantiene el algoritmo, una
+columna por nodo, reconstruida desde la traza en cada paso. Cada algoritmo
+declara en el registro cuáles muestra:
+
+| Algoritmo | Vectores | Nodos cerrados |
+|---|---|---|
+| BFS | D, Π | Finalizados |
+| DFS | Π | Finalizados |
+| Dijkstra | D, Π | S |
+| Bellman-Ford | D, Π | no aplica |
+| DAG por orden topológico | D, Π | Procesados |
+
+DFS no calcula distancias: solo el padre de cada nodo en el árbol de
+profundidad. Bellman-Ford no cierra nodos, porque revisa todas las aristas en
+cada pasada.
+
+Las casillas van vacías hasta que se ejecuta la línea que asigna los valores
+iniciales, de modo que ese paso también se ve. El panel está presente desde el
+primer paso: si apareciera a mitad de la traza cambiaría el alto del lienzo y
+movería el grafo.
 
 ## Dijkstra
 
@@ -71,7 +102,7 @@ algoritmo lo indica con `aristasNoSeRevisitan`.
 }
 ```
 
-`dirigido` es opcional y su omisión significa dirigido. `label` y `pos` también
+`dirigido` es opcional; si aparece debe ser verdadero. `label` y `pos` también
 son opcionales; si `pos` aparece, debe ser una lista de dos números finitos. El
 peso se declara como `weight` o como `peso`, y un valor `null` equivale a la
 ausencia de la clave.

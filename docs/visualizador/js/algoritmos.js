@@ -21,7 +21,8 @@ function bfsTraza(G, origen) {
     const distancia = { [origen]: 0 };
     const cola = [origen];
 
-    tb.emitir('visitar_nodo', { nodo: origen, linea: 3, dist: 0 });
+    tb.emitir('inicializar', { linea: 2 });
+    tb.emitir('visitar_nodo', { nodo: origen, linea: 3, dist: 0, padre: null });
     while (cola.length) {
         const u = cola.shift();
         tb.emitir('procesar_nodo', { nodo: u, linea: 5 });
@@ -32,7 +33,7 @@ function bfsTraza(G, origen) {
                 padre[v] = u;
                 distancia[v] = distancia[u] + 1;
                 cola.push(v);
-                tb.emitir('visitar_nodo', { nodo: v, linea: 8, dist: distancia[v] });
+                tb.emitir('visitar_nodo', { nodo: v, linea: 8, dist: distancia[v], padre: u });
                 tb.emitir('arista_solucion', { u, v, linea: 9 });
             } else {
                 tb.emitir('descartar_arista', { u, v, linea: 7 });
@@ -54,10 +55,12 @@ function dfsTraza(G, origen) {
     const descubrimiento = {}, finalizacion = {};
     let reloj = 0;
 
+    tb.emitir('inicializar', { linea: 1 });
+
     const visitar = (u) => {
         visitado.add(u);
         descubrimiento[u] = ++reloj;
-        tb.emitir('visitar_nodo', { nodo: u, linea: 2 });
+        tb.emitir('visitar_nodo', { nodo: u, linea: 2, padre: padre[u] ?? null });
         tb.emitir('procesar_nodo', { nodo: u, linea: 2 });
         for (const { v } of G.vecinos(u)) {
             tb.emitir('explorar_arista', { u, v, linea: 4 });
@@ -154,14 +157,10 @@ function bellmanFordTraza(G, origen) {
     distancia[origen] = 0;
     const padre = Object.fromEntries(nodos.map((n) => [n, null]));
 
-    // En un grafo no dirigido cada arista se relaja en los dos sentidos.
-    const aristas = [];
-    for (const { origen: u, destino: v, peso } of G.aristas) {
-        aristas.push([u, v, peso]);
-        if (!G.dirigido) aristas.push([v, u, peso]);
-    }
+    const aristas = G.aristas.map(({ origen: u, destino: v, peso }) => [u, v, peso]);
 
-    tb.emitir('visitar_nodo', { nodo: origen, linea: 2, dist: 0 });
+    tb.emitir('inicializar', { linea: 1 });
+    tb.emitir('visitar_nodo', { nodo: origen, linea: 2, dist: 0, padre: null });
     const totalIteraciones = Math.max(nodos.length - 1, 0);
     let cortoAnticipado = false;
     for (let i = 0; i < totalIteraciones; i++) {
@@ -233,8 +232,8 @@ function bellmanFordTraza(G, origen) {
 /* --- Camino mínimo en DAG ------------------------------------------------ */
 function dagCaminoMinimoTraza(G, origen) {
     const orden = G.ordenTopologico();
-    if (!G.dirigido || orden === null) {
-        throw new Error('Este algoritmo requiere un grafo dirigido y acíclico (DAG).');
+    if (orden === null) {
+        throw new Error('Este algoritmo requiere un digrafo acíclico (DAG).');
     }
     const tb = new ConstructorTraza();
     orden.forEach((u, i) => tb.emitir('orden_topologico_nodo', { nodo: u, posicion: i + 1, linea: 2 }));
@@ -242,7 +241,8 @@ function dagCaminoMinimoTraza(G, origen) {
     const distancia = Object.fromEntries(G.ids.map((n) => [n, Infinity]));
     distancia[origen] = 0;
     const padre = Object.fromEntries(G.ids.map((n) => [n, null]));
-    tb.emitir('visitar_nodo', { nodo: origen, linea: 3, dist: 0 });
+    tb.emitir('inicializar', { linea: 3 });
+    tb.emitir('visitar_nodo', { nodo: origen, linea: 3, dist: 0, padre: null });
 
     for (const u of orden) {
         if (distancia[u] === Infinity) continue;
@@ -271,6 +271,7 @@ function dagCaminoMinimoTraza(G, origen) {
 const ALGORITMOS = {
     bfs: {
         id: 'bfs', nombre: 'BFS (recorrido en anchura)', funcion: bfsTraza,
+        vectores: ['D', 'Π'], nombreCerrados: 'Finalizados', aristasNoSeRevisitan: true,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(V + E)',
         descripcion: 'Recorre el grafo en anchura desde el nodo origen: explora primero todos '
             + 'los vecinos directos antes de avanzar al siguiente nivel, usando una cola FIFO.\n\n'
@@ -292,6 +293,7 @@ const ALGORITMOS = {
     },
     dfs: {
         id: 'dfs', nombre: 'DFS (recorrido en profundidad)', funcion: dfsTraza,
+        vectores: ['Π'], nombreCerrados: 'Finalizados', aristasNoSeRevisitan: true,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(V + E)',
         descripcion: 'Recorre el grafo en profundidad desde el nodo origen: avanza por una rama '
             + 'hasta el final antes de retroceder y probar otra.\n\n'
@@ -310,7 +312,7 @@ const ALGORITMOS = {
     dijkstra: {
         id: 'dijkstra', nombre: 'Dijkstra (camino mínimo)', funcion: dijkstraTraza,
         permiteNegativos: false, requiereDag: false, complejidad: 'O(V² + E)',
-        vectores: true, aristasNoSeRevisitan: true,
+        vectores: ['D', 'Π'], nombreCerrados: 'S', aristasNoSeRevisitan: true,
         descripcion: 'Calcula el camino de menor peso acumulado desde el origen. En cada '
             + 'vuelta elige el nodo de V∖S con D mínimo y relaja sus arcos salientes. El '
             + 'nodo elegido entra en S y no se vuelve a tocar.\n\n'
@@ -335,6 +337,7 @@ const ALGORITMOS = {
     },
     bellman_ford: {
         id: 'bellman_ford', nombre: 'Bellman-Ford (camino mínimo)', funcion: bellmanFordTraza,
+        vectores: ['D', 'Π'], nombreCerrados: null,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(V · E)',
         descripcion: 'Calcula caminos mínimos relajando todas las aristas del grafo, V-1 '
             + 'veces.\n\n'
@@ -356,8 +359,9 @@ const ALGORITMOS = {
     },
     dag_sp: {
         id: 'dag_sp', nombre: 'Camino mínimo en DAG (orden topológico)', funcion: dagCaminoMinimoTraza,
+        vectores: ['D', 'Π'], nombreCerrados: 'Procesados', aristasNoSeRevisitan: true,
         permiteNegativos: true, requiereDag: true, complejidad: 'O(V + E)',
-        descripcion: 'Calcula caminos mínimos en un grafo dirigido acíclico en dos fases. '
+        descripcion: 'Calcula caminos mínimos en un digrafo acíclico en dos fases. '
             + 'Primero obtiene un orden topológico con el algoritmo de Kahn, y después relaja '
             + 'las aristas siguiendo ese orden, una sola vez.\n\n'
             + 'Al no haber ciclos no es necesario repetir las relajaciones como en Bellman-Ford. '
@@ -381,9 +385,7 @@ const ALGORITMOS = {
  * interfaz muestra este texto junto al algoritmo que no ofrece. */
 function motivoNoDisponible(info, G) {
     if (info.requiereDag && !G.esDAG()) {
-        return G.dirigido
-            ? 'Requiere un grafo acíclico (DAG); este tiene ciclos.'
-            : 'Requiere un grafo dirigido y acíclico; este es no dirigido.';
+        return 'Requiere un digrafo acíclico (DAG); este tiene ciclos.';
     }
     if (G.tienePesosNegativos() && !info.permiteNegativos) {
         return 'El grafo tiene pesos negativos y este algoritmo no los admite.';

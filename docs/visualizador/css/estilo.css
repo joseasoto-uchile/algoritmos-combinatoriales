@@ -312,9 +312,10 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 #tabla-vectores th.fila-nombre { background: #eceff1; font-weight: 700; }
 #tabla-vectores td.indefinido { color: #90a4ae; }
 
-/* Nodos ya cerrados, el elegido en este paso y aquel cuya casilla se evalúa. */
-#tabla-vectores .en-S { background: #e8eaf6; }
-#tabla-vectores td.en-S { color: #3949ab; }
+/* Nodos que el algoritmo ya no vuelve a procesar, el del paso actual y aquel
+   cuya casilla se evalúa. */
+#tabla-vectores .cerrado { background: #e8eaf6; }
+#tabla-vectores td.cerrado { color: #3949ab; }
 #tabla-vectores .activo { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; font-weight: 700; }
 #tabla-vectores .destino { background: #e3f2fd; box-shadow: inset 0 0 0 2px #1976d2; }
 

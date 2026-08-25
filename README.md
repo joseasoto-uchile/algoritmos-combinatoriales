@@ -19,11 +19,12 @@ tablas mientras se calculan columna a columna, marca las celdas de las que
 depende una celda al pulsarla, y reconstruye el paseo óptimo por el Algoritmo 3.
 Incluye un editor de la instancia por matriz de largos. Ver `docs/dp/README.md`.
 
-### 2. Recorridos y caminos mínimos (`docs/visualizador/`)
+### 2. SSSP: caminos mínimos desde un origen (`docs/visualizador/`)
 
-BFS, DFS, Dijkstra, Bellman-Ford y caminos mínimos en un DAG. Cada algoritmo
-emite una traza de eventos que la interfaz reproduce paso a paso, con el
-pseudocódigo resaltado y puntos de interrupción por línea. Ver
+BFS, DFS, Dijkstra, Bellman-Ford y caminos mínimos en un DAG por orden
+topológico, sobre digrafos. Cada algoritmo emite una traza de eventos que la
+interfaz reproduce paso a paso, con el pseudocódigo resaltado, puntos de
+interrupción por línea y los vectores D y Π bajo el grafo. Ver
 `docs/visualizador/README.md`.
 
 ## Arquitectura

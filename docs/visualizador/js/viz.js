@@ -37,7 +37,6 @@ const ESTILOS = [
         'target-arrow-color': COLORES.base, 'target-arrow-shape': 'triangle', width: 2,
         'font-size': '10px', color: '#546e7a', 'text-background-color': '#ffffff',
         'text-background-opacity': 1, 'text-background-padding': '1px' } },
-    { selector: 'edge.no_dirigido', style: { 'target-arrow-shape': 'none', 'source-arrow-shape': 'none' } },
     { selector: 'node.visitado', style: {
         'background-color': COLORES.visitado, 'border-color': COLORES.visitado_borde } },
     { selector: 'node.finalizado', style: {
@@ -72,10 +71,9 @@ const ESTILOS = [
         'text-background-shape': 'roundrectangle' } },
 ];
 
-/* Identificador estable de arista. No depende del orden en que el algoritmo
- * recorra sus extremos, lo que es necesario en grafos no dirigidos. */
-function idArista(u, v, dirigido) {
-    return dirigido ? `${u}__${v}` : [String(u), String(v)].sort().join('__');
+/* Identificador de arco, réplica del que genera grafo.js. */
+function idArista(u, v) {
+    return `${u}__${v}`;
 }
 
 function grafoAElementos(G, incluirPosiciones = true) {
@@ -88,11 +86,10 @@ function grafoAElementos(G, incluirPosiciones = true) {
     for (const { origen, destino, peso } of G.aristas) {
         elementos.push({
             data: {
-                id: idArista(origen, destino, G.dirigido),
+                id: idArista(origen, destino),
                 source: origen, target: destino,
                 label: peso === undefined || peso === null ? '' : String(peso),
             },
-            classes: G.dirigido ? '' : 'no_dirigido',
         });
     }
     return elementos;
@@ -108,7 +105,7 @@ const EVENTOS_TRANSITORIOS_ARISTA = new Set(['explorar_arista', 'relajar', 'desc
 /* En los algoritmos que no vuelven sobre una arista, la que ya se examinó
  * queda marcada para distinguirla de las que aún faltan. Bellman-Ford recorre
  * todas las aristas en cada pasada, de modo que ahí no se aplica. */
-function calcularEstado(traza, pasoActual, dirigido, aristasNoSeRevisitan = false) {
+function calcularEstado(traza, pasoActual, aristasNoSeRevisitan = false) {
     const clasesNodo = new Map(), clasesArista = new Map();
     const agregar = (m, k, c) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(c); };
     const tope = traza.length ? Math.max(0, Math.min(pasoActual, traza.length - 1)) : -1;
@@ -116,19 +113,19 @@ function calcularEstado(traza, pasoActual, dirigido, aristasNoSeRevisitan = fals
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
         if (aristasNoSeRevisitan && EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) {
-            agregar(clasesArista, idArista(ev.u, ev.v, dirigido), 'procesada');
+            agregar(clasesArista, idArista(ev.u, ev.v), 'procesada');
         }
         if (EVENTOS_PERSISTENTES_NODO[ev.tipo]) {
             agregar(clasesNodo, ev.nodo, EVENTOS_PERSISTENTES_NODO[ev.tipo]);
         } else if (ev.tipo === 'arista_solucion') {
-            agregar(clasesArista, idArista(ev.u, ev.v, dirigido), 'solucion');
+            agregar(clasesArista, idArista(ev.u, ev.v), 'solucion');
             agregar(clasesNodo, ev.v, 'solucion');
         }
     }
     if (tope >= 0 && tope < traza.length) {
         const ev = traza[tope];
         if (EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) {
-            agregar(clasesArista, idArista(ev.u, ev.v, dirigido), 'activo');
+            agregar(clasesArista, idArista(ev.u, ev.v), 'activo');
             agregar(clasesNodo, ev.u, 'activo');
             agregar(clasesNodo, ev.v, 'activo');
         } else if (ev.tipo === 'procesar_nodo') {
@@ -141,7 +138,7 @@ function calcularEstado(traza, pasoActual, dirigido, aristasNoSeRevisitan = fals
 function aplicarClases(elementos, clasesNodo, clasesArista, origen = null) {
     return elementos.map((el) => {
         const nuevo = { ...el, data: { ...el.data } };
-        // Une las clases estructurales, como 'no_dirigido', con las de estado.
+        // Une las clases que ya trae el elemento con las de estado.
         const clases = new Set((el.classes || '').split(' ').filter(Boolean));
         if ('source' in nuevo.data) {
             (clasesArista.get(nuevo.data.id) || []).forEach((c) => clases.add(c));
@@ -235,33 +232,49 @@ function aplicarDistancias(elementos, distancias) {
  * Devuelve null si el algoritmo no los mantiene. Los eventos guardan los
  * cambios, no una copia de los vectores, de modo que se reproducen en orden.
  *
- * `S` es el conjunto de nodos ya cerrados, `activo` el que el algoritmo eligió
- * en este paso y `destino` aquel cuya casilla se está evaluando. */
+ * `cerrados` son los nodos que el algoritmo ya no vuelve a procesar, `activo`
+ * el nodo del paso actual y `destino` aquel cuya casilla se está evaluando.
+ *
+ * `inicializado` indica si la línea que asigna los valores iniciales ya se
+ * ejecutó. Antes de eso las casillas van vacías, no en +∞: el paso de
+ * inicialización es parte de lo que se muestra. */
 function calcularVectores(traza, pasoActual, ids) {
     if (!traza || !traza.length) return null;
     const D = new Map(ids.map((v) => [v, Infinity]));
     const Pi = new Map(ids.map((v) => [v, null]));
-    const S = new Set();
+    const cerrados = new Set();
     let inicializado = false, activo = null, destino = null, interrumpido = false;
 
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
         switch (ev.tipo) {
-            case 'inicializar': inicializado = true; break;
-            case 'visitar_nodo': if ('dist' in ev) D.set(ev.nodo, ev.dist); break;
-            case 'relajar': D.set(ev.v, ev.nueva_dist); Pi.set(ev.v, ev.u); break;
-            case 'nodo_finalizado': S.add(ev.nodo); break;
-            case 'interrumpir': interrumpido = true; break;
-            default: break;
+            case 'inicializar':
+                inicializado = true;
+                break;
+            case 'visitar_nodo':
+                if ('dist' in ev) D.set(ev.nodo, ev.dist);
+                if ('padre' in ev) Pi.set(ev.nodo, ev.padre);
+                break;
+            case 'relajar':
+                D.set(ev.v, ev.nueva_dist);
+                Pi.set(ev.v, ev.u);
+                break;
+            case 'nodo_finalizado':
+                cerrados.add(ev.nodo);
+                break;
+            case 'interrumpir':
+                interrumpido = true;
+                break;
+            default:
+                break;
         }
     }
-    if (!inicializado) return null;
-
     const ev = traza[tope];
     if (ev.tipo === 'procesar_nodo') activo = ev.nodo;
     else if (EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) { activo = ev.u; destino = ev.v; }
-    else if (ev.tipo === 'nodo_finalizado' || ev.tipo === 'interrumpir') activo = ev.nodo;
+    else if (ev.tipo === 'nodo_finalizado' || ev.tipo === 'interrumpir'
+             || ev.tipo === 'visitar_nodo') activo = ev.nodo;
 
-    return { D, Pi, S, activo, destino, interrumpido };
+    return { D, Pi, cerrados, activo, destino, interrumpido, inicializado };
 }

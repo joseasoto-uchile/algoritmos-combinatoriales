@@ -32,14 +32,18 @@ function generadorAleatorio(semilla) {
 /* Réplica del identificador que viz.js genera para cada arista. Se duplica
  * porque el modelo no depende de la capa de dibujo. Un cambio de formato en
  * viz.js requiere actualizar también esta función. */
-function idAristaInterno(u, v, dirigido) {
-    return dirigido ? `${u}__${v}` : [u, v].sort().join('__');
+function idAristaInterno(u, v) {
+    return `${u}__${v}`;
 }
 
-/* Lee la clave "dirigido" del objeto del grafo. La clave es opcional y su
- * omisión significa dirigido. */
-function esDirigido(datos) {
-    return datos.dirigido === undefined ? true : Boolean(datos.dirigido);
+/* La aplicación trabaja solo con digrafos. La clave "dirigido" del archivo es
+ * opcional; si aparece con valor falso, el archivo se rechaza en lugar de
+ * convertirlo, porque el grafo resultante no sería el que el usuario escribió. */
+function comprobarDirigido(datos) {
+    if ('dirigido' in datos && !datos.dirigido) {
+        throw new Error('JSON inválido: el archivo declara un grafo no dirigido y '
+            + 'esta aplicación solo admite digrafos.');
+    }
 }
 
 /* Comprueba que "pos" es una lista de dos números finitos. */
@@ -67,7 +71,7 @@ function validarDatosGrafo(datos) {
         }
     }
 
-    const dirigido = esDirigido(datos);
+    comprobarDirigido(datos);
     const ids = new Set();
     for (const nodo of datos.nodos) {
         if (nodo === null || typeof nodo !== 'object' || !('id' in nodo)) {
@@ -111,12 +115,12 @@ function validarDatosGrafo(datos) {
             throw new Error(`JSON inválido: la arista ${u} → ${v} tiene un peso no finito.`);
         }
 
-        const clave = dirigido ? `${u}>${v}` : [u, v].sort().join('-');
+        const clave = `${u}>${v}`;
         if (vistas.has(clave)) {
             throw new Error(`JSON inválido: la arista ${u} → ${v} aparece repetida.`);
         }
         vistas.add(clave);
-        idsArista.add(idAristaInterno(u, v, dirigido));
+        idsArista.add(idAristaInterno(u, v));
     }
 
     // Cytoscape exige identificadores únicos entre nodos y aristas. Un nodo
@@ -129,8 +133,7 @@ function validarDatosGrafo(datos) {
 }
 
 class Grafo {
-    constructor(dirigido = true) {
-        this.dirigido = dirigido;
+    constructor() {
         this.nodos = new Map();   // id -> {id, label, pos:[x,y]}
         this.aristas = [];        // {origen, destino, peso}
         this._ady = null;         // caché de adyacencia
@@ -148,16 +151,13 @@ class Grafo {
 
     get ids() { return [...this.nodos.keys()]; }
 
-    /* Lista de adyacencia. En un grafo no dirigido cada arista se registra en
-     * los dos sentidos, de modo que los algoritmos no necesitan comprobar la
-     * dirección. */
+    /* Lista de adyacencia: para cada nodo, los arcos que salen de él. */
     get adyacencia() {
         if (this._ady) return this._ady;
         const ady = new Map();
         for (const id of this.nodos.keys()) ady.set(id, []);
         for (const { origen, destino, peso } of this.aristas) {
             ady.get(origen).push({ v: destino, peso });
-            if (!this.dirigido) ady.get(destino).push({ v: origen, peso });
         }
         this._ady = ady;
         return ady;
@@ -174,7 +174,6 @@ class Grafo {
      * algoritmo de caminos mínimos en DAG, de modo que no existen dos
      * implementaciones que puedan discrepar. */
     ordenTopologico() {
-        if (!this.dirigido) return null;
         const gradoEntrada = new Map([...this.nodos.keys()].map((n) => [n, 0]));
         for (const { destino } of this.aristas) {
             gradoEntrada.set(destino, gradoEntrada.get(destino) + 1);
@@ -196,7 +195,7 @@ class Grafo {
 
     aObjeto() {
         return {
-            dirigido: this.dirigido,
+            dirigido: true,
             nodos: [...this.nodos.values()],
             aristas: this.aristas.map((a) => ({
                 origen: a.origen, destino: a.destino, weight: a.peso,
@@ -206,7 +205,7 @@ class Grafo {
 
     static desdeObjeto(datos) {
         validarDatosGrafo(datos);
-        const G = new Grafo(esDirigido(datos));
+        const G = new Grafo();
         for (const n of datos.nodos) {
             G.agregarNodo(n.id, { label: n.label ?? String(n.id), pos: n.pos });
         }
@@ -233,21 +232,20 @@ function asignarPosiciones(G) {
 }
 
 function generarAleatorio({
-    n = 10, densidad = 0.3, dirigido = true, dag = false, conexo = true,
+    n = 10, densidad = 0.3, dag = false, conexo = true,
     pesoMin = 1, pesoMax = 10, permitirNegativos = false, semilla = null,
 } = {}) {
-    if (dag) dirigido = true;
     if (n < 1) throw new Error('El número de nodos debe ser al menos 1.');
     if (pesoMin > pesoMax) {
         throw new Error(`El peso mínimo (${pesoMin}) no puede ser mayor que el máximo (${pesoMax}).`);
     }
 
     const rng = generadorAleatorio(semilla == null ? Math.floor(Math.random() * 1e9) : semilla);
-    const G = new Grafo(dirigido);
+    const G = new Grafo();
     const ids = Array.from({ length: n }, (_, i) => String(i));
     ids.forEach((id) => G.agregarNodo(id));
 
-    const maxAristas = dirigido ? n * (n - 1) : (n * (n - 1)) / 2;
+    const maxAristas = n * (n - 1);
     let numAristas = Math.round((densidad ?? 0) * maxAristas);
     numAristas = Math.max(0, Math.min(numAristas, maxAristas));
 
@@ -260,7 +258,7 @@ function generarAleatorio({
     };
 
     const existentes = new Set();
-    const clave = (u, v) => (dirigido ? `${u}>${v}` : [u, v].sort().join('-'));
+    const clave = (u, v) => `${u}>${v}`;
     const agregar = (u, v) => {
         if (u === v) return false;
         const k = clave(u, v);
@@ -295,7 +293,7 @@ function generarAleatorio({
  * que el recorrido del algoritmo se corresponda con el dibujo.
  * ------------------------------------------------------------------------- */
 function ejArbolBinario(niveles = 4) {
-    const G = new Grafo(false);
+    const G = new Grafo();
     const total = 2 ** niveles - 1;
     for (let i = 0; i < total; i++) G.agregarNodo(i);
     for (let i = 0; i < total; i++) {
@@ -314,14 +312,14 @@ function ejArbolBinario(niveles = 4) {
 }
 
 function ejCiclo(n = 8) {
-    const G = new Grafo(false);
+    const G = new Grafo();
     for (let i = 0; i < n; i++) G.agregarNodo(i);
     for (let i = 0; i < n; i++) G.agregarArista(i, (i + 1) % n, 1 + (i % 4));
     return asignarPosiciones(G);
 }
 
 function ejRejilla(filas = 4, columnas = 5) {
-    const G = new Grafo(false);
+    const G = new Grafo();
     for (let f = 0; f < filas; f++) {
         for (let c = 0; c < columnas; c++) {
             const id = f * columnas + c;
@@ -343,7 +341,7 @@ function ejRejilla(filas = 4, columnas = 5) {
 }
 
 function ejDagCapas(capas = [1, 3, 3, 2, 1]) {
-    const G = new Grafo(true);
+    const G = new Grafo();
     const porCapa = [];
     let contador = 0;
     capas.forEach((ancho, indice) => {
@@ -372,7 +370,7 @@ function ejDagCapas(capas = [1, 3, 3, 2, 1]) {
 }
 
 function ejCicloNegativo() {
-    const G = new Grafo(true);
+    const G = new Grafo();
     const posiciones = {
         0: [80, 400], 1: [240, 220], 2: [240, 580], 3: [430, 400],
         4: [610, 250], 5: [610, 550], 6: [430, 720],
@@ -385,11 +383,12 @@ function ejCicloNegativo() {
 }
 
 function ejCompleto(n = 6) {
-    const G = new Grafo(false);
+    const G = new Grafo();
     for (let i = 0; i < n; i++) G.agregarNodo(i);
     let peso = 2;
     for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
+        for (let j = 0; j < n; j++) {
+            if (i === j) continue;
             G.agregarArista(i, j, peso);
             peso = 1 + ((peso * 3) % 9);
         }
@@ -399,17 +398,20 @@ function ejCompleto(n = 6) {
 
 const EJEMPLOS = {
     arbol: { nombre: 'Árbol binario (15 nodos)', constructor: ejArbolBinario,
-        descripcion: 'No dirigido. BFS recorre por niveles y DFS desciende hasta una hoja.' },
+        descripcion: 'Arcos de padre a hijo. Es acíclico, de modo que admite el camino '
+            + 'mínimo por orden topológico.' },
     ciclo: { nombre: 'Ciclo (8 nodos)', constructor: ejCiclo,
-        descripcion: 'No dirigido. BFS avanza por los dos sentidos y se cierra en el nodo opuesto.' },
+        descripcion: 'Ciclo dirigido: desde el origen se llega a todos dando la vuelta.' },
     rejilla: { nombre: 'Rejilla 4×5', constructor: () => ejRejilla(),
-        descripcion: 'No dirigido. Las distancias forman anillos concéntricos alrededor del origen.' },
+        descripcion: 'Arcos hacia la derecha y hacia abajo. Es acíclico; desde el nodo '
+            + 'superior izquierdo se alcanza todo.' },
     dag: { nombre: 'DAG por capas', constructor: () => ejDagCapas(),
         descripcion: 'Dirigido y acíclico. Habilita el camino mínimo por orden topológico.' },
     ciclo_negativo: { nombre: 'Ciclo negativo (Bellman-Ford)', constructor: ejCicloNegativo,
         descripcion: 'Dirigido con un ciclo de peso -2. Dijkstra no está disponible.' },
-    completo: { nombre: 'Grafo completo K6', constructor: () => ejCompleto(),
-        descripcion: 'No dirigido y denso. Dijkstra descarta un número alto de aristas.' },
+    completo: { nombre: 'Digrafo completo (6 nodos)', constructor: () => ejCompleto(),
+        descripcion: 'Digrafo completo: 30 arcos entre 6 nodos. Dijkstra descarta un '
+            + 'número alto de ellos.' },
 };
 
 function construirEjemplo(clave) {

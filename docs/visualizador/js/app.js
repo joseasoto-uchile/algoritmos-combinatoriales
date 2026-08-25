@@ -64,13 +64,10 @@ function llenarDesplegable(select, pares) {
 function origenPorOmision(G) {
     const ids = G.ids;
     if (!ids.length) return null;
-    if (G.dirigido) {
-        // Se elige el nodo con mayor grado de salida. La opción "conexo" solo
-        // garantiza conexidad débil, de modo que el primer nodo puede no tener
-        // aristas salientes y producir un recorrido de tres pasos.
-        return ids.reduce((mejor, n) => (G.gradoSalida(n) > G.gradoSalida(mejor) ? n : mejor), ids[0]);
-    }
-    return ids.find((n) => G.vecinos(n).length > 0) ?? ids[0];
+    // Se elige el nodo con mayor grado de salida. La opción "conexo" solo
+    // garantiza conexidad débil, de modo que el primer nodo puede no tener
+    // arcos salientes y producir un recorrido de tres pasos.
+    return ids.reduce((mejor, n) => (G.gradoSalida(n) > G.gradoSalida(mejor) ? n : mejor), ids[0]);
 }
 
 /* --- Render del grafo ---------------------------------------------------- */
@@ -83,8 +80,7 @@ function elementosActuales() {
     if (estado.traza) {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
         const info = ALGORITMOS[estado.algEjecutado] || {};
-        const [cn, ca] = calcularEstado(estado.traza, paso, estado.G.dirigido,
-            Boolean(info.aristasNoSeRevisitan));
+        const [cn, ca] = calcularEstado(estado.traza, paso, Boolean(info.aristasNoSeRevisitan));
         elementos = aplicarClases(elementos, cn, ca, $('#dd-origen').value);
         const d = calcularDistancias(estado.traza, paso);
         if (d !== null) elementos = aplicarDistancias(elementos, d);
@@ -135,18 +131,18 @@ function reconstruirGrafo({ recalcular = true } = {}) {
 /* --- Vectores D y Pi ------------------------------------------------------ */
 
 /* Una fila por vector, una columna por nodo. Se reconstruyen desde la traza en
- * cada paso, igual que las clases del grafo. */
+ * cada paso, igual que las clases del grafo. Cada algoritmo declara en el
+ * registro qué vectores mantiene: DFS no calcula distancias, solo el padre. */
 function pintarVectores() {
     const panel = $('#panel-vectores');
     const info = ALGORITMOS[estado.algEjecutado] || {};
-    const mostrar = Boolean(info.vectores) && estado.traza
+    const cuales = info.vectores || [];
+    const mostrar = cuales.length > 0 && estado.traza
         && $('#dd-algoritmo').value === estado.algEjecutado;
-    // Aparecer o desaparecer cambia el alto de #cyto. Se reencuadra la vista,
-    // sin volver a correr el layout, que movería los nodos.
+    // Aparecer o desaparecer cambia el alto de #cyto. Se reencuadra la vista en
+    // el cuadro siguiente, sin volver a correr el layout, que movería los nodos.
     const cambia = panel.hidden === mostrar;
     panel.hidden = !mostrar;
-    // En el cuadro siguiente, cuando el navegador ya midio la pagina con el
-    // panel puesto o quitado.
     if (cambia && estado.cy) {
         requestAnimationFrame(() => {
             estado.cy.resize();
@@ -157,13 +153,11 @@ function pintarVectores() {
 
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
     const v = calcularVectores(estado.traza, paso, estado.G.ids);
-    const tabla = $('#tabla-vectores');
-    if (v === null) { panel.hidden = true; return; }
 
     const ids = estado.G.ids;
     const clasesDe = (id) => {
         const c = [];
-        if (v.S.has(id)) c.push('en-S');
+        if (v.cerrados.has(id)) c.push('cerrado');
         if (id === v.activo) c.push('activo');
         if (id === v.destino) c.push('destino');
         return c.join(' ');
@@ -183,8 +177,10 @@ function pintarVectores() {
     }
     thead.append(filaEnc);
 
+    const FILAS = { 'D': [v.D, '∞'], 'Π': [v.Pi, '⊥'] };
     const tbody = document.createElement('tbody');
-    for (const [nombre, mapa, vacio] of [['D', v.D, '∞'], ['Π', v.Pi, '⊥']]) {
+    for (const nombre of cuales) {
+        const [mapa, vacio] = FILAS[nombre];
         const tr = document.createElement('tr');
         const th = document.createElement('th');
         th.textContent = nombre;
@@ -194,18 +190,25 @@ function pintarVectores() {
             const td = document.createElement('td');
             const valor = mapa.get(id);
             const indefinido = valor === undefined || valor === null || valor === Infinity;
-            td.textContent = indefinido ? vacio : String(valor);
-            td.className = [clasesDe(id), indefinido ? 'indefinido' : ''].filter(Boolean).join(' ');
+            td.textContent = v.inicializado ? (indefinido ? vacio : String(valor)) : '';
+            td.className = [clasesDe(id), v.inicializado && indefinido ? 'indefinido' : '']
+                .filter(Boolean).join(' ');
             tr.append(td);
         }
         tbody.append(tr);
     }
-    tabla.replaceChildren(thead, tbody);
+    $('#tabla-vectores').replaceChildren(thead, tbody);
 
-    const cerrados = [...v.S];
-    $('#txt-vectores').textContent = v.interrumpido
-        ? `S = {${cerrados.join(', ')}}. El ciclo se interrumpió: los nodos que faltan son inalcanzables.`
-        : `S = {${cerrados.join(', ')}}, ${cerrados.length} de ${ids.length} nodos cerrados.`;
+    const lista = [...v.cerrados];
+    let texto = '';
+    if (v.interrumpido) {
+        texto = `${info.nombreCerrados} = {${lista.join(', ')}}. El ciclo se interrumpió: `
+            + 'los nodos que faltan son inalcanzables.';
+    } else if (info.nombreCerrados) {
+        texto = `${info.nombreCerrados} = {${lista.join(', ')}}, `
+            + `${lista.length} de ${ids.length} nodos.`;
+    }
+    $('#txt-vectores').textContent = texto;
 }
 
 function actualizarTextoPaso() {
@@ -240,7 +243,6 @@ function generarInstancia() {
         const G = generarAleatorio({
             n: entero($('#in-n').value, 10),
             densidad: decimal($('#in-densidad').value, 0.3),
-            dirigido: banderas.has('dirigido'),
             dag: banderas.has('dag'),
             conexo: banderas.has('conexo'),
             pesoMin: entero($('#in-peso-min').value, 1),
@@ -265,7 +267,16 @@ function actualizarOpciones() {
     const disponibles = estados.filter((e) => e.disponible);
     const sel = $('#dd-algoritmo');
     const previo = sel.value;
-    llenarDesplegable(sel, disponibles.map((e) => [e.id, e.nombre]));
+    // La lista muestra siempre todos los algoritmos. Los que no aplican a esta
+    // instancia quedan desactivados con el motivo, en lugar de desaparecer.
+    sel.replaceChildren(...estados.map((e) => {
+        const op = document.createElement('option');
+        op.value = e.id;
+        op.textContent = e.nombre;
+        op.disabled = !e.disponible;
+        if (e.motivo) op.title = e.motivo;
+        return op;
+    }));
     // Conserva el algoritmo elegido si el grafo nuevo también lo admite.
     sel.value = disponibles.some((e) => e.id === previo) ? previo : (disponibles[0]?.id ?? '');
 
@@ -476,7 +487,11 @@ const CLAVE_LEYENDA = 'grafos:leyenda-abierta';
 
 function activarLeyenda() {
     const d = document.querySelector('.leyenda');
-    try { d.open = localStorage.getItem(CLAVE_LEYENDA) === '1'; } catch { /* deshabilitado */ }
+    // Abierta salvo que se haya cerrado antes.
+    try {
+        const guardado = localStorage.getItem(CLAVE_LEYENDA);
+        if (guardado !== null) d.open = guardado === '1';
+    } catch { /* deshabilitado */ }
     d.addEventListener('toggle', () => {
         try { localStorage.setItem(CLAVE_LEYENDA, d.open ? '1' : '0'); } catch { /* deshabilitado */ }
     });
