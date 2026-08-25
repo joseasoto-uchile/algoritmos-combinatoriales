@@ -3,6 +3,12 @@
  * Esta capa no depende de los algoritmos ni del dibujo.
  */
 
+/* La aplicación es de demostración: las tablas de vectores y la matriz del
+ * editor se leen en pantalla completas, y el grafo tiene que seguir siendo
+ * legible. El tope rige en el generador, en el editor y al cargar un archivo. */
+const NODOS_MINIMO = 2;
+const NODOS_MAXIMO = 30;
+
 /* Generador de números aleatorios con semilla (mulberry32). JavaScript no
  * incluye uno y Math.random no acepta semilla. Es lo que hace reproducibles
  * las instancias generadas. */
@@ -72,6 +78,10 @@ function validarDatosGrafo(datos) {
     }
 
     comprobarDirigido(datos);
+    if (datos.nodos.length > NODOS_MAXIMO) {
+        throw new Error(`JSON inválido: el archivo tiene ${datos.nodos.length} nodos y la `
+            + `aplicación admite hasta ${NODOS_MAXIMO}.`);
+    }
     const ids = new Set();
     for (const nodo of datos.nodos) {
         if (nodo === null || typeof nodo !== 'object' || !('id' in nodo)) {
@@ -235,7 +245,10 @@ function generarAleatorio({
     n = 10, densidad = 0.3, dag = false, conexo = true,
     pesoMin = 1, pesoMax = 10, permitirNegativos = false, semilla = null,
 } = {}) {
-    if (n < 1) throw new Error('El número de nodos debe ser al menos 1.');
+    if (n < NODOS_MINIMO || n > NODOS_MAXIMO) {
+        throw new Error(`El número de nodos debe estar entre ${NODOS_MINIMO} y `
+            + `${NODOS_MAXIMO}. Se recibió ${n}.`);
+    }
     if (pesoMin > pesoMax) {
         throw new Error(`El peso mínimo (${pesoMin}) no puede ser mayor que el máximo (${pesoMax}).`);
     }

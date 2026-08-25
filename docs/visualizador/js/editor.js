@@ -8,12 +8,8 @@
  * que el arco no existe. La diagonal es editable: un arco de un nodo a sí mismo
  * es válido en este modelo.
  *
- * La matriz tiene n² casillas, de modo que el editor admite menos nodos que el
- * generador. Por encima de ese tope se edita el archivo JSON.
+ * El tope de nodos es el de la aplicación, NODOS_MAXIMO.
  */
-
-const EDITOR_NODOS_MAXIMO = 20;
-const EDITOR_NODOS_MINIMO = 2;
 
 /* Modelo de trabajo: una fila por nodo, con su posición en el lienzo, y la
  * matriz con el texto de cada casilla. Se conserva el texto para poder señalar
@@ -129,13 +125,13 @@ function _dibujarMatrizEd() {
     tabla.append(tbody);
 
     document.getElementById('txt-editor-n').textContent =
-        `${n} nodos. Máximo ${EDITOR_NODOS_MAXIMO}.`;
-    document.getElementById('btn-editor-agregar').disabled = n >= EDITOR_NODOS_MAXIMO;
+        `${n} nodos. Máximo ${NODOS_MAXIMO}.`;
+    document.getElementById('btn-editor-agregar').disabled = n >= NODOS_MAXIMO;
 }
 
 function _agregarNodoEd() {
     _sincronizarEd();
-    if (editor.filas.length >= EDITOR_NODOS_MAXIMO) return;
+    if (editor.filas.length >= NODOS_MAXIMO) return;
     editor.filas.push({ nombre: _nombreLibreEd(new Set(editor.filas.map((f) => f.nombre))),
                         pos: null });
     editor.P.forEach((fila) => fila.push(''));
@@ -146,8 +142,8 @@ function _agregarNodoEd() {
 
 function _eliminarNodoEd(i) {
     _sincronizarEd();
-    if (editor.filas.length <= EDITOR_NODOS_MINIMO) {
-        _mensajeEd(`El digrafo debe tener al menos ${EDITOR_NODOS_MINIMO} nodos.`);
+    if (editor.filas.length <= NODOS_MINIMO) {
+        _mensajeEd(`El digrafo debe tener al menos ${NODOS_MINIMO} nodos.`);
         return;
     }
     editor.filas.splice(i, 1);
@@ -172,8 +168,8 @@ function _posicionesEd() {
  * primer problema encontrado, señalando la casilla o el nombre concreto. */
 function _objetoDesdeModeloEd() {
     const n = editor.filas.length;
-    if (n < EDITOR_NODOS_MINIMO) {
-        throw new Error(`El digrafo debe tener al menos ${EDITOR_NODOS_MINIMO} nodos.`);
+    if (n < NODOS_MINIMO) {
+        throw new Error(`El digrafo debe tener al menos ${NODOS_MINIMO} nodos.`);
     }
     const nombres = editor.filas.map((f) => f.nombre.trim());
     const vistos = new Set();

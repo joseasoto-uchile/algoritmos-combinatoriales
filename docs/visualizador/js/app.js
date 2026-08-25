@@ -216,8 +216,10 @@ function pintarVectores() {
         texto = `${info.nombreCerrados} = {${lista.join(', ')}}. El ciclo se interrumpió: `
             + 'los nodos que faltan son inalcanzables.';
     } else if (info.nombreCerrados) {
-        texto = `${info.nombreCerrados} = {${lista.join(', ')}}, `
-            + `${lista.length} de ${ids.length} nodos.`;
+        // El recuento va delante porque es lo que sobrevive al recorte cuando
+        // la lista no cabe en la línea.
+        texto = `${lista.length} de ${ids.length} nodos. `
+            + `${info.nombreCerrados} = {${lista.join(', ')}}`;
     }
     $('#txt-vectores').textContent = texto;
 }
@@ -697,13 +699,6 @@ function iniciar() {
     iniciarEditor();
     $('#btn-editar').addEventListener('click', () => {
         const salida = $('#txt-editar');
-        // La matriz tiene n² casillas: por encima del tope se edita el archivo.
-        if (estado.G.ids.length > EDITOR_NODOS_MAXIMO) {
-            salida.textContent = `La instancia tiene ${estado.G.ids.length} nodos y el `
-                + `editor admite ${EDITOR_NODOS_MAXIMO}. Genera una menor o edita el JSON.`;
-            salida.className = 'txt-error';
-            return;
-        }
         salida.textContent = '';
         salida.className = 'txt-estado';
         pausar();

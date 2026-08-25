@@ -279,12 +279,26 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     margin-top: 8px;
 }
 
+/* Una sola línea de alto fijo. El texto crece con el número de nodos cerrados;
+   si envolviera, el panel crecería y el lienzo del grafo encogería, moviendo el
+   grafo en mitad de la animación. */
 .vectores-cabecera {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    height: 18px;
     margin-bottom: 6px;
+}
+
+#txt-vectores {
+    flex: 1 1 0;
+    min-width: 0;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .vectores-cabecera h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #607d8b; }

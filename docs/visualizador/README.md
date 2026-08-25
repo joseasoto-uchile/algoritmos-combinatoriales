@@ -42,10 +42,19 @@ Aplicar, y Cancelar descarta todo. Aplicar valida antes de reemplazar y no
 cierra el diálogo si hay un problema; se informa el primero que se encuentra,
 con la casilla o el nombre concreto.
 
-El editor admite hasta 20 nodos, menos que el generador, porque la matriz tiene
-n² casillas. Con una instancia mayor el botón no abre el diálogo y explica por
-qué. Los nodos que ya existían conservan su posición en el lienzo, incluso al
+Los nodos que ya existían conservan su posición en el lienzo, incluso al
 renombrarlos; los nuevos se reparten en un círculo.
+
+## Límites
+
+La aplicación admite entre 2 y 30 nodos. Es una herramienta de demostración: la
+tabla de vectores tiene una columna por nodo, la matriz del editor tiene n²
+casillas y el grafo tiene que seguir siendo legible.
+
+El tope rige en las tres vías de entrada. El generador rechaza un valor fuera de
+rango con un mensaje, en lugar de acortarlo. El editor desactiva el botón de
+agregar al llegar a 30. Un archivo con más nodos se rechaza al cargarlo,
+indicando cuántos trae.
 
 ## Vectores D y Π
 
@@ -74,6 +83,11 @@ Las casillas van vacías hasta que se ejecuta la línea que asigna los valores
 iniciales, de modo que ese paso también se ve. El panel está presente desde el
 primer paso: si apareciera a mitad de la traza cambiaría el alto del lienzo y
 movería el grafo.
+
+Por la misma razón, la cabecera del panel ocupa una línea de alto fijo. El texto
+que la acompaña crece con el número de nodos cerrados, y con 30 nodos llegaba a
+envolver. El recuento va delante de la lista porque es lo que sobrevive cuando
+el texto no cabe y se recorta.
 
 ## Dijkstra
 
