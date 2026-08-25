@@ -11,7 +11,11 @@ const COLORES = {
     solucion: '#66bb6a', solucion_borde: '#2e7d32',
     ciclo_negativo: '#ef5350', ciclo_negativo_borde: '#b71c1c',
     activo: '#ffb74d', activo_borde: '#e65100',
-    procesada: '#cfd8dc',
+    /* Los arcos llevan su propio par de colores, no el de los nodos: gris
+       oscuro sin procesar y celeste una vez examinados. Con dos grises
+       parecidos no se distinguía cuáles quedaban por mirar. */
+    arco: '#546e7a',
+    arco_procesado: '#4fc3f7',
     origen_borde: '#f57f17',
 };
 
@@ -22,7 +26,8 @@ const ESTADOS_LEYENDA = [
     ['Visitado', 'Descubierto, aún puede mejorar', COLORES.visitado, COLORES.visitado_borde],
     ['Finalizado', 'Procesado por completo', COLORES.finalizado, COLORES.finalizado_borde],
     ['Activo', 'Lo que ocurre en este paso', COLORES.activo, COLORES.activo_borde],
-    ['Arista procesada', 'Ya examinada, no se vuelve a mirar', COLORES.procesada, COLORES.procesada],
+    ['Arco sin procesar', 'Todavía no examinado', COLORES.arco, COLORES.arco],
+    ['Arco procesado', 'Ya examinado, no se vuelve a mirar', COLORES.arco_procesado, COLORES.arco_procesado],
     ['Solución', 'Parte del árbol de caminos', COLORES.solucion, COLORES.solucion_borde],
     ['Ciclo negativo', 'Sin distancia mínima definida', COLORES.ciclo_negativo, COLORES.ciclo_negativo_borde],
 ];
@@ -33,8 +38,8 @@ const ESTILOS = [
         'background-color': COLORES.base, color: '#1a1a1a', 'font-size': '12px',
         width: '34px', height: '34px', 'border-width': '2px', 'border-color': COLORES.base_borde } },
     { selector: 'edge', style: {
-        content: 'data(label)', 'curve-style': 'bezier', 'line-color': COLORES.base,
-        'target-arrow-color': COLORES.base, 'target-arrow-shape': 'triangle', width: 2,
+        content: 'data(label)', 'curve-style': 'bezier', 'line-color': COLORES.arco,
+        'target-arrow-color': COLORES.arco, 'target-arrow-shape': 'triangle', width: 2,
         'font-size': '10px', color: '#546e7a', 'text-background-color': '#ffffff',
         'text-background-opacity': 1, 'text-background-padding': '1px' } },
     { selector: 'node.visitado', style: {
@@ -50,8 +55,8 @@ const ESTILOS = [
     { selector: 'node.activo', style: {
         'background-color': COLORES.activo, 'border-color': COLORES.activo_borde, 'border-width': '4px' } },
     { selector: 'edge.procesada', style: {
-        'line-color': COLORES.procesada, 'target-arrow-color': COLORES.procesada,
-        width: 1.5, color: '#90a4ae' } },
+        'line-color': COLORES.arco_procesado, 'target-arrow-color': COLORES.arco_procesado,
+        width: 2.5 } },
     { selector: 'edge.solucion', style: {
         'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde, width: 4 } },
     { selector: 'edge.activo', style: {
