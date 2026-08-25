@@ -115,11 +115,16 @@ function marcarCaminoYSeleccion(clasesNodo, clasesArista, paso) {
     if (v === null) return;
 
     if (estado.destino !== null) {
-        const camino = reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
+        const { camino, ciclo } = reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
         if (camino) {
             camino.forEach((n) => agregar(clasesNodo, n, 'camino'));
             for (let j = 0; j + 1 < camino.length; j++) {
                 agregar(clasesArista, idArista(camino[j], camino[j + 1]), 'camino');
+            }
+        } else if (ciclo) {
+            ciclo.forEach((n) => agregar(clasesNodo, n, 'ciclo'));
+            for (const [u, w] of arcosDelCiclo(ciclo)) {
+                agregar(clasesArista, idArista(u, w), 'ciclo');
             }
         }
     }
@@ -199,9 +204,10 @@ function pintarVectores() {
     const v = vectoresDelPaso(paso);
 
     const ids = estado.G.ids;
-    const camino = estado.destino === null ? null
+    const reconstruccion = estado.destino === null ? {}
         : reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
-    const enCamino = new Set(camino || []);
+    const enCamino = new Set(reconstruccion.camino || []);
+    const enCiclo = new Set(reconstruccion.ciclo || []);
     const entrantes = new Set();
     if (estado.seleccion !== null) {
         entrantes.add(estado.seleccion);
@@ -215,6 +221,7 @@ function pintarVectores() {
         if (v.cerrados.has(id)) c.push('cerrado');
         if (v.sinMinimo.has(id)) c.push('sin-minimo');
         if (enCamino.has(id)) c.push('camino');
+        if (enCiclo.has(id)) c.push('ciclo');
         if (entrantes.has(id)) c.push('entrante');
         if (id === v.activo) c.push('activo');
         if (id === v.destino) c.push('destino');
@@ -271,7 +278,7 @@ function pintarVectores() {
     const lista = [...v.cerrados];
     let texto = '';
     if (estado.destino !== null) {
-        texto = textoCamino(camino, v);
+        texto = textoCamino(reconstruccion, v);
     } else if (v.sinMinimo.size) {
         texto = `Sin distancia mínima definida: ${[...v.sinMinimo].join(', ')}. `
             + 'Son alcanzables desde un ciclo de peso negativo.';
@@ -288,13 +295,23 @@ function pintarVectores() {
     actualizarTextoSeleccion(v);
 }
 
-/* Camino reconstruido y su largo, o el motivo de que no exista. */
-function textoCamino(camino, v) {
+/* Camino reconstruido y su largo, el ciclo encontrado, o el motivo de que no
+ * haya ninguno de los dos. */
+function textoCamino({ camino, ciclo }, v) {
     const t = estado.destino;
     if (camino) {
         const d = v.D.get(t);
         const largo = d === undefined || d === Infinity ? '' : `  (largo ${d})`;
         return `Camino a ${t}:  ${camino.join(' → ')}${largo}`;
+    }
+    if (ciclo) {
+        const peso = arcosDelCiclo(ciclo).reduce((suma, [u, w]) => {
+            const a = estado.G.aristas.find((x) => x.origen === u && x.destino === w);
+            return suma + (a ? a.peso : 0);
+        }, 0);
+        const cerrado = [...ciclo].reverse();
+        return `Π forma un ciclo desde ${t}:  ${cerrado.join(' → ')} → ${cerrado[0]}`
+            + `  (peso ${peso})`;
     }
     if (v.sinMinimo.has(t)) {
         return `${t} no tiene camino mínimo definido: es alcanzable desde un ciclo `

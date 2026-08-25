@@ -100,9 +100,19 @@ El texto de al lado da el camino y su largo, o el motivo de que no exista: que
 Π todavía no llegue al origen, o que el nodo sea alcanzable desde un ciclo de
 peso negativo.
 
-Bellman-Ford puede dejar un ciclo en Π mientras un ciclo de peso negativo sigue
-mejorando las distancias, de modo que la reconstrucción se corta al repetir un
-nodo en lugar de girar sin fin.
+## Ciclo de Π
+
+Bellman-Ford deja un ciclo en Π mientras un ciclo de peso negativo sigue
+mejorando las distancias: cada nodo del ciclo acaba apuntando al anterior. Al
+retroceder desde el destino se vuelve sobre un nodo ya visitado.
+
+Ese ciclo es el testigo del peso negativo, de modo que en lugar de descartar la
+reconstrucción se devuelve y se marca en rojo: los nodos y arcos del ciclo en el
+grafo y sus casillas en la tabla. El texto lo escribe cerrado y con su peso, por
+ejemplo `Π forma un ciclo desde 4:  5 → 3 → 4 → 5  (peso -2)`.
+
+En la instancia de ejemplo el camino a 4 es válido hasta el paso 21, `0 → 2 → 3
+→ 4` de largo 7, y en el paso 22 Π cierra el ciclo y pasa a rojo.
 
 ## Arcos que entran a un nodo
 

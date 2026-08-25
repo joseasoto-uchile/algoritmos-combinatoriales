@@ -33,6 +33,7 @@ const ESTADOS_LEYENDA = [
     ['Solución', 'Parte del árbol de caminos', COLORES.solucion, COLORES.solucion_borde],
     ['Camino al destino', 'Reconstruido siguiendo Π', COLORES.camino, COLORES.camino],
     ['Arco entrante', 'Compite por la distancia del nodo elegido', COLORES.entrante, COLORES.entrante],
+    ['Ciclo de Π', 'Testigo del peso negativo', COLORES.ciclo_negativo_borde, COLORES.ciclo_negativo_borde],
     ['Ciclo negativo', 'Sin distancia mínima definida', COLORES.ciclo_negativo, COLORES.ciclo_negativo_borde],
 ];
 
@@ -73,6 +74,11 @@ const ESTILOS = [
         'line-color': COLORES.camino, 'target-arrow-color': COLORES.camino, width: 5 } },
     { selector: 'node.camino', style: {
         'border-color': COLORES.camino, 'border-width': '4px' } },
+    { selector: 'edge.ciclo', style: {
+        'line-color': COLORES.ciclo_negativo_borde,
+        'target-arrow-color': COLORES.ciclo_negativo_borde, width: 5 } },
+    { selector: 'node.ciclo', style: {
+        'border-color': COLORES.ciclo_negativo_borde, 'border-width': '5px' } },
     /* Cytoscape.js admite una sola etiqueta por elemento. El nombre del nodo y
      * la distancia son los dos renglones de un mismo texto, situado bajo el
      * nodo, y comparten color.
@@ -303,24 +309,42 @@ function calcularVectores(traza, pasoActual, ids) {
     return { D, Pi, cerrados, sinMinimo, activo, destino, interrumpido, inicializado };
 }
 
-/* Camino desde el origen hasta `t` siguiendo Π hacia atrás, tal como está en
- * este paso. Devuelve la sucesión de nodos, o null si Π todavía no llega al
- * origen.
+/* Sigue Π hacia atrás desde `t`. Devuelve una de tres cosas:
  *
- * Bellman-Ford puede dejar un ciclo en Π mientras un ciclo de peso negativo
- * sigue mejorando, de modo que se corta al repetir un nodo. */
+ *   { camino }  la sucesión de nodos del origen a t
+ *   { ciclo }   los nodos de un ciclo de Π, si al retroceder se repite uno
+ *   { }         si Π se corta antes de llegar al origen
+ *
+ * Bellman-Ford deja un ciclo en Π mientras un ciclo de peso negativo sigue
+ * mejorando las distancias: cada nodo del ciclo acaba apuntando al anterior.
+ * Ese ciclo es el testigo del peso negativo y se devuelve para marcarlo.
+ *
+ * Π[v] = u significa el arco u → v, de modo que la sucesión va en sentido
+ * contrario al de los arcos y se invierte antes de devolverla. */
 function reconstruirCamino(Pi, t, origen) {
-    if (t === origen) return [origen];
-    const camino = [t];
-    const vistos = new Set([t]);
+    const secuencia = [t];
+    const posicion = new Map([[t, 0]]);
     let actual = t;
     for (;;) {
+        if (actual === origen) return { camino: secuencia.slice().reverse() };
         const previo = Pi.get(actual);
-        if (previo === null || previo === undefined) return null;
-        if (vistos.has(previo)) return null;
-        camino.unshift(previo);
-        vistos.add(previo);
-        if (previo === origen) return camino;
+        if (previo === null || previo === undefined) return {};
+        if (posicion.has(previo)) {
+            // Desde la primera aparición del nodo repetido hasta el último
+            // visitado: esos son los nodos del ciclo.
+            return { ciclo: secuencia.slice(posicion.get(previo)) };
+        }
+        posicion.set(previo, secuencia.length);
+        secuencia.push(previo);
         actual = previo;
     }
+}
+
+/* Arcos de un ciclo devuelto por reconstruirCamino, en el sentido en que
+ * existen en el digrafo. */
+function arcosDelCiclo(ciclo) {
+    const arcos = [];
+    for (let j = 0; j + 1 < ciclo.length; j++) arcos.push([ciclo[j + 1], ciclo[j]]);
+    arcos.push([ciclo[0], ciclo[ciclo.length - 1]]);
+    return arcos;
 }
