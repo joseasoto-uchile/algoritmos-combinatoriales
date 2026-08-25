@@ -47,6 +47,11 @@ DFS no calcula distancias: solo el padre de cada nodo en el árbol de
 profundidad. Bellman-Ford no cierra nodos, porque revisa todas las aristas en
 cada pasada.
 
+Un nodo alcanzable desde un ciclo de peso negativo no tiene distancia mínima
+definida. Su casilla en D muestra −∞ y no el valor que quedó en la última
+pasada, que no es una respuesta; la de Π muestra ⊥. Las dos van marcadas, igual
+que el nodo en el grafo.
+
 Las casillas van vacías hasta que se ejecuta la línea que asigna los valores
 iniciales, de modo que ese paso también se ve. El panel está presente desde el
 primer paso: si apareciera a mitad de la traza cambiaría el alto del lienzo y

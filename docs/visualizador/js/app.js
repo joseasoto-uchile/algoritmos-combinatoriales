@@ -158,6 +158,7 @@ function pintarVectores() {
     const clasesDe = (id) => {
         const c = [];
         if (v.cerrados.has(id)) c.push('cerrado');
+        if (v.sinMinimo.has(id)) c.push('sin-minimo');
         if (id === v.activo) c.push('activo');
         if (id === v.destino) c.push('destino');
         return c.join(' ');
@@ -190,8 +191,15 @@ function pintarVectores() {
             const td = document.createElement('td');
             const valor = mapa.get(id);
             const indefinido = valor === undefined || valor === null || valor === Infinity;
-            td.textContent = v.inicializado ? (indefinido ? vacio : String(valor)) : '';
-            td.className = [clasesDe(id), v.inicializado && indefinido ? 'indefinido' : '']
+            // Sin distancia mínima definida no se muestra el valor de la última
+            // pasada, que no es una respuesta.
+            let texto;
+            if (!v.inicializado) texto = '';
+            else if (v.sinMinimo.has(id)) texto = nombre === 'D' ? '−∞' : vacio;
+            else texto = indefinido ? vacio : String(valor);
+            td.textContent = texto;
+            td.className = [clasesDe(id),
+                v.inicializado && indefinido && !v.sinMinimo.has(id) ? 'indefinido' : '']
                 .filter(Boolean).join(' ');
             tr.append(td);
         }
@@ -201,7 +209,10 @@ function pintarVectores() {
 
     const lista = [...v.cerrados];
     let texto = '';
-    if (v.interrumpido) {
+    if (v.sinMinimo.size) {
+        texto = `Sin distancia mínima definida: ${[...v.sinMinimo].join(', ')}. `
+            + 'Son alcanzables desde un ciclo de peso negativo.';
+    } else if (v.interrumpido) {
         texto = `${info.nombreCerrados} = {${lista.join(', ')}}. El ciclo se interrumpió: `
             + 'los nodos que faltan son inalcanzables.';
     } else if (info.nombreCerrados) {

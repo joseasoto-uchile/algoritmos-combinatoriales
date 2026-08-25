@@ -243,6 +243,10 @@ function calcularVectores(traza, pasoActual, ids) {
     const D = new Map(ids.map((v) => [v, Infinity]));
     const Pi = new Map(ids.map((v) => [v, null]));
     const cerrados = new Set();
+    // Un nodo alcanzable desde un ciclo de peso negativo no tiene distancia
+    // mínima definida. El valor que quede en D es el de la última pasada y no
+    // es una respuesta.
+    const sinMinimo = new Set();
     let inicializado = false, activo = null, destino = null, interrumpido = false;
 
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
@@ -263,6 +267,9 @@ function calcularVectores(traza, pasoActual, ids) {
             case 'nodo_finalizado':
                 cerrados.add(ev.nodo);
                 break;
+            case 'ciclo_negativo':
+                sinMinimo.add(ev.nodo);
+                break;
             case 'interrumpir':
                 interrumpido = true;
                 break;
@@ -276,5 +283,5 @@ function calcularVectores(traza, pasoActual, ids) {
     else if (ev.tipo === 'nodo_finalizado' || ev.tipo === 'interrumpir'
              || ev.tipo === 'visitar_nodo') activo = ev.nodo;
 
-    return { D, Pi, cerrados, activo, destino, interrumpido, inicializado };
+    return { D, Pi, cerrados, sinMinimo, activo, destino, interrumpido, inicializado };
 }

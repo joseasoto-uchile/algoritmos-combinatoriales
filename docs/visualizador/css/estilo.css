@@ -387,3 +387,8 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 @media (max-width: 900px) {
     .solo-ancho { display: none; }
 }
+
+/* Nodos sin distancia mínima definida, por estar tras un ciclo de peso
+   negativo. El valor que queda en D es el de la última pasada. */
+#tabla-vectores .sin-minimo { background: #ffebee; }
+#tabla-vectores td.sin-minimo { color: #b71c1c; font-weight: 700; }
