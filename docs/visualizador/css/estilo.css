@@ -481,3 +481,25 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     padding: 7px 14px; border: 1px solid #cfd8dc; border-radius: 5px;
     background: #fff; cursor: pointer; font-size: 13px; color: #263238;
 }
+
+/* Selector del destino y expresión de la selección, dentro del panel de
+   vectores. Los dos con alto fijo por la misma razón que la cabecera. */
+.etiqueta-destino { flex: 0 0 auto; white-space: nowrap; color: #607d8b; font-size: 11px; }
+.etiqueta-destino select { font-size: 11px; padding: 0 2px; }
+
+#txt-seleccion {
+    margin-top: 5px;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+/* Columna elegida como destino y columnas de los arcos que entran al nodo
+   seleccionado. */
+#tabla-vectores .camino { background: #f3e5f5; }
+#tabla-vectores td.camino { color: #6a1b9a; font-weight: 700; }
+#tabla-vectores .entrante { background: #e3f2fd; box-shadow: inset 0 0 0 2px #1565c0; }
+#tabla-vectores th { cursor: pointer; }

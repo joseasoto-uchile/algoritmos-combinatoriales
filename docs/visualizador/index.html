@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=27">
+<link rel="stylesheet" href="css/estilo.css?v=30">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -131,11 +131,16 @@
       <section id="panel-vectores" class="panel-vectores" hidden>
         <div class="vectores-cabecera">
           <h4>Vectores</h4>
+          <label class="etiqueta-destino">Camino a
+            <select id="dd-destino"></select>
+          </label>
           <span id="txt-vectores" class="txt-ayuda"></span>
         </div>
         <div class="vectores-envoltura">
           <table id="tabla-vectores"></table>
         </div>
+        <!-- Alto fijo: si envolviera, el panel crecería y movería el grafo. -->
+        <div id="txt-seleccion" class="txt-ayuda">Pulsa una columna para ver los arcos que entran a ese nodo.</div>
       </section>
 
     </div>
@@ -200,8 +205,8 @@
      cualquier archivo de js/ o css/. -->
 <script src="js/grafo.js?v=25"></script>
 <script src="js/algoritmos.js?v=25"></script>
-<script src="js/viz.js?v=28"></script>
+<script src="js/viz.js?v=30"></script>
 <script src="js/editor.js?v=25"></script>
-<script src="js/app.js?v=29"></script>
+<script src="js/app.js?v=32"></script>
 </body>
 </html>

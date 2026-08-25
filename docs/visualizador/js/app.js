@@ -16,6 +16,8 @@ const estado = {
     traza: null,
     algEjecutado: null,
     origenEjecutado: null,
+    destino: null,
+    seleccion: null,
     paso: 0,
     reproduciendo: false,
     temporizador: null,
@@ -82,6 +84,7 @@ function elementosActuales() {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
         const info = ALGORITMOS[estado.algEjecutado] || {};
         const [cn, ca] = calcularEstado(estado.traza, paso, Boolean(info.aristasNoSeRevisitan));
+        marcarCaminoYSeleccion(cn, ca, paso);
         elementos = aplicarClases(elementos, cn, ca, $('#dd-origen').value);
         const d = calcularDistancias(estado.traza, paso);
         if (d !== null) elementos = aplicarDistancias(elementos, d);
@@ -89,6 +92,46 @@ function elementosActuales() {
         elementos = aplicarClases(elementos, new Map(), new Map(), $('#dd-origen').value);
     }
     return elementos;
+}
+
+/* calcularVectores recorre la traza desde el principio, y un repintado la
+ * necesita dos veces: para el grafo y para la tabla. Se guarda la del paso
+ * actual. */
+let _vectores = { traza: null, paso: -1, valor: null };
+
+function vectoresDelPaso(paso) {
+    if (_vectores.traza === estado.traza && _vectores.paso === paso) return _vectores.valor;
+    const valor = calcularVectores(estado.traza, paso, estado.G.ids);
+    _vectores = { traza: estado.traza, paso, valor };
+    return valor;
+}
+
+/* Anade al dibujo el camino hasta el destino elegido y los arcos que entran al
+ * nodo seleccionado. Se calculan aparte de la traza: dependen de lo que el
+ * usuario elige, no del paso. */
+function marcarCaminoYSeleccion(clasesNodo, clasesArista, paso) {
+    const agregar = (m, k, c) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(c); };
+    const v = vectoresDelPaso(paso);
+    if (v === null) return;
+
+    if (estado.destino !== null) {
+        const camino = reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
+        if (camino) {
+            camino.forEach((n) => agregar(clasesNodo, n, 'camino'));
+            for (let j = 0; j + 1 < camino.length; j++) {
+                agregar(clasesArista, idArista(camino[j], camino[j + 1]), 'camino');
+            }
+        }
+    }
+
+    if (estado.seleccion !== null) {
+        agregar(clasesNodo, estado.seleccion, 'entrante');
+        for (const a of estado.G.aristas) {
+            if (a.destino !== estado.seleccion) continue;
+            agregar(clasesArista, idArista(a.origen, a.destino), 'entrante');
+            agregar(clasesNodo, a.origen, 'entrante');
+        }
+    }
 }
 
 /* Cytoscape guarda el tamano del contenedor y solo lo relee con resize(). El
@@ -153,13 +196,26 @@ function pintarVectores() {
     if (!mostrar) return;
 
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-    const v = calcularVectores(estado.traza, paso, estado.G.ids);
+    const v = vectoresDelPaso(paso);
 
     const ids = estado.G.ids;
+    const camino = estado.destino === null ? null
+        : reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
+    const enCamino = new Set(camino || []);
+    const entrantes = new Set();
+    if (estado.seleccion !== null) {
+        entrantes.add(estado.seleccion);
+        for (const a of estado.G.aristas) {
+            if (a.destino === estado.seleccion) entrantes.add(a.origen);
+        }
+    }
+
     const clasesDe = (id) => {
         const c = [];
         if (v.cerrados.has(id)) c.push('cerrado');
         if (v.sinMinimo.has(id)) c.push('sin-minimo');
+        if (enCamino.has(id)) c.push('camino');
+        if (entrantes.has(id)) c.push('entrante');
         if (id === v.activo) c.push('activo');
         if (id === v.destino) c.push('destino');
         return c.join(' ');
@@ -175,6 +231,8 @@ function pintarVectores() {
         const th = document.createElement('th');
         th.textContent = id;
         th.className = clasesDe(id);
+        th.dataset.nodo = id;
+        th.title = `Arcos que entran a ${id}`;
         filaEnc.append(th);
     }
     thead.append(filaEnc);
@@ -208,9 +266,13 @@ function pintarVectores() {
     }
     $('#tabla-vectores').replaceChildren(thead, tbody);
 
+    // Un destino elegido es una pregunta concreta y su respuesta manda sobre
+    // el estado general del conjunto de nodos cerrados.
     const lista = [...v.cerrados];
     let texto = '';
-    if (v.sinMinimo.size) {
+    if (estado.destino !== null) {
+        texto = textoCamino(camino, v);
+    } else if (v.sinMinimo.size) {
         texto = `Sin distancia mínima definida: ${[...v.sinMinimo].join(', ')}. `
             + 'Son alcanzables desde un ciclo de peso negativo.';
     } else if (v.interrumpido) {
@@ -223,6 +285,44 @@ function pintarVectores() {
             + `${info.nombreCerrados} = {${lista.join(', ')}}`;
     }
     $('#txt-vectores').textContent = texto;
+    actualizarTextoSeleccion(v);
+}
+
+/* Camino reconstruido y su largo, o el motivo de que no exista. */
+function textoCamino(camino, v) {
+    const t = estado.destino;
+    if (camino) {
+        const d = v.D.get(t);
+        const largo = d === undefined || d === Infinity ? '' : `  (largo ${d})`;
+        return `Camino a ${t}:  ${camino.join(' → ')}${largo}`;
+    }
+    if (v.sinMinimo.has(t)) {
+        return `${t} no tiene camino mínimo definido: es alcanzable desde un ciclo `
+            + 'de peso negativo.';
+    }
+    return `Todavía no hay camino del origen a ${t}.`;
+}
+
+/* Expresion del minimo para el nodo seleccionado, con los valores del paso. */
+function actualizarTextoSeleccion(v) {
+    const salida = $('#txt-seleccion');
+    const b = estado.seleccion;
+    if (b === null) {
+        salida.textContent = 'Pulsa una columna para ver los arcos que entran a ese nodo.';
+        return;
+    }
+    const entrantes = estado.G.aristas.filter((a) => a.destino === b);
+    if (!entrantes.length) {
+        salida.textContent = `A ${b} no entra ningún arco.`;
+        return;
+    }
+    const val = (x) => (x === Infinity || x === undefined ? '∞' : String(x));
+    const terminos = entrantes.map((a) => {
+        const signo = a.peso < 0 ? ' - ' : ' + ';
+        return `D[${a.origen}]${signo}${Math.abs(a.peso)} = ${val(v.D.get(a.origen) === Infinity
+            ? Infinity : v.D.get(a.origen) + a.peso)}`;
+    });
+    salida.textContent = `D[${b}] = ${val(v.D.get(b))}  ←  mín { ${terminos.join(',  ')} }`;
 }
 
 function actualizarTextoPaso() {
@@ -298,6 +398,11 @@ function actualizarOpciones() {
     const origen = $('#dd-origen');
     llenarDesplegable(origen, estado.G.ids.map((n) => [n, n]));
     origen.value = origenPorOmision(estado.G);
+
+    // El camino y la selección se olvidan: los nodos pueden ser otros.
+    llenarDesplegable($('#dd-destino'), [['', 'ninguno'], ...estado.G.ids.map((n) => [n, n])]);
+    estado.destino = null;
+    estado.seleccion = null;
 
     const noDisp = estados.filter((e) => !e.disponible);
     $('#lista-no-disponibles').innerHTML = noDisp.length
@@ -630,6 +735,18 @@ function iniciar() {
     });
     $('#btn-ejecutar').addEventListener('click', ejecutar);
     $('#dd-algoritmo').addEventListener('change', renderPseudocodigo);
+    $('#dd-destino').addEventListener('change', () => {
+        estado.destino = $('#dd-destino').value || null;
+        pintarEstado();
+    });
+    // La cabecera de una columna marca los arcos que entran a ese nodo. Volver
+    // a pulsarla quita la marca.
+    $('#tabla-vectores').addEventListener('click', (ev) => {
+        const th = ev.target.closest('th[data-nodo]');
+        if (!th) return;
+        estado.seleccion = estado.seleccion === th.dataset.nodo ? null : th.dataset.nodo;
+        pintarEstado();
+    });
     $('#dd-origen').addEventListener('change', pintarEstado);
     $('#dd-layout').addEventListener('change', () => reconstruirGrafo());
     $('#btn-centrar').addEventListener('click', () => recalcularLayout());

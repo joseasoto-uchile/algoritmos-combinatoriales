@@ -89,6 +89,32 @@ que la acompaña crece con el número de nodos cerrados, y con 30 nodos llegaba 
 envolver. El recuento va delante de la lista porque es lo que sobrevive cuando
 el texto no cabe y se recorta.
 
+## Camino a un destino
+
+El desplegable de la cabecera del panel elige un nodo destino. La aplicación
+reconstruye el camino desde el origen siguiendo Π hacia atrás, tal como está en
+ese paso, y lo marca en morado: los nodos y arcos del camino en el grafo, y sus
+casillas en D y en Π.
+
+El texto de al lado da el camino y su largo, o el motivo de que no exista: que
+Π todavía no llegue al origen, o que el nodo sea alcanzable desde un ciclo de
+peso negativo.
+
+Bellman-Ford puede dejar un ciclo en Π mientras un ciclo de peso negativo sigue
+mejorando las distancias, de modo que la reconstrucción se corta al repetir un
+nodo en lugar de girar sin fin.
+
+## Arcos que entran a un nodo
+
+Al pulsar la cabecera de una columna se marcan en azul los arcos que entran a
+ese nodo y los nodos de los que salen, y bajo la tabla aparece la expresión del
+mínimo con los valores de ese paso:
+
+    D[c] = 6  ←  mín { D[a] + 3 = 6,  D[b] + 7 = 9 }
+
+Es lo que compite por la distancia de ese nodo. Volver a pulsar la columna quita
+la marca.
+
 ## Dijkstra
 
 Sigue el pseudocódigo de la clase, con la elección del mínimo por barrido sobre

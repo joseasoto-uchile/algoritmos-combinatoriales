@@ -16,6 +16,8 @@ const COLORES = {
        parecidos no se distinguía cuáles quedaban por mirar. */
     arco: '#546e7a',
     arco_procesado: '#4fc3f7',
+    camino: '#8e24aa',
+    entrante: '#1565c0',
     origen_borde: '#f57f17',
 };
 
@@ -29,6 +31,8 @@ const ESTADOS_LEYENDA = [
     ['Arco sin procesar', 'Todavía no examinado', COLORES.arco, COLORES.arco],
     ['Arco procesado', 'Ya examinado, no se vuelve a mirar', COLORES.arco_procesado, COLORES.arco_procesado],
     ['Solución', 'Parte del árbol de caminos', COLORES.solucion, COLORES.solucion_borde],
+    ['Camino al destino', 'Reconstruido siguiendo Π', COLORES.camino, COLORES.camino],
+    ['Arco entrante', 'Compite por la distancia del nodo elegido', COLORES.entrante, COLORES.entrante],
     ['Ciclo negativo', 'Sin distancia mínima definida', COLORES.ciclo_negativo, COLORES.ciclo_negativo_borde],
 ];
 
@@ -61,6 +65,14 @@ const ESTILOS = [
         'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde, width: 4 } },
     { selector: 'edge.activo', style: {
         'line-color': COLORES.activo_borde, 'target-arrow-color': COLORES.activo_borde, width: 4 } },
+    { selector: 'edge.entrante', style: {
+        'line-color': COLORES.entrante, 'target-arrow-color': COLORES.entrante, width: 4 } },
+    { selector: 'node.entrante', style: {
+        'border-color': COLORES.entrante, 'border-width': '4px' } },
+    { selector: 'edge.camino', style: {
+        'line-color': COLORES.camino, 'target-arrow-color': COLORES.camino, width: 5 } },
+    { selector: 'node.camino', style: {
+        'border-color': COLORES.camino, 'border-width': '4px' } },
     /* Cytoscape.js admite una sola etiqueta por elemento. El nombre del nodo y
      * la distancia son los dos renglones de un mismo texto, situado bajo el
      * nodo, y comparten color.
@@ -289,4 +301,26 @@ function calcularVectores(traza, pasoActual, ids) {
              || ev.tipo === 'visitar_nodo') activo = ev.nodo;
 
     return { D, Pi, cerrados, sinMinimo, activo, destino, interrumpido, inicializado };
+}
+
+/* Camino desde el origen hasta `t` siguiendo Π hacia atrás, tal como está en
+ * este paso. Devuelve la sucesión de nodos, o null si Π todavía no llega al
+ * origen.
+ *
+ * Bellman-Ford puede dejar un ciclo en Π mientras un ciclo de peso negativo
+ * sigue mejorando, de modo que se corta al repetir un nodo. */
+function reconstruirCamino(Pi, t, origen) {
+    if (t === origen) return [origen];
+    const camino = [t];
+    const vistos = new Set([t]);
+    let actual = t;
+    for (;;) {
+        const previo = Pi.get(actual);
+        if (previo === null || previo === undefined) return null;
+        if (vistos.has(previo)) return null;
+        camino.unshift(previo);
+        vistos.add(previo);
+        if (previo === origen) return camino;
+        actual = previo;
+    }
 }
