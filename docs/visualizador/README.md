@@ -183,7 +183,11 @@ animación. Lo mismo vale para el contador de iteraciones de Bellman-Ford.
 
 ## Reproducción
 
-La velocidad se expresa en pasos por segundo. `setInterval` no entrega disparos
+El botón de reproducir ejecuta el algoritmo si aún no hay traza, o si el
+algoritmo o el origen cambiaron desde la última ejecución. Sin eso, pulsarlo
+antes de ejecutar no hacía nada.
+
+La velocidad se expresa en pasos por segundo, con atajos de 1, 5, 15, 50 y 100. `setInterval` no entrega disparos
 fiables por debajo de 16 ms, de modo que para velocidades mayores a unos 62
 pasos por segundo cada disparo avanza varios pasos. Los puntos de interrupción
 se comprueban en cada paso intermedio del disparo.

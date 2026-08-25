@@ -9,12 +9,13 @@ const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];
 const URL_LICENCIA = 'https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE';
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 5;
 const INTERVALO_MINIMO_MS = 16;
-const ATAJOS_VELOCIDAD = [1, 5, 15, 50];
+const ATAJOS_VELOCIDAD = [1, 5, 15, 50, 100];
 
 const estado = {
     G: null,
     traza: null,
     algEjecutado: null,
+    origenEjecutado: null,
     paso: 0,
     reproduciendo: false,
     temporizador: null,
@@ -242,6 +243,7 @@ function cargarGrafo(G, { layout = null } = {}) {
     estado.G = G;
     estado.traza = null;
     estado.algEjecutado = null;
+    estado.origenEjecutado = null;
     estado.paso = 0;
     pausar();
     if (layout) $('#dd-layout').value = layout;
@@ -316,6 +318,7 @@ function ejecutar() {
         const [, traza] = info.funcion(estado.G, origen);
         estado.traza = traza;
         estado.algEjecutado = algId;
+        estado.origenEjecutado = origen;
         estado.paso = 0;
         pausar();
         salida.textContent = `${info.nombre} desde ${origen}, ${traza.length} pasos de traza.`;
@@ -360,8 +363,13 @@ function reproducir() {
     arrancarTemporizador();
 }
 
+/* Reproducir ejecuta el algoritmo si aun no hay traza, o si el algoritmo o el
+ * origen cambiaron desde la ultima ejecucion. */
 function alternarPlay() {
-    if (!estado.traza) return;
+    const desactualizada = !estado.traza
+        || estado.algEjecutado !== $('#dd-algoritmo').value
+        || estado.origenEjecutado !== $('#dd-origen').value;
+    if (desactualizada) { ejecutar(); return; }
     if (estado.reproduciendo) pausar();
     else reproducir();
 }
