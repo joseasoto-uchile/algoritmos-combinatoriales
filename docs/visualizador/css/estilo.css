@@ -392,3 +392,78 @@ body.redimensionando { cursor: col-resize; user-select: none; }
    negativo. El valor que queda en D es el de la última pasada. */
 #tabla-vectores .sin-minimo { background: #ffebee; }
 #tabla-vectores td.sin-minimo { color: #b71c1c; font-weight: 700; }
+
+/* --- Editor de la matriz de pesos --- */
+#dlg-editor {
+    border: 1px solid #cfd8dc;
+    border-radius: 8px;
+    padding: 16px 18px;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: #fff;
+    color: #263238;
+    box-shadow: 0 10px 30px rgba(38, 50, 56, .18);
+}
+
+#dlg-editor::backdrop { background: rgba(38, 50, 56, .45); }
+#dlg-editor h4 { margin: 0 0 6px; font-size: 15px; }
+#dlg-editor p { margin: 0 0 10px; max-width: 62ch; }
+
+.editor-barra { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+.editor-barra button {
+    padding: 5px 9px; border: 1px solid #cfd8dc; border-radius: 4px;
+    background: #fff; cursor: pointer; font-size: 12px; color: #263238;
+}
+
+.editor-barra button:disabled { color: #cfd8dc; cursor: default; }
+
+.editor-envoltura {
+    overflow: auto; max-height: 56vh;
+    border: 1px solid #cfd8dc; border-radius: 4px;
+}
+
+#tabla-editor {
+    border-collapse: collapse;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+}
+
+#tabla-editor th, #tabla-editor td {
+    border: 1px solid #90a4ae; padding: 0; text-align: center;
+}
+
+#tabla-editor thead th {
+    position: sticky; top: 0; z-index: 2; background: #eceff1;
+    font-weight: 700; padding: 3px 6px; min-width: 54px;
+}
+
+#tabla-editor thead th.esquina { background: #37474f; color: #fff; left: 0; z-index: 3; }
+#tabla-editor tbody th { position: sticky; left: 0; z-index: 1; background: #eceff1; }
+
+#tabla-editor input {
+    width: 54px; height: 26px; border: none; background: transparent;
+    text-align: center; font-family: inherit; font-size: 13px; color: #263238;
+}
+
+#tabla-editor input:focus { outline: 2px solid #1565c0; outline-offset: -2px; }
+#tabla-editor input.nombre-nodo { font-weight: 700; }
+/* La diagonal son los arcos de un nodo a sí mismo, poco frecuentes. */
+#tabla-editor input.celda-diagonal { background: #fafafa; }
+
+#tabla-editor .celda-borrar { border: none; }
+
+#tabla-editor .celda-borrar button {
+    border: none; background: transparent; color: #78909c;
+    cursor: pointer; font-size: 15px; padding: 0 7px;
+}
+
+#tabla-editor .celda-borrar button:hover { color: #c62828; }
+
+.editor-pie { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.editor-pie .btn-primario { width: auto; margin-top: 0; }
+
+.editor-pie button:not(.btn-primario) {
+    padding: 7px 14px; border: 1px solid #cfd8dc; border-radius: 5px;
+    background: #fff; cursor: pointer; font-size: 13px; color: #263238;
+}

@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=22">
+<link rel="stylesheet" href="css/estilo.css?v=24">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -68,6 +68,13 @@
         <input id="in-seed" type="number">
         <button id="btn-generar" class="btn-primario">Generar instancia</button>
         <div id="txt-generar"></div>
+      </div>
+
+      <div class="panel">
+        <h4>Edición</h4>
+        <button id="btn-editar" class="btn-primario">Editar matriz de pesos</button>
+        <div class="txt-ayuda">El digrafo no cambia hasta pulsar Aplicar. Hasta 20 nodos.</div>
+        <div id="txt-editar" class="txt-estado"></div>
       </div>
 
       <div class="panel">
@@ -150,6 +157,26 @@
     </div>
   </div>
 
+  <dialog id="dlg-editor">
+    <h4>Matriz de pesos</h4>
+    <p class="txt-ayuda">Cada casilla es el peso del arco de la fila hacia la
+      columna. Una casilla vac&iacute;a significa que el arco no existe. La diagonal
+      tambi&eacute;n se edita: un arco de un nodo a s&iacute; mismo es v&aacute;lido. Los nombres de
+      los nodos se escriben en la primera columna.</p>
+    <div class="editor-barra">
+      <button id="btn-editor-agregar" type="button">Agregar nodo</button>
+      <span id="txt-editor-n" class="txt-ayuda"></span>
+    </div>
+    <div class="editor-envoltura">
+      <table id="tabla-editor"></table>
+    </div>
+    <div id="txt-editor"></div>
+    <div class="editor-pie">
+      <button id="btn-editor-cancelar" type="button">Cancelar</button>
+      <button id="btn-editor-aplicar" type="button" class="btn-primario">Aplicar</button>
+    </div>
+  </dialog>
+
   <footer class="pie">
     <a id="pie-credito" class="pie-credito" target="_blank" rel="noopener noreferrer"
        title="Ver la licencia MIT en el repositorio">© 2026 José A. Soto, Universidad de Chile</a>
@@ -170,9 +197,10 @@
 
 <!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
      cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=20"></script>
-<script src="js/algoritmos.js?v=23"></script>
-<script src="js/viz.js?v=22"></script>
-<script src="js/app.js?v=22"></script>
+<script src="js/grafo.js?v=24"></script>
+<script src="js/algoritmos.js?v=24"></script>
+<script src="js/viz.js?v=24"></script>
+<script src="js/editor.js?v=24"></script>
+<script src="js/app.js?v=24"></script>
 </body>
 </html>

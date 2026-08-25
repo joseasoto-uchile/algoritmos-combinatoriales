@@ -694,6 +694,26 @@ function iniciar() {
     new ResizeObserver(() => estado.cy.resize()).observe($('#cyto'));
     activarPlegado();
     activarLeyenda();
+    iniciarEditor();
+    $('#btn-editar').addEventListener('click', () => {
+        const salida = $('#txt-editar');
+        // La matriz tiene n² casillas: por encima del tope se edita el archivo.
+        if (estado.G.ids.length > EDITOR_NODOS_MAXIMO) {
+            salida.textContent = `La instancia tiene ${estado.G.ids.length} nodos y el `
+                + `editor admite ${EDITOR_NODOS_MAXIMO}. Genera una menor o edita el JSON.`;
+            salida.className = 'txt-error';
+            return;
+        }
+        salida.textContent = '';
+        salida.className = 'txt-estado';
+        pausar();
+        abrirEditor(estado.G, (G) => {
+            cargarGrafo(G);
+            salida.textContent = `Instancia editada: ${G.ids.length} nodos, `
+                + `${G.aristas.length} arcos.`;
+            salida.className = 'txt-estado';
+        });
+    });
     generarInstancia();
     // En DOMContentLoaded el navegador aun no ha fijado el alto definitivo de
     // #cyto, de modo que el primer encuadre se repite ya con la pagina medida.

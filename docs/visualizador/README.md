@@ -29,6 +29,24 @@ Dijkstra rechaza los pesos negativos con un mensaje en lugar de devolver un
 resultado incorrecto. Los caminos mínimos en un DAG rechazan un grafo que no
 sea dirigido y acíclico.
 
+## Edición de la instancia
+
+El botón Editar abre un diálogo con la matriz de pesos. La fila es el nodo de
+origen y la columna el de destino. Una casilla vacía significa que el arco no
+existe. La diagonal también se edita: un arco de un nodo a sí mismo es válido en
+este modelo, a diferencia de la aplicación de programación dinámica, donde la
+diagonal son los loops del preprocesamiento y vale 0.
+
+La edición ocurre sobre una copia. El digrafo en pantalla no cambia hasta pulsar
+Aplicar, y Cancelar descarta todo. Aplicar valida antes de reemplazar y no
+cierra el diálogo si hay un problema; se informa el primero que se encuentra,
+con la casilla o el nombre concreto.
+
+El editor admite hasta 20 nodos, menos que el generador, porque la matriz tiene
+n² casillas. Con una instancia mayor el botón no abre el diálogo y explica por
+qué. Los nodos que ya existían conservan su posición en el lienzo, incluso al
+renombrarlos; los nuevos se reparten en un círculo.
+
 ## Vectores D y Π
 
 Bajo el grafo hay una tabla con los vectores que mantiene el algoritmo, una

@@ -24,8 +24,8 @@ Incluye un editor de la instancia por matriz de largos. Ver `docs/dp/README.md`.
 BFS, DFS, Dijkstra, Bellman-Ford y caminos mínimos en un DAG por orden
 topológico, sobre digrafos. Cada algoritmo emite una traza de eventos que la
 interfaz reproduce paso a paso, con el pseudocódigo resaltado, puntos de
-interrupción por línea y los vectores D y Π bajo el grafo. Ver
-`docs/visualizador/README.md`.
+interrupción por línea y los vectores D y Π bajo el grafo. Incluye un editor de
+la instancia por matriz de pesos. Ver `docs/visualizador/README.md`.
 
 ## Arquitectura
 
