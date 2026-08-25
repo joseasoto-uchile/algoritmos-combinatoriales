@@ -340,3 +340,49 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     line-height: 18px;
     height: 24px;
 }
+
+/* --- Leyenda en la columna del pseudocódigo --- */
+/* La columna es angosta, de modo que los estados van uno por renglón en vez de
+   repartidos en varias columnas. */
+.columna-codigo .leyenda {
+    margin-top: 8px;
+    font-size: 10.5px;
+    padding: 5px 10px;
+}
+
+.columna-codigo .leyenda-contenido {
+    display: block;
+    margin-top: 4px;
+}
+
+.columna-codigo .leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.columna-codigo .leyenda-punto { width: 10px; height: 10px; border-width: 1.5px; }
+.columna-codigo .leyenda-detalle { overflow: hidden; text-overflow: ellipsis; }
+.columna-codigo .leyenda-etiqueta { white-space: normal; }
+
+/* El panel del pseudocódigo cede el alto sobrante a la leyenda. */
+.columna-codigo .panel-codigo { min-height: 0; overflow-y: auto; }
+
+/* --- Columna de controles plegable --- */
+/* Al plegarla, la columna y su divisor dejan de ocupar espacio y el lienzo del
+   grafo se queda con todo el ancho. */
+.fila-principal.controles-plegados > .columna-controles,
+.fila-principal.controles-plegados > .divisor[data-objetivo="controles"] {
+    display: none;
+}
+
+#btn-plegar { font-size: 12px; }
+
+/* En ventanas angostas el boton se queda con la flecha: la barra no tiene sitio
+   para la palabra y la pagina acabaria desplazandose en horizontal. */
+@media (max-width: 900px) {
+    .solo-ancho { display: none; }
+}

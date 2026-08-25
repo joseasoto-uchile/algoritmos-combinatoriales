@@ -450,6 +450,49 @@ function renderLeyenda() {
         + `</div>${muestras}`;
 }
 
+/* --- Columna de controles plegable ---------------------------------------- */
+
+/* El estado se guarda: quien trabaja con la columna plegada la encuentra igual
+ * al volver. */
+const CLAVE_PLEGADO = 'grafos:controles-plegados';
+
+function aplicarPlegado(plegados) {
+    document.querySelector('.fila-principal').classList.toggle('controles-plegados', plegados);
+    $('#flecha-plegar').textContent = plegados ? '⯈' : '⯇';
+    $('#btn-plegar').setAttribute('aria-expanded', String(!plegados));
+    // El ancho de #cyto cambia. Se reencuadra la vista en el cuadro siguiente,
+    // cuando el navegador ya midió la página, y sin volver a correr el layout,
+    // que movería los nodos.
+    if (estado.cy) {
+        requestAnimationFrame(() => {
+            estado.cy.resize();
+            estado.cy.fit(undefined, 30);
+        });
+    }
+}
+
+/* La leyenda recuerda si quedo abierta o cerrada. */
+const CLAVE_LEYENDA = 'grafos:leyenda-abierta';
+
+function activarLeyenda() {
+    const d = document.querySelector('.leyenda');
+    try { d.open = localStorage.getItem(CLAVE_LEYENDA) === '1'; } catch { /* deshabilitado */ }
+    d.addEventListener('toggle', () => {
+        try { localStorage.setItem(CLAVE_LEYENDA, d.open ? '1' : '0'); } catch { /* deshabilitado */ }
+    });
+}
+
+function activarPlegado() {
+    let plegados = false;
+    try { plegados = localStorage.getItem(CLAVE_PLEGADO) === '1'; } catch { /* deshabilitado */ }
+    aplicarPlegado(plegados);
+    $('#btn-plegar').addEventListener('click', () => {
+        const ahora = !document.querySelector('.fila-principal').classList.contains('controles-plegados');
+        aplicarPlegado(ahora);
+        try { localStorage.setItem(CLAVE_PLEGADO, ahora ? '1' : '0'); } catch { /* deshabilitado */ }
+    });
+}
+
 /* --- Columnas redimensionables ------------------------------------------- */
 function activarDivisores() {
     const LIMITES = { controles: [180, 560], codigo: [160, 640] };
@@ -623,6 +666,8 @@ function iniciar() {
     // El tamano de #cyto cambia con la ventana y con los divisores laterales.
     // Un observador cubre las dos vias.
     new ResizeObserver(() => estado.cy.resize()).observe($('#cyto'));
+    activarPlegado();
+    activarLeyenda();
     generarInstancia();
     // En DOMContentLoaded el navegador aun no ha fijado el alto definitivo de
     // #cyto, de modo que el primer encuadre se repite ya con la pagina medida.

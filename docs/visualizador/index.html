@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=17">
+<link rel="stylesheet" href="css/estilo.css?v=20">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -97,6 +97,9 @@
     <div class="columna-grafo">
       <div class="toolbar-grafo">
         <div class="fila-botones">
+          <button id="btn-plegar" title="Ocultar o mostrar la columna de controles"
+                  aria-expanded="true"><span id="flecha-plegar">⯇</span><span
+                  class="solo-ancho"> Controles</span></button>
           <button id="btn-reiniciar" title="Reiniciar">⏮</button>
           <button id="btn-anterior" title="Paso anterior">⏪</button>
           <button id="btn-play" title="Reproducir / Pausar">▶</button>
@@ -128,10 +131,6 @@
         </div>
       </section>
 
-      <details class="leyenda" open>
-        <summary>Leyenda</summary>
-        <div id="leyenda-contenido" class="leyenda-contenido"></div>
-      </details>
     </div>
 
     <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
@@ -143,6 +142,13 @@
         <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
         <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
       </div>
+
+      <!-- Plegada por omision: ocupa una linea hasta que se abre. El estado
+           queda guardado. -->
+      <details class="leyenda">
+        <summary>Leyenda de colores</summary>
+        <div id="leyenda-contenido" class="leyenda-contenido"></div>
+      </details>
     </div>
   </div>
 
@@ -166,9 +172,9 @@
 
 <!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
      cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=16"></script>
-<script src="js/algoritmos.js?v=16"></script>
-<script src="js/viz.js?v=16"></script>
-<script src="js/app.js?v=16"></script>
+<script src="js/grafo.js?v=17"></script>
+<script src="js/algoritmos.js?v=17"></script>
+<script src="js/viz.js?v=17"></script>
+<script src="js/app.js?v=19"></script>
 </body>
 </html>

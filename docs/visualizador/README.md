@@ -94,6 +94,18 @@ usar `innerHTML` con datos procedentes del archivo que carga el usuario: un
 nodo llamado `"><img src=x onerror=...>` inyecta marcado si se concatena. Los
 elementos `<option>` se construyen con `document.createElement` y `textContent`.
 
+## Espacio para el grafo
+
+El botón de la izquierda de la barra pliega la columna de controles. Con tres
+columnas el lienzo gana el ancho que ocupaban, unos 286 px; en ventanas
+estrechas, donde las columnas se apilan, quita ese bloque de la pila y acorta la
+página a la mitad. En ventanas estrechas el botón se queda con la flecha, porque
+con la palabra la barra no cabe y la página se desplazaría en horizontal.
+
+La leyenda de colores está bajo el pseudocódigo, en la columna de la derecha, y
+viene plegada: ocupa una línea hasta que se abre. Tanto su estado como el de la
+columna de controles quedan guardados en el navegador.
+
 ## Altura de la barra
 
 El texto del paso ocupa una línea de alto fija y no cambia con su contenido. La
