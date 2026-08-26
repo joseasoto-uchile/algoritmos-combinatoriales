@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=39">
+<link rel="stylesheet" href="css/estilo.css?v=41">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -104,9 +104,9 @@
     <div class="columna-grafo">
       <div class="toolbar-grafo">
         <div class="fila-botones">
-          <button id="btn-plegar" title="Ocultar o mostrar la columna de controles"
+          <button id="btn-plegar" title="Ocultar o mostrar la selección de instancia y algoritmo"
                   aria-expanded="true"><span id="flecha-plegar">⯇</span><span
-                  class="solo-ancho"> Controles</span></button>
+                  class="solo-ancho"> Selección instancia</span></button>
           <button id="btn-reiniciar" title="Reiniciar">⏮</button>
           <button id="btn-anterior" title="Paso anterior">⏪</button>
           <button id="btn-play" title="Reproducir / Pausar">▶</button>
@@ -130,16 +130,7 @@
 
     </div>
 
-    <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
-
-    <div class="columna-codigo">
-      <div class="panel panel-codigo">
-        <h4 id="pseudocodigo-titulo">Pseudocódigo</h4>
-        <div id="pseudocodigo-complejidad"></div>
-        <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
-        <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
-      </div>
-
+    <div class="columna-vectores">
       <!-- Solo aparece en los algoritmos que mantienen los vectores D y Pi. -->
       <section id="panel-vectores" class="panel-vectores" hidden>
         <div class="vectores-cabecera">
@@ -157,6 +148,18 @@
         </div>
         <div id="txt-seleccion" class="txt-ayuda">Pulsa un nodo de la tabla para ver los arcos que entran.</div>
       </section>
+    </div>
+
+    <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
+
+    <div class="columna-codigo">
+      <div class="panel panel-codigo">
+        <h4 id="pseudocodigo-titulo">Pseudocódigo</h4>
+        <div id="pseudocodigo-complejidad"></div>
+        <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
+        <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
+      </div>
+
 
       <!-- Plegada por omisión. El estado queda guardado entre visitas. -->
       <details class="leyenda">
@@ -210,6 +213,6 @@
 <script src="js/algoritmos.js?v=36"></script>
 <script src="js/viz.js?v=39"></script>
 <script src="js/editor.js?v=25"></script>
-<script src="js/app.js?v=39"></script>
+<script src="js/app.js?v=41"></script>
 </body>
 </html>

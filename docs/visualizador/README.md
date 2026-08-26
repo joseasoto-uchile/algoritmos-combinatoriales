@@ -58,11 +58,12 @@ indicando cuántos trae.
 
 ## Vectores D y Π
 
-En la columna del pseudocódigo hay una tabla con los vectores que mantiene el
-algoritmo, una fila por nodo y una columna por vector, reconstruida desde la
-traza en cada paso. En vertical ocupa poco ancho, que es lo escaso en esa
-columna, y crece hacia abajo, donde se desplaza por dentro. Cada algoritmo
-declara en el registro cuáles muestra:
+Los vectores tienen su propia columna, entre el grafo y el pseudocódigo. La
+tabla lleva una fila por nodo y una columna por vector, reconstruida desde la
+traza en cada paso: en vertical ocupa 160 px de ancho y crece hacia abajo, donde
+se desplaza por dentro. La columna tiene ancho fijo, porque sin él se ajustaría
+al texto más largo de la cabecera y le quitaría al grafo mucho más de lo que
+ocupa la tabla. Cada algoritmo declara en el registro cuáles muestra:
 
 | Algoritmo | Vectores | Nodos cerrados |
 |---|---|---|
@@ -216,18 +217,15 @@ elementos `<option>` se construyen con `document.createElement` y `textContent`.
 
 ## Espacio para el grafo
 
-El botón de la izquierda de la barra pliega la columna de controles. Con tres
-columnas el lienzo gana el ancho que ocupaban, unos 286 px; en ventanas
-estrechas, donde las columnas se apilan, quita ese bloque de la pila y acorta la
-página a la mitad. En ventanas estrechas el botón se queda con la flecha: con
-la palabra no cabe en la barra.
+El botón de la izquierda de la barra pliega la columna de selección de
+instancia y algoritmo. Reproducir la pliega también: durante la animación no
+hace falta y su ancho pasa al grafo, unos 286 px. El botón la devuelve. En
+ventanas estrechas se queda con la flecha, porque con la palabra no cabe en la
+barra; ahí las columnas se apilan y plegarla acorta la página a la mitad.
 
-La columna del pseudocódigo lleva debajo la tabla de vectores y, al final, la
-leyenda de colores, plegada. Tanto el estado de la leyenda como el de la columna
-de controles quedan guardados en el navegador.
-
-La tabla está ahí y no bajo el grafo porque el alto de la columna del grafo es
-lo que determina el tamaño del dibujo.
+La leyenda de colores va al final de la columna del pseudocódigo, plegada.
+Tanto su estado como el de la columna de selección quedan guardados en el
+navegador.
 
 ## Altura de la barra
 

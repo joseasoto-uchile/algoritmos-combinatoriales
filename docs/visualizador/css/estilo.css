@@ -393,7 +393,7 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 .columna-codigo .leyenda-detalle { overflow: hidden; text-overflow: ellipsis; }
 .columna-codigo .leyenda-etiqueta { white-space: normal; }
 
-/* El panel del pseudocódigo cede el alto sobrante a la leyenda. */
+/* El pseudocódigo cede el alto sobrante a la leyenda. */
 .columna-codigo .panel-codigo { min-height: 0; overflow-y: auto; }
 
 /* --- Columna de controles plegable --- */
@@ -533,3 +533,28 @@ body.redimensionando { cursor: col-resize; user-select: none; }
    camino vuelve sobre un nodo ya visitado. */
 #tabla-vectores .ciclo { background: #ffebee; box-shadow: inset 0 0 0 2px #b71c1c; }
 #tabla-vectores td.ciclo { color: #b71c1c; font-weight: 700; }
+
+/* --- Columna de los vectores --- */
+/* Entre el grafo y el pseudocódigo. La tabla es angosta y esta columna se
+   ajusta a su contenido, de modo que no le quita ancho al pseudocódigo ni lo
+   tapa. */
+.columna-vectores {
+    /* Ancho fijo: sin él la columna se ajusta al texto más largo de la cabecera
+       y le quita al grafo mucho más de lo que ocupa la tabla. */
+    flex: 0 0 250px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-left: 10px;
+}
+
+.columna-vectores .panel-vectores { margin-top: 0; }
+.columna-vectores .vectores-envoltura { max-height: none; flex: 1 1 auto; min-height: 0; }
+
+/* Con el panel oculto la columna no ocupa nada. */
+.columna-vectores:has(> [hidden]) { display: none; }
+
+@media (max-width: 900px) {
+    .columna-vectores { width: 100%; margin-left: 0; }
+}

@@ -362,7 +362,7 @@ function actualizarTextoSeleccion(v) {
     const salida = $('#txt-seleccion');
     const b = estado.seleccion;
     if (b === null) {
-        salida.textContent = 'Pulsa una columna para ver los arcos que entran a ese nodo.';
+        salida.textContent = 'Pulsa un nodo de la tabla para ver los arcos que entran.';
         return;
     }
     const entrantes = estado.G.aristas.filter((a) => a.destino === b);
@@ -519,6 +519,9 @@ function reproducir() {
     if (estado.paso >= estado.traza.length - 1) estado.paso = 0;
     estado.reproduciendo = true;
     $('#btn-play').textContent = '⏸';
+    // Al reproducir, la columna de la izquierda deja de hacer falta y su ancho
+    // pasa al grafo. El botón de la barra la devuelve.
+    aplicarPlegado(true);
     arrancarTemporizador();
 }
 
@@ -646,7 +649,9 @@ function renderLeyenda() {
 const CLAVE_PLEGADO = 'grafos:controles-plegados';
 
 function aplicarPlegado(plegados) {
-    document.querySelector('.fila-principal').classList.toggle('controles-plegados', plegados);
+    const fila = document.querySelector('.fila-principal');
+    if (fila.classList.contains('controles-plegados') === plegados) return;
+    fila.classList.toggle('controles-plegados', plegados);
     $('#flecha-plegar').textContent = plegados ? '⯈' : '⯇';
     $('#btn-plegar').setAttribute('aria-expanded', String(!plegados));
     // El ancho de #cyto cambia. Se reencuadra la vista en el cuadro siguiente,
