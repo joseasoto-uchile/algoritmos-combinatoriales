@@ -292,7 +292,19 @@ function pintarVectores() {
             + `${info.nombreCerrados} = {${lista.join(', ')}}`;
     }
     $('#txt-vectores').textContent = texto;
+    actualizarTextoEstructura(info, paso);
     actualizarTextoSeleccion(v);
+}
+
+/* Cola de BFS o pila de DFS, con el elemento que sale a continuación marcado. */
+function actualizarTextoEstructura(info, paso) {
+    const salida = $('#txt-estructura');
+    const e = info.estructura;
+    if (!e) { salida.textContent = ''; return; }
+    const lista = calcularEstructura(estado.traza, paso, e.tipo);
+    if (!lista.length) { salida.textContent = `${e.nombre} vacía.`; return; }
+    salida.textContent = `${e.nombre}:  ${lista.join(', ')}`
+        + `   (${e.primero}: ${lista[0]})`;
 }
 
 /* Camino reconstruido y su largo, el ciclo encontrado, o el motivo de que no

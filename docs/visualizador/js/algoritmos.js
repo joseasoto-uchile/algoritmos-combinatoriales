@@ -273,6 +273,7 @@ const ALGORITMOS = {
         id: 'bfs', nombre: 'BFS (recorrido en anchura)', funcion: bfsTraza,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(n + m)',
         vectores: ['D', 'Π'], nombreCerrados: 'Finalizados', arcosNoSeRevisitan: true,
+        estructura: { nombre: 'Cola', tipo: 'fifo', primero: 'sale' },
         descripcion: 'Recorre el digrafo en anchura desde el nodo origen: explora primero todos los vecinos directos antes de avanzar al siguiente nivel, usando una cola FIFO.\n\n'
             + 'No considera el peso de los arcos. La arborescencia resultante es la de menor número de arcos.',
         pseudocodigo: [
@@ -294,6 +295,7 @@ const ALGORITMOS = {
         id: 'dfs', nombre: 'DFS (recorrido en profundidad)', funcion: dfsTraza,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(n + m)',
         vectores: ['Π'], nombreCerrados: 'Finalizados', arcosNoSeRevisitan: true,
+        estructura: { nombre: 'Pila', tipo: 'lifo', primero: 'cima' },
         descripcion: 'Recorre el digrafo en profundidad desde el nodo origen: avanza por una rama hasta el final antes de retroceder y probar otra.\n\n'
             + 'No calcula caminos mínimos; construye una arborescencia de descubrimiento '
             + 'con tiempos de entrada y salida por nodo.',

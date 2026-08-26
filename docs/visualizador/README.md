@@ -87,6 +87,26 @@ alto fijo. El alto del panel determina el que le queda al lienzo del grafo, y el
 texto de la cabecera crece con el número de nodos cerrados. El recuento va
 delante de la lista: la línea se recorta por el final.
 
+## Cola y pila
+
+BFS mantiene una cola y DFS una pila. El panel las muestra en una línea sobre la
+tabla, con el elemento que sale a continuación indicado aparte.
+
+Las dos se reconstruyen desde la traza. Los dos algoritmos usan los mismos
+eventos con significados distintos, de modo que el registro declara cuál de las
+dos reglas se aplica:
+
+| | Entra | Sale |
+|---|---|---|
+| Cola de BFS | `visitar_nodo` | `procesar_nodo` |
+| Pila de DFS | `visitar_nodo` | `nodo_finalizado` |
+
+En DFS la pila es la de la recursión: `visitar(u)` apila u y su fin lo desapila,
+de modo que el contenido es el camino desde el origen hasta el nodo en curso.
+
+La línea ocupa su alto también en los tres algoritmos que no mantienen ninguna
+de las dos estructuras.
+
 ## Camino a un destino
 
 El desplegable de la cabecera del panel elige un nodo destino. La aplicación

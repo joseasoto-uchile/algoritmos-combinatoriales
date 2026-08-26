@@ -347,3 +347,26 @@ function arcosDelCiclo(ciclo) {
     arcos.push([ciclo[0], ciclo[ciclo.length - 1]]);
     return arcos;
 }
+
+/* Contenido de la cola de BFS o de la pila de DFS en `pasoActual`.
+ *
+ * Los dos algoritmos usan los mismos eventos con significados distintos, de
+ * modo que el registro declara cuál de las dos reglas se aplica:
+ *
+ *   fifo  visitar_nodo encola;      procesar_nodo saca el primero
+ *   lifo  visitar_nodo apila;       nodo_finalizado desapila
+ *
+ * Devuelve null si el algoritmo no mantiene ninguna de las dos. El primer
+ * elemento de la lista es el que sale a continuación. */
+function calcularEstructura(traza, pasoActual, tipo) {
+    if (!traza || !traza.length || !tipo) return null;
+    const cola = [];
+    const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
+    for (let i = 0; i <= tope; i++) {
+        const ev = traza[i];
+        if (ev.tipo === 'visitar_nodo') cola.push(ev.nodo);
+        else if (tipo === 'fifo' && ev.tipo === 'procesar_nodo') cola.shift();
+        else if (tipo === 'lifo' && ev.tipo === 'nodo_finalizado') cola.pop();
+    }
+    return tipo === 'fifo' ? cola : cola.slice().reverse();
+}

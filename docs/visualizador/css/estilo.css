@@ -487,6 +487,17 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 .etiqueta-destino { flex: 0 0 auto; white-space: nowrap; color: #607d8b; font-size: 11px; }
 .etiqueta-destino select { font-size: 11px; padding: 0 2px; }
 
+/* Cola de BFS o pila de DFS. Ocupa su línea también cuando está vacío. */
+#txt-estructura {
+    margin-bottom: 5px;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    font-family: Consolas, "Courier New", monospace;
+}
+
 #txt-seleccion {
     margin-top: 5px;
     line-height: 16px;
