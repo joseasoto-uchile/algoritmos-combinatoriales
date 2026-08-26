@@ -27,16 +27,16 @@ function bfsTraza(G, origen) {
         const u = cola.shift();
         tb.emitir('procesar_nodo', { nodo: u, linea: [5, 6] });
         for (const { v } of G.vecinos(u)) {
-            tb.emitir('explorar_arista', { u, v, linea: [7, 8] });
+            tb.emitir('explorar_arco', { u, v, linea: [7, 8] });
             if (!visitado.has(v)) {
                 visitado.add(v);
                 padre[v] = u;
                 distancia[v] = distancia[u] + 1;
                 cola.push(v);
                 tb.emitir('visitar_nodo', { nodo: v, linea: [9, 10, 11], dist: distancia[v], padre: u });
-                tb.emitir('arista_solucion', { u, v, linea: 10 });
+                tb.emitir('arco_solucion', { u, v, linea: 10 });
             } else {
-                tb.emitir('descartar_arista', { u, v, linea: 8 });
+                tb.emitir('descartar_arco', { u, v, linea: 8 });
             }
         }
         tb.emitir('nodo_finalizado', { nodo: u, linea: 12 });
@@ -63,13 +63,13 @@ function dfsTraza(G, origen) {
         tb.emitir('visitar_nodo', { nodo: u, linea: [4, 5], padre: padre[u] ?? null });
         tb.emitir('procesar_nodo', { nodo: u, linea: [4, 5] });
         for (const { v } of G.vecinos(u)) {
-            tb.emitir('explorar_arista', { u, v, linea: [6, 7] });
+            tb.emitir('explorar_arco', { u, v, linea: [6, 7] });
             if (!visitado.has(v)) {
                 padre[v] = u;
-                tb.emitir('arista_solucion', { u, v, linea: [8, 9] });
+                tb.emitir('arco_solucion', { u, v, linea: [8, 9] });
                 visitar(v);
             } else {
-                tb.emitir('descartar_arista', { u, v, linea: 7 });
+                tb.emitir('descartar_arco', { u, v, linea: 7 });
             }
         }
         finalizacion[u] = ++reloj;
@@ -109,7 +109,7 @@ function dijkstraTraza(G, origen) {
 
     D[origen] = 0;
     /* Map y no un objeto: los nodos se insertan a medida que se relajan, y las
-     * aristas de la solucion se emiten en ese orden. Un objeto con claves
+     * arcos de la solucion se emiten en ese orden. Un objeto con claves
      * numericas las recorre en orden ascendente por especificacion del
      * lenguaje, no en orden de insercion. */
     const padre = new Map([[origen, null]]);
@@ -125,7 +125,7 @@ function dijkstraTraza(G, origen) {
             break;
         }
         for (const { v: b, peso } of G.vecinos(a)) {
-            tb.emitir('explorar_arista', { u: a, v: b, peso, linea: [7, 8] });
+            tb.emitir('explorar_arco', { u: a, v: b, peso, linea: [7, 8] });
             const candidato = D[a] + peso;
             if (candidato < D[b]) {
                 D[b] = candidato;
@@ -134,7 +134,7 @@ function dijkstraTraza(G, origen) {
                 tb.emitir('relajar', { u: a, v: b, nueva_dist: candidato, linea: [9, 10] });
                 if (!S.has(b)) tb.emitir('visitar_nodo', { nodo: b, linea: 9, dist: candidato });
             } else {
-                tb.emitir('descartar_arista', { u: a, v: b, linea: 8 });
+                tb.emitir('descartar_arco', { u: a, v: b, linea: 8 });
             }
         }
         S.add(a);
@@ -142,7 +142,7 @@ function dijkstraTraza(G, origen) {
     }
 
     for (const [v, p] of padre) {
-        if (p !== null) tb.emitir('arista_solucion', { u: p, v, linea: 12 });
+        if (p !== null) tb.emitir('arco_solucion', { u: p, v, linea: 12 });
     }
     const padresObj = Object.fromEntries(padre);
     tb.emitir('fin', { distancias: D, padres: padresObj, linea: 12 });
@@ -166,13 +166,13 @@ function bellmanFordTraza(G, origen) {
     for (let i = 0; i < totalIteraciones; i++) {
         // Marca el comienzo de cada pasada. Es el único evento que distingue
         // una pasada de otra, ya que todas repiten los mismos eventos sobre
-        // las mismas aristas. La interfaz lo usa para mostrar la iteración.
+        // los mismos arcos. La interfaz lo usa para mostrar la iteración.
         tb.emitir('inicio_iteracion', {
             iteracion: i + 1, total_iteraciones: totalIteraciones, linea: 4,
         });
         let hubo = false;
         for (const [u, v, peso] of aristas) {
-            tb.emitir('explorar_arista', { u, v, iteracion: i + 1, linea: [5, 6] });
+            tb.emitir('explorar_arco', { u, v, iteracion: i + 1, linea: [5, 6] });
             if (distancia[u] !== Infinity && distancia[u] + peso < distancia[v]) {
                 distancia[v] = distancia[u] + peso;
                 padre[v] = u;
@@ -180,7 +180,7 @@ function bellmanFordTraza(G, origen) {
                 tb.emitir('relajar', { u, v, nueva_dist: distancia[v], linea: 7 });
                 tb.emitir('visitar_nodo', { nodo: v, linea: 7, dist: distancia[v], padre: u });
             } else {
-                tb.emitir('descartar_arista', { u, v, linea: 6 });
+                tb.emitir('descartar_arco', { u, v, linea: 6 });
             }
         }
         if (!hubo) {
@@ -201,7 +201,7 @@ function bellmanFordTraza(G, origen) {
         });
     }
 
-    // Pasada adicional: toda arista que aún se puede relajar indica un ciclo de
+    // Pasada adicional: todo arco que aún se puede relajar indica un ciclo de
     // peso negativo. La marca se propaga hacia adelante desde esos extremos,
     // porque el ciclo completo y los nodos alcanzables desde él tampoco tienen
     // distancia mínima definida.
@@ -223,7 +223,7 @@ function bellmanFordTraza(G, origen) {
     }
 
     for (const [v, p] of Object.entries(padre)) {
-        if (p !== null && !cicloNegativo.has(v)) tb.emitir('arista_solucion', { u: p, v, linea: 11 });
+        if (p !== null && !cicloNegativo.has(v)) tb.emitir('arco_solucion', { u: p, v, linea: 11 });
     }
     tb.emitir('fin', { distancias: distancia, padres: padre, ciclo_negativo: [...cicloNegativo], linea: 11 });
     return [{ distancias: distancia, padres: padre, ciclo_negativo: cicloNegativo }, tb.traza];
@@ -248,20 +248,20 @@ function dagCaminoMinimoTraza(G, origen) {
         if (distancia[u] === Infinity) continue;
         tb.emitir('procesar_nodo', { nodo: u, linea: [5, 6] });
         for (const { v, peso } of G.vecinos(u)) {
-            tb.emitir('explorar_arista', { u, v, peso, linea: [7, 8] });
+            tb.emitir('explorar_arco', { u, v, peso, linea: [7, 8] });
             if (distancia[u] + peso < distancia[v]) {
                 distancia[v] = distancia[u] + peso;
                 padre[v] = u;
                 tb.emitir('relajar', { u, v, nueva_dist: distancia[v], linea: 9 });
                 tb.emitir('visitar_nodo', { nodo: v, linea: 9, dist: distancia[v] });
             } else {
-                tb.emitir('descartar_arista', { u, v, linea: 8 });
+                tb.emitir('descartar_arco', { u, v, linea: 8 });
             }
         }
         tb.emitir('nodo_finalizado', { nodo: u, linea: 5 });
     }
     for (const [v, p] of Object.entries(padre)) {
-        if (p !== null) tb.emitir('arista_solucion', { u: p, v, linea: 10 });
+        if (p !== null) tb.emitir('arco_solucion', { u: p, v, linea: 10 });
     }
     tb.emitir('fin', { distancias: distancia, padres: padre, orden_topologico: orden, linea: 10 });
     return [{ distancias: distancia, padres: padre, orden_topologico: orden }, tb.traza];
@@ -272,7 +272,7 @@ const ALGORITMOS = {
     bfs: {
         id: 'bfs', nombre: 'BFS (recorrido en anchura)', funcion: bfsTraza,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(n + m)',
-        vectores: ['D', 'Π'], nombreCerrados: 'Finalizados', aristasNoSeRevisitan: true,
+        vectores: ['D', 'Π'], nombreCerrados: 'Finalizados', arcosNoSeRevisitan: true,
         descripcion: 'Recorre el digrafo en anchura desde el nodo origen: explora primero todos los vecinos directos antes de avanzar al siguiente nivel, usando una cola FIFO.\n\n'
             + 'No considera el peso de los arcos. La arborescencia resultante es la de menor número de arcos.',
         pseudocodigo: [
@@ -293,9 +293,10 @@ const ALGORITMOS = {
     dfs: {
         id: 'dfs', nombre: 'DFS (recorrido en profundidad)', funcion: dfsTraza,
         permiteNegativos: true, requiereDag: false, complejidad: 'O(n + m)',
-        vectores: ['Π'], nombreCerrados: 'Finalizados', aristasNoSeRevisitan: true,
+        vectores: ['Π'], nombreCerrados: 'Finalizados', arcosNoSeRevisitan: true,
         descripcion: 'Recorre el digrafo en profundidad desde el nodo origen: avanza por una rama hasta el final antes de retroceder y probar otra.\n\n'
-            + 'No calcula caminos mínimos; construye un árbol de descubrimiento con tiempos de entrada y salida por nodo.',
+            + 'No calcula caminos mínimos; construye una arborescencia de descubrimiento '
+            + 'con tiempos de entrada y salida por nodo.',
         pseudocodigo: [
             'función DFS(G, s):',
             '  Π[v] ← ⊥ para todo v ∈ V;  visitados ← ∅',
@@ -312,7 +313,7 @@ const ALGORITMOS = {
     dijkstra: {
         id: 'dijkstra', nombre: 'Dijkstra (camino mínimo)', funcion: dijkstraTraza,
         permiteNegativos: false, requiereDag: false, complejidad: 'O(n² + m)',
-        vectores: ['D', 'Π'], nombreCerrados: 'S', aristasNoSeRevisitan: true,
+        vectores: ['D', 'Π'], nombreCerrados: 'S', arcosNoSeRevisitan: true,
         descripcion: 'Calcula el camino de menor peso acumulado desde el origen. En cada vuelta elige el nodo de V∖S con D mínimo y relaja sus arcos salientes. El nodo elegido entra en S y no se vuelve a tocar.\n\n'
             + 'La elección del mínimo es por barrido sobre V∖S, sin usar colas de prioridad (implementación directa).\n\n'
             + 'Requiere pesos no negativos. Con pesos negativos el resultado puede ser incorrecto, por lo que no se ofrece en esos grafos.',
@@ -354,7 +355,7 @@ const ALGORITMOS = {
     dag_sp: {
         id: 'dag_sp', nombre: 'Camino mínimo en DAG (orden topológico)', funcion: dagCaminoMinimoTraza,
         permiteNegativos: true, requiereDag: true, complejidad: 'O(n + m)',
-        vectores: ['D', 'Π'], nombreCerrados: 'Procesados', aristasNoSeRevisitan: true,
+        vectores: ['D', 'Π'], nombreCerrados: 'Procesados', arcosNoSeRevisitan: true,
         descripcion: 'Calcula caminos mínimos en un digrafo acíclico en dos fases. Primero obtiene un orden topológico con el algoritmo de Kahn, y después relaja los arcos siguiendo ese orden, una sola vez.\n\n'
             + 'Al no haber ciclos no es necesario repetir las relajaciones como en Bellman-Ford. Admite pesos negativos.',
         pseudocodigo: [

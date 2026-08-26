@@ -29,7 +29,7 @@ const ESTADOS_LEYENDA = [
     ['Activo', 'Lo que ocurre en este paso', COLORES.activo, COLORES.activo_borde],
     ['Arco sin procesar', 'Todavía no examinado', COLORES.arco, COLORES.arco],
     ['Arco procesado', 'Ya examinado, no se vuelve a mirar', COLORES.arco_procesado, COLORES.arco_procesado],
-    ['Solución', 'Parte del árbol de caminos', COLORES.solucion, COLORES.solucion_borde],
+    ['Solución', 'Parte de la arborescencia de caminos', COLORES.solucion, COLORES.solucion_borde],
     ['Camino al destino', 'Reconstruido siguiendo Π', COLORES.camino, COLORES.camino],
     ['Arco entrante', 'Compite por la distancia del nodo elegido', COLORES.entrante, COLORES.entrante],
     ['Ciclo de Π', 'Testigo del peso negativo', COLORES.ciclo_negativo_borde, COLORES.ciclo_negativo_borde],
@@ -94,7 +94,7 @@ const ESTILOS = [
 ];
 
 /* Identificador de arco, réplica del que genera grafo.js. */
-function idArista(u, v) {
+function idArco(u, v) {
     return `${u}__${v}`;
 }
 
@@ -108,7 +108,7 @@ function grafoAElementos(G, incluirPosiciones = true) {
     for (const { origen, destino, peso } of G.aristas) {
         elementos.push({
             data: {
-                id: idArista(origen, destino),
+                id: idArco(origen, destino),
                 source: origen, target: destino,
                 label: peso === undefined || peso === null ? '' : String(peso),
             },
@@ -122,48 +122,48 @@ const EVENTOS_PERSISTENTES_NODO = {
     nodo_finalizado: 'finalizado',
     ciclo_negativo: 'ciclo_negativo',
 };
-const EVENTOS_TRANSITORIOS_ARISTA = new Set(['explorar_arista', 'relajar', 'descartar_arista']);
+const EVENTOS_TRANSITORIOS_ARCO = new Set(['explorar_arco', 'relajar', 'descartar_arco']);
 
-/* En los algoritmos que no vuelven sobre una arista, la que ya se examinó
- * queda marcada para distinguirla de las que aún faltan. Bellman-Ford recorre
- * todas las aristas en cada pasada, de modo que ahí no se aplica. */
-function calcularEstado(traza, pasoActual, aristasNoSeRevisitan = false) {
-    const clasesNodo = new Map(), clasesArista = new Map();
+/* En los algoritmos que no vuelven sobre un arco, el que ya se examinó queda
+ * marcado para distinguirlo de los que aún faltan. Bellman-Ford recorre todos
+ * los arcos en cada pasada, de modo que ahí no se aplica. */
+function calcularEstado(traza, pasoActual, arcosNoSeRevisitan = false) {
+    const clasesNodo = new Map(), clasesArco = new Map();
     const agregar = (m, k, c) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(c); };
     const tope = traza.length ? Math.max(0, Math.min(pasoActual, traza.length - 1)) : -1;
 
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (aristasNoSeRevisitan && EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) {
-            agregar(clasesArista, idArista(ev.u, ev.v), 'procesada');
+        if (arcosNoSeRevisitan && EVENTOS_TRANSITORIOS_ARCO.has(ev.tipo)) {
+            agregar(clasesArco, idArco(ev.u, ev.v), 'procesada');
         }
         if (EVENTOS_PERSISTENTES_NODO[ev.tipo]) {
             agregar(clasesNodo, ev.nodo, EVENTOS_PERSISTENTES_NODO[ev.tipo]);
-        } else if (ev.tipo === 'arista_solucion') {
-            agregar(clasesArista, idArista(ev.u, ev.v), 'solucion');
+        } else if (ev.tipo === 'arco_solucion') {
+            agregar(clasesArco, idArco(ev.u, ev.v), 'solucion');
             agregar(clasesNodo, ev.v, 'solucion');
         }
     }
     if (tope >= 0 && tope < traza.length) {
         const ev = traza[tope];
-        if (EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) {
-            agregar(clasesArista, idArista(ev.u, ev.v), 'activo');
+        if (EVENTOS_TRANSITORIOS_ARCO.has(ev.tipo)) {
+            agregar(clasesArco, idArco(ev.u, ev.v), 'activo');
             agregar(clasesNodo, ev.u, 'activo');
             agregar(clasesNodo, ev.v, 'activo');
         } else if (ev.tipo === 'procesar_nodo') {
             agregar(clasesNodo, ev.nodo, 'activo');
         }
     }
-    return [clasesNodo, clasesArista];
+    return [clasesNodo, clasesArco];
 }
 
-function aplicarClases(elementos, clasesNodo, clasesArista, origen = null) {
+function aplicarClases(elementos, clasesNodo, clasesArco, origen = null) {
     return elementos.map((el) => {
         const nuevo = { ...el, data: { ...el.data } };
         // Une las clases que ya trae el elemento con las de estado.
         const clases = new Set((el.classes || '').split(' ').filter(Boolean));
         if ('source' in nuevo.data) {
-            (clasesArista.get(nuevo.data.id) || []).forEach((c) => clases.add(c));
+            (clasesArco.get(nuevo.data.id) || []).forEach((c) => clases.add(c));
         } else {
             (clasesNodo.get(nuevo.data.id) || []).forEach((c) => clases.add(c));
             if (origen !== null && nuevo.data.id === String(origen)) clases.add('origen');
@@ -301,7 +301,7 @@ function calcularVectores(traza, pasoActual, ids) {
     }
     const ev = traza[tope];
     if (ev.tipo === 'procesar_nodo') activo = ev.nodo;
-    else if (EVENTOS_TRANSITORIOS_ARISTA.has(ev.tipo)) { activo = ev.u; destino = ev.v; }
+    else if (EVENTOS_TRANSITORIOS_ARCO.has(ev.tipo)) { activo = ev.u; destino = ev.v; }
     else if (ev.tipo === 'nodo_finalizado' || ev.tipo === 'interrumpir'
              || ev.tipo === 'visitar_nodo') activo = ev.nodo;
 

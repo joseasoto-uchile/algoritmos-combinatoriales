@@ -14,8 +14,8 @@ en lugar de desaparecer de la lista.
 ## Algoritmos
 
 Cada uno emite una traza de eventos con el mismo vocabulario: `visitar_nodo`,
-`procesar_nodo`, `explorar_arista`, `relajar`, `descartar_arista`,
-`arista_solucion`, `nodo_finalizado` y `fin`. El campo `linea` indica la línea
+`procesar_nodo`, `explorar_arco`, `relajar`, `descartar_arco`,
+`arco_solucion`, `nodo_finalizado` y `fin`. El campo `linea` indica la línea
 del pseudocódigo que se resalta en cada paso, o la lista de líneas si el paso
 ejecuta varias. Todos los eventos lo llevan: un paso sin línea deja el
 pseudocódigo apagado.
@@ -70,8 +70,8 @@ declara en el registro cuáles muestra:
 | Bellman-Ford | D, Π | no aplica |
 | DAG por orden topológico | D, Π | Procesados |
 
-DFS no calcula distancias: solo el padre de cada nodo en el árbol de
-profundidad. Bellman-Ford no cierra nodos, porque revisa todas las aristas en
+DFS no calcula distancias: solo el padre de cada nodo en la arborescencia de
+profundidad. Bellman-Ford no cierra nodos, porque revisa todos los arcos en
 cada pasada.
 
 Un nodo alcanzable desde un ciclo de peso negativo no tiene distancia mínima
@@ -126,11 +126,12 @@ la marca.
 
 Un arco sin examinar va en gris oscuro y uno ya examinado en celeste. La marca
 se aplica en los algoritmos que no vuelven sobre un arco, los que declaran
-`aristasNoSeRevisitan` en el registro. Bellman-Ford recorre todos los arcos en
+`arcosNoSeRevisitan` en el registro. Bellman-Ford recorre todos los arcos en
 cada pasada y no marca ninguno.
 
-Sobre esa base van, de menos a más específico, el árbol de caminos en verde, el
-paso actual en naranjo, el camino al destino en morado y el ciclo de Π en rojo.
+Sobre esa base van, de menos a más específico, la arborescencia de caminos en
+verde, el paso actual en naranjo, el camino al destino en morado y el ciclo de Π
+en rojo.
 
 ## Dijkstra
 

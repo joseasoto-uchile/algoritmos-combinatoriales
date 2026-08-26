@@ -35,10 +35,10 @@ function generadorAleatorio(semilla) {
     };
 }
 
-/* Réplica del identificador que viz.js genera para cada arista. Se duplica
+/* Réplica del identificador que viz.js genera para cada arco. Se duplica
  * porque el modelo no depende de la capa de dibujo. Un cambio de formato en
  * viz.js requiere actualizar también esta función. */
-function idAristaInterno(u, v) {
+function idArcoInterno(u, v) {
     return `${u}__${v}`;
 }
 
@@ -102,43 +102,43 @@ function validarDatosGrafo(datos) {
     }
 
     const vistas = new Set();
-    const idsArista = new Set();
+    const idsArco = new Set();
     for (const arista of datos.aristas) {
         if (arista === null || typeof arista !== 'object'
             || !('origen' in arista) || !('destino' in arista)) {
-            throw new Error('JSON inválido: hay una arista sin "origen" o sin "destino".');
+            throw new Error('JSON inválido: hay un arco sin "origen" o sin "destino".');
         }
         const u = String(arista.origen), v = String(arista.destino);
         for (const extremo of [u, v]) {
             if (!ids.has(extremo)) {
-                throw new Error(`JSON inválido: la arista ${u} → ${v} apunta al nodo "${extremo}", que no está declarado.`);
+                throw new Error(`JSON inválido: el arco ${u} → ${v} apunta al nodo "${extremo}", que no está declarado.`);
             }
         }
         const peso = arista.weight ?? arista.peso;
         if (peso === undefined || peso === null) {
-            throw new Error(`JSON inválido: la arista ${u} → ${v} no tiene peso.`);
+            throw new Error(`JSON inválido: el arco ${u} → ${v} no tiene peso.`);
         }
         if (typeof peso !== 'number') {
-            throw new Error(`JSON inválido: la arista ${u} → ${v} tiene un peso no numérico ("${peso}").`);
+            throw new Error(`JSON inválido: el arco ${u} → ${v} tiene un peso no numérico ("${peso}").`);
         }
         if (!Number.isFinite(peso)) {
-            throw new Error(`JSON inválido: la arista ${u} → ${v} tiene un peso no finito.`);
+            throw new Error(`JSON inválido: el arco ${u} → ${v} tiene un peso no finito.`);
         }
 
         const clave = `${u}>${v}`;
         if (vistas.has(clave)) {
-            throw new Error(`JSON inválido: la arista ${u} → ${v} aparece repetida.`);
+            throw new Error(`JSON inválido: el arco ${u} → ${v} aparece repetido.`);
         }
         vistas.add(clave);
-        idsArista.add(idAristaInterno(u, v));
+        idsArco.add(idArcoInterno(u, v));
     }
 
-    // Cytoscape exige identificadores únicos entre nodos y aristas. Un nodo
-    // llamado "0__1" coincide con el identificador de la arista 0 -> 1, y uno
+    // Cytoscape exige identificadores únicos entre nodos y arcos. Un nodo
+    // llamado "0__1" coincide con el identificador del arco 0 -> 1, y uno
     // de los dos elementos no se dibuja.
-    const choque = [...ids].filter((n) => idsArista.has(n)).sort();
+    const choque = [...ids].filter((n) => idsArco.has(n)).sort();
     if (choque.length) {
-        throw new Error(`JSON inválido: el nodo "${choque[0]}" choca con el identificador interno de una arista. Renómbralo.`);
+        throw new Error(`JSON inválido: el nodo "${choque[0]}" choca con el identificador interno de un arco. Renómbralo.`);
     }
 }
 
@@ -410,7 +410,7 @@ function ejCompleto(n = 6) {
 }
 
 const EJEMPLOS = {
-    arbol: { nombre: 'Árbol binario (15 nodos)', constructor: ejArbolBinario,
+    arbol: { nombre: 'Arborescencia binaria (15 nodos)', constructor: ejArbolBinario,
         descripcion: 'Arcos de padre a hijo. Es acíclico, de modo que admite el camino '
             + 'mínimo por orden topológico.' },
     ciclo: { nombre: 'Ciclo (8 nodos)', constructor: ejCiclo,

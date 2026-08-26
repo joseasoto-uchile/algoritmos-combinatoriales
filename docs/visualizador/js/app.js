@@ -83,7 +83,7 @@ function elementosActuales() {
     if (estado.traza) {
         const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
         const info = ALGORITMOS[estado.algEjecutado] || {};
-        const [cn, ca] = calcularEstado(estado.traza, paso, Boolean(info.aristasNoSeRevisitan));
+        const [cn, ca] = calcularEstado(estado.traza, paso, Boolean(info.arcosNoSeRevisitan));
         marcarCaminoYSeleccion(cn, ca, paso);
         elementos = aplicarClases(elementos, cn, ca, $('#dd-origen').value);
         const d = calcularDistancias(estado.traza, paso);
@@ -109,7 +109,7 @@ function vectoresDelPaso(paso) {
 /* Anade al dibujo el camino hasta el destino elegido y los arcos que entran al
  * nodo seleccionado. Se calculan aparte de la traza: dependen de lo que el
  * usuario elige, no del paso. */
-function marcarCaminoYSeleccion(clasesNodo, clasesArista, paso) {
+function marcarCaminoYSeleccion(clasesNodo, clasesArco, paso) {
     const agregar = (m, k, c) => { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(c); };
     const v = vectoresDelPaso(paso);
     if (v === null) return;
@@ -119,12 +119,12 @@ function marcarCaminoYSeleccion(clasesNodo, clasesArista, paso) {
         if (camino) {
             camino.forEach((n) => agregar(clasesNodo, n, 'camino'));
             for (let j = 0; j + 1 < camino.length; j++) {
-                agregar(clasesArista, idArista(camino[j], camino[j + 1]), 'camino');
+                agregar(clasesArco, idArco(camino[j], camino[j + 1]), 'camino');
             }
         } else if (ciclo) {
             ciclo.forEach((n) => agregar(clasesNodo, n, 'ciclo'));
             for (const [u, w] of arcosDelCiclo(ciclo)) {
-                agregar(clasesArista, idArista(u, w), 'ciclo');
+                agregar(clasesArco, idArco(u, w), 'ciclo');
             }
         }
     }
@@ -133,7 +133,7 @@ function marcarCaminoYSeleccion(clasesNodo, clasesArista, paso) {
         agregar(clasesNodo, estado.seleccion, 'entrante');
         for (const a of estado.G.aristas) {
             if (a.destino !== estado.seleccion) continue;
-            agregar(clasesArista, idArista(a.origen, a.destino), 'entrante');
+            agregar(clasesArco, idArco(a.origen, a.destino), 'entrante');
             agregar(clasesNodo, a.origen, 'entrante');
         }
     }
