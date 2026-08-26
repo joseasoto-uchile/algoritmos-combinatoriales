@@ -188,8 +188,9 @@ function pintarVectores() {
     const cuales = info.vectores || [];
     const mostrar = cuales.length > 0 && estado.traza
         && $('#dd-algoritmo').value === estado.algEjecutado;
-    // Aparecer o desaparecer cambia el alto de #cyto. Se reencuadra la vista en
-    // el cuadro siguiente, sin volver a correr el layout, que movería los nodos.
+    // Aparecer o desaparecer cambia el alto de #cyto. La vista se reencuadra en
+    // el cuadro siguiente. Se usa fit y no el layout: fit ajusta el encuadre y
+    // deja los nodos donde están.
     const cambia = panel.hidden === mostrar;
     panel.hidden = !mostrar;
     if (cambia && estado.cy) {
@@ -273,8 +274,8 @@ function pintarVectores() {
     }
     $('#tabla-vectores').replaceChildren(thead, tbody);
 
-    // Un destino elegido es una pregunta concreta y su respuesta manda sobre
-    // el estado general del conjunto de nodos cerrados.
+    // Con un destino elegido el texto da su camino; sin él, el estado del
+    // conjunto de nodos cerrados.
     const lista = [...v.cerrados];
     let texto = '';
     if (estado.destino !== null) {
@@ -286,8 +287,7 @@ function pintarVectores() {
         texto = `${info.nombreCerrados} = {${lista.join(', ')}}. El ciclo se interrumpió: `
             + 'los nodos que faltan son inalcanzables.';
     } else if (info.nombreCerrados) {
-        // El recuento va delante porque es lo que sobrevive al recorte cuando
-        // la lista no cabe en la línea.
+        // El recuento va delante: la línea se recorta por el final.
         texto = `${lista.length} de ${ids.length} nodos. `
             + `${info.nombreCerrados} = {${lista.join(', ')}}`;
     }
@@ -506,8 +506,7 @@ function avanzarAutomatico() {
             break;
         }
         // Punto de interrupción. La reproducción se detiene con el paso
-        // visible, lo que permite examinar el estado del grafo. Se comprueba
-        // en cada paso intermedio del disparo.
+        // visible, y se comprueba en cada paso intermedio del disparo.
         if (lineasDelPaso(estado.traza[estado.paso]).some((n) => estado.breakpoints.has(n))) {
             pausar();
             break;
@@ -565,9 +564,8 @@ function resaltarPseudocodigo() {
 }
 
 /* --- Archivo ------------------------------------------------------------- */
-/* El objeto URL se libera en el siguiente ciclo de eventos. Revocarlo en la
- * misma vuelta deja la descarga dependiendo de que el navegador capture el
- * blob de forma sincrona al pulsar. */
+/* El objeto URL se libera en el siguiente ciclo de eventos, ya empezada la
+ * descarga. */
 function descargar(nombre, contenido, tipo = 'application/json') {
     const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
     const a = document.createElement('a');

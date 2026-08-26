@@ -80,14 +80,12 @@ pasada, que no es una respuesta; la de Π muestra ⊥. Las dos van marcadas, igu
 que el nodo en el grafo.
 
 Las casillas van vacías hasta que se ejecuta la línea que asigna los valores
-iniciales, de modo que ese paso también se ve. El panel está presente desde el
-primer paso: si apareciera a mitad de la traza cambiaría el alto del lienzo y
-movería el grafo.
+iniciales, de modo que ese paso también se ve.
 
-Por la misma razón, la cabecera del panel ocupa una línea de alto fijo. El texto
-que la acompaña crece con el número de nodos cerrados, y con 30 nodos llegaba a
-envolver. El recuento va delante de la lista porque es lo que sobrevive cuando
-el texto no cabe y se recorta.
+El panel está presente desde el primer paso y su cabecera ocupa una línea de
+alto fijo. El alto del panel determina el que le queda al lienzo del grafo, y el
+texto de la cabecera crece con el número de nodos cerrados. El recuento va
+delante de la lista: la línea se recorta por el final.
 
 ## Camino a un destino
 
@@ -106,10 +104,9 @@ Bellman-Ford deja un ciclo en Π mientras un ciclo de peso negativo sigue
 mejorando las distancias: cada nodo del ciclo acaba apuntando al anterior. Al
 retroceder desde el destino se vuelve sobre un nodo ya visitado.
 
-Ese ciclo es el testigo del peso negativo, de modo que en lugar de descartar la
-reconstrucción se devuelve y se marca en rojo: los nodos y arcos del ciclo en el
-grafo y sus casillas en la tabla. El texto lo escribe cerrado y con su peso, por
-ejemplo `Π forma un ciclo desde 4:  5 → 3 → 4 → 5  (peso -2)`.
+Ese ciclo es el testigo del peso negativo. Se marca en rojo: los nodos y arcos
+del ciclo en el grafo y sus casillas en la tabla. El texto lo escribe cerrado y
+con su peso, por ejemplo `Π forma un ciclo desde 4:  5 → 3 → 4 → 5  (peso -2)`.
 
 En la instancia de ejemplo el camino a 4 es válido hasta el paso 21, `0 → 2 → 3
 → 4` de largo 7, y en el paso 22 Π cierra el ciclo y pasa a rojo.
@@ -125,44 +122,30 @@ mínimo con los valores de ese paso:
 Es lo que compite por la distancia de ese nodo. Volver a pulsar la columna quita
 la marca.
 
+## Colores de los arcos
+
+Un arco sin examinar va en gris oscuro y uno ya examinado en celeste. La marca
+se aplica en los algoritmos que no vuelven sobre un arco, los que declaran
+`aristasNoSeRevisitan` en el registro. Bellman-Ford recorre todos los arcos en
+cada pasada y no marca ninguno.
+
+Sobre esa base van, de menos a más específico, el árbol de caminos en verde, el
+paso actual en naranjo, el camino al destino en morado y el ciclo de Π en rojo.
+
 ## Dijkstra
 
-Sigue el pseudocódigo de la clase, con la elección del mínimo por barrido sobre
-V∖S y sin cola de prioridad. El costo es O(V² + E).
-
-    Dijkstra(G, s, ℓ)
-      D[v] ← +∞;  Π[v] ← ⊥  para todo v ∈ V
-      D[s] ← 0;  S ← ∅
-      mientras S ≠ V:
-          elegir a ∈ V∖S que minimice D[a]
-          si D[a] = +∞: interrumpir el ciclo
-          para cada (a,b) ∈ δ⁺(a):
-              si D[a] + ℓ(a,b) < D[b]:
-                  D[b] ← D[a] + ℓ(a,b)
-                  Π[b] ← a
-          S ← S ∪ {a}
-      devolver (D, Π)
-
-El barrido desempata por el nombre del nodo. Sin ese desempate, con dos nodos a
-la misma distancia el elegido dependería del orden de la lista de nodos y la
-animación dejaría de ser reproducible.
-
-Bajo el grafo aparece una tabla con los vectores D y Π, una columna por nodo,
-reconstruida desde la traza en cada paso. Los nodos ya cerrados aparecen
-sombreados, el elegido en el paso actual con borde naranjo y aquel cuya casilla
-se evalúa con borde azul. El texto de al lado indica el contenido de S.
-
-Las aristas ya examinadas quedan en gris: en este algoritmo el nodo elegido
-entra en S y sus arcos no se vuelven a mirar. Bellman-Ford recorre todas las
-aristas en cada pasada, de modo que ahí no se marcan; el registro de cada
-algoritmo lo indica con `aristasNoSeRevisitan`.
+La elección del mínimo es por barrido sobre V∖S y desempata por el nombre del
+nodo. Sin ese desempate, con dos nodos a la misma distancia el elegido
+dependería del orden de la lista y la animación dejaría de ser reproducible.
 
 ## Archivos
 
 - `js/grafo.js` — modelo de grafo, generador aleatorio con semilla, instancias
   de ejemplo y validación del formato de archivo.
 - `js/algoritmos.js` — los cinco algoritmos y sus pseudocódigos.
-- `js/viz.js` — traducción de eventos a clases de Cytoscape.
+- `js/viz.js` — traducción de eventos a clases de Cytoscape, y reconstrucción
+  de los vectores y del camino a un destino.
+- `js/editor.js` — diálogo de la matriz de pesos.
 - `js/app.js` — interfaz. Es la única capa que accede al DOM.
 
 ## Formato de archivo
@@ -203,30 +186,30 @@ elementos `<option>` se construyen con `document.createElement` y `textContent`.
 El botón de la izquierda de la barra pliega la columna de controles. Con tres
 columnas el lienzo gana el ancho que ocupaban, unos 286 px; en ventanas
 estrechas, donde las columnas se apilan, quita ese bloque de la pila y acorta la
-página a la mitad. En ventanas estrechas el botón se queda con la flecha, porque
-con la palabra la barra no cabe y la página se desplazaría en horizontal.
+página a la mitad. En ventanas estrechas el botón se queda con la flecha: con
+la palabra no cabe en la barra.
 
-La leyenda de colores está bajo el pseudocódigo, en la columna de la derecha, y
-viene plegada: ocupa una línea hasta que se abre. Tanto su estado como el de la
-columna de controles quedan guardados en el navegador.
+La leyenda de colores está bajo el pseudocódigo, en la columna de la derecha,
+desplegada. Tanto su estado como el de la columna de controles quedan guardados
+en el navegador.
 
 ## Altura de la barra
 
-El texto del paso ocupa una línea de alto fija y no cambia con su contenido. La
-barra de control está encima del lienzo del grafo, de modo que cualquier cambio
-en su alto encoge o agranda el lienzo y mueve el grafo en mitad de la
-animación. Lo mismo vale para el contador de iteraciones de Bellman-Ford.
+El texto del paso ocupa una línea de alto fijo. La barra está encima del lienzo
+del grafo y el alto de una determina el de la otra, de modo que un texto que
+creciera movería el grafo en mitad de la animación. Lo mismo vale para el
+contador de iteraciones de Bellman-Ford.
 
 ## Reproducción
 
 El botón de reproducir ejecuta el algoritmo si aún no hay traza, o si el
-algoritmo o el origen cambiaron desde la última ejecución. Sin eso, pulsarlo
-antes de ejecutar no hacía nada.
+algoritmo o el origen cambiaron desde la última ejecución.
 
-La velocidad se expresa en pasos por segundo, con atajos de 1, 5, 15, 50 y 100. `setInterval` no entrega disparos
-fiables por debajo de 16 ms, de modo que para velocidades mayores a unos 62
-pasos por segundo cada disparo avanza varios pasos. Los puntos de interrupción
-se comprueban en cada paso intermedio del disparo.
+La velocidad se expresa en pasos por segundo, con atajos de 1, 5, 15, 50 y 100.
+`setInterval` no entrega disparos fiables por debajo de 16 ms, de modo que para
+velocidades mayores a unos 62 pasos por segundo cada disparo avanza varios
+pasos. Los puntos de interrupción se comprueban en cada paso intermedio del
+disparo.
 
 ## Ejecución local
 

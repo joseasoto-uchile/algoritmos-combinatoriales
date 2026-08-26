@@ -1,7 +1,7 @@
 /* Convierte (grafo, traza, paso actual) en elementos de Cytoscape.
  *
- * Port de viz/. Es la única capa que conoce a la vez el formato de la traza y
- * el de Cytoscape. Los algoritmos no dependen de ella.
+ * Es la única capa que conoce a la vez el formato de la traza y el de
+ * Cytoscape. Los algoritmos no dependen de ella.
  */
 
 const COLORES = {
@@ -11,9 +11,8 @@ const COLORES = {
     solucion: '#66bb6a', solucion_borde: '#2e7d32',
     ciclo_negativo: '#ef5350', ciclo_negativo_borde: '#b71c1c',
     activo: '#ffb74d', activo_borde: '#e65100',
-    /* Los arcos llevan su propio par de colores, no el de los nodos: gris
-       oscuro sin procesar y celeste una vez examinados. Con dos grises
-       parecidos no se distinguía cuáles quedaban por mirar. */
+    /* Los arcos llevan su propio par de colores, aparte del de los nodos:
+       gris oscuro sin procesar y celeste una vez examinados. */
     arco: '#546e7a',
     arco_procesado: '#4fc3f7',
     camino: '#8e24aa',
@@ -259,8 +258,8 @@ function aplicarDistancias(elementos, distancias) {
  * el nodo del paso actual y `destino` aquel cuya casilla se está evaluando.
  *
  * `inicializado` indica si la línea que asigna los valores iniciales ya se
- * ejecutó. Antes de eso las casillas van vacías, no en +∞: el paso de
- * inicialización es parte de lo que se muestra. */
+ * ejecutó. Las casillas van vacías hasta entonces, de modo que ese paso también
+ * se ve. */
 function calcularVectores(traza, pasoActual, ids) {
     if (!traza || !traza.length) return null;
     const D = new Map(ids.map((v) => [v, Infinity]));
