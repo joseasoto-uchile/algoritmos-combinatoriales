@@ -12,7 +12,7 @@
      GitHub Pages no admite cabeceras propias, de ahí la etiqueta meta. -->
 <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<link rel="stylesheet" href="css/estilo.css?v=38">
+<link rel="stylesheet" href="css/estilo.css?v=39">
 <!-- Cytoscape servido desde el propio sitio, no desde un CDN. Elimina la
      dependencia de red externa. Para actualizarlo, descargar la versión nueva
      sobre este archivo y subir el ?v=. -->
@@ -127,6 +127,19 @@
 
       <div id="cyto"></div>
 
+
+    </div>
+
+    <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
+
+    <div class="columna-codigo">
+      <div class="panel panel-codigo">
+        <h4 id="pseudocodigo-titulo">Pseudocódigo</h4>
+        <div id="pseudocodigo-complejidad"></div>
+        <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
+        <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
+      </div>
+
       <!-- Solo aparece en los algoritmos que mantienen los vectores D y Pi. -->
       <section id="panel-vectores" class="panel-vectores" hidden>
         <div class="vectores-cabecera">
@@ -142,24 +155,11 @@
         <div class="vectores-envoltura">
           <table id="tabla-vectores"></table>
         </div>
-        <!-- Alto fijo: si envolviera, el panel crecería y movería el grafo. -->
-        <div id="txt-seleccion" class="txt-ayuda">Pulsa una columna para ver los arcos que entran a ese nodo.</div>
+        <div id="txt-seleccion" class="txt-ayuda">Pulsa un nodo de la tabla para ver los arcos que entran.</div>
       </section>
 
-    </div>
-
-    <div class="divisor" data-objetivo="codigo" title="Arrastra para redimensionar · doble clic para restablecer"></div>
-
-    <div class="columna-codigo">
-      <div class="panel panel-codigo">
-        <h4 id="pseudocodigo-titulo">Pseudocódigo</h4>
-        <div id="pseudocodigo-complejidad"></div>
-        <div class="txt-ayuda">Haz clic en una línea para poner un punto de interrupción: la reproducción se detiene al llegar ahí.</div>
-        <div id="pseudocodigo-lineas" class="bloque-codigo"></div>
-      </div>
-
-      <!-- El estado queda guardado entre visitas. -->
-      <details class="leyenda" open>
+      <!-- Plegada por omisión. El estado queda guardado entre visitas. -->
+      <details class="leyenda">
         <summary>Leyenda de colores</summary>
         <div id="leyenda-contenido" class="leyenda-contenido"></div>
       </details>
@@ -206,10 +206,10 @@
 
 <!-- El ?v= invalida la caché del navegador. Incrementarlo al modificar
      cualquier archivo de js/ o css/. -->
-<script src="js/grafo.js?v=35"></script>
+<script src="js/grafo.js?v=39"></script>
 <script src="js/algoritmos.js?v=36"></script>
-<script src="js/viz.js?v=37"></script>
+<script src="js/viz.js?v=39"></script>
 <script src="js/editor.js?v=25"></script>
-<script src="js/app.js?v=38"></script>
+<script src="js/app.js?v=39"></script>
 </body>
 </html>

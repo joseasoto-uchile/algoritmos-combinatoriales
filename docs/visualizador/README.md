@@ -58,8 +58,10 @@ indicando cuántos trae.
 
 ## Vectores D y Π
 
-Bajo el grafo hay una tabla con los vectores que mantiene el algoritmo, una
-columna por nodo, reconstruida desde la traza en cada paso. Cada algoritmo
+En la columna del pseudocódigo hay una tabla con los vectores que mantiene el
+algoritmo, una fila por nodo y una columna por vector, reconstruida desde la
+traza en cada paso. En vertical ocupa poco ancho, que es lo escaso en esa
+columna, y crece hacia abajo, donde se desplaza por dentro. Cada algoritmo
 declara en el registro cuáles muestra:
 
 | Algoritmo | Vectores | Nodos cerrados |
@@ -82,10 +84,9 @@ que el nodo en el grafo.
 Las casillas van vacías hasta que se ejecuta la línea que asigna los valores
 iniciales, de modo que ese paso también se ve.
 
-El panel está presente desde el primer paso y su cabecera ocupa una línea de
-alto fijo. El alto del panel determina el que le queda al lienzo del grafo, y el
-texto de la cabecera crece con el número de nodos cerrados. El recuento va
-delante de la lista: la línea se recorta por el final.
+La cabecera del panel ocupa una línea de alto fijo. Su texto crece con el número
+de nodos cerrados, y el recuento va delante de la lista: la línea se recorta por
+el final.
 
 ## Cola y pila
 
@@ -140,16 +141,20 @@ En la instancia de ejemplo el camino a 4 es válido hasta el paso 21, `0 → 2 �
 
 ## Arcos que entran a un nodo
 
-Al pulsar la cabecera de una columna se marcan en azul los arcos que entran a
-ese nodo y los nodos de los que salen, y bajo la tabla aparece la expresión del
-mínimo con los valores de ese paso:
+Al pulsar la celda de un nodo se marcan en azul los arcos que entran a él y los
+nodos de los que salen, y bajo la tabla aparece la expresión del mínimo con los
+valores de ese paso:
 
     D[c] = 6  ←  mín { D[a] + 3 = 6,  D[b] + 7 = 9 }
 
-Es lo que compite por la distancia de ese nodo. Volver a pulsar la columna quita
-la marca.
+Es lo que compite por la distancia de ese nodo. Volver a pulsarla quita la
+marca.
 
 ## Colores de los arcos
+
+La punta de la flecha escala con el ancho del arco. Va a 1,9 veces su tamaño
+por omisión: con el tamaño normal y arcos de 2 px apenas se distinguía el
+sentido.
 
 Un arco sin examinar va en gris oscuro y uno ya examinado en celeste. La marca
 se aplica en los algoritmos que no vuelven sobre un arco, los que declaran
@@ -217,9 +222,12 @@ estrechas, donde las columnas se apilan, quita ese bloque de la pila y acorta la
 página a la mitad. En ventanas estrechas el botón se queda con la flecha: con
 la palabra no cabe en la barra.
 
-La leyenda de colores está bajo el pseudocódigo, en la columna de la derecha,
-desplegada. Tanto su estado como el de la columna de controles quedan guardados
-en el navegador.
+La columna del pseudocódigo lleva debajo la tabla de vectores y, al final, la
+leyenda de colores, plegada. Tanto el estado de la leyenda como el de la columna
+de controles quedan guardados en el navegador.
+
+La tabla está ahí y no bajo el grafo porque el alto de la columna del grafo es
+lo que determina el tamaño del dibujo.
 
 ## Altura de la barra
 

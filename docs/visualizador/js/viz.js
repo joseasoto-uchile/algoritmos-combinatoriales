@@ -8,7 +8,7 @@ const COLORES = {
     base: '#b0bec5', base_borde: '#78909c',
     visitado: '#90caf9', visitado_borde: '#42a5f5',
     finalizado: '#5c6bc0', finalizado_borde: '#3949ab',
-    solucion: '#66bb6a', solucion_borde: '#2e7d32',
+    solucion: '#66bb6a', solucion_borde: '#1b5e20',
     ciclo_negativo: '#ef5350', ciclo_negativo_borde: '#b71c1c',
     activo: '#ffb74d', activo_borde: '#e65100',
     /* Los arcos llevan su propio par de colores, aparte del de los nodos:
@@ -41,9 +41,12 @@ const ESTILOS = [
         content: 'data(label)', 'text-valign': 'center', 'text-halign': 'center',
         'background-color': COLORES.base, color: '#1a1a1a', 'font-size': '12px',
         width: '34px', height: '34px', 'border-width': '2px', 'border-color': COLORES.base_borde } },
+    /* La punta de la flecha escala con el ancho del arco. Con arrow-scale 1 y
+       arcos de 2 px apenas se distinguía el sentido. */
     { selector: 'edge', style: {
         content: 'data(label)', 'curve-style': 'bezier', 'line-color': COLORES.arco,
-        'target-arrow-color': COLORES.arco, 'target-arrow-shape': 'triangle', width: 2,
+        'target-arrow-color': COLORES.arco, 'target-arrow-shape': 'triangle',
+        'arrow-scale': 1.9, width: 2,
         'font-size': '10px', color: '#546e7a', 'text-background-color': '#ffffff',
         'text-background-opacity': 1, 'text-background-padding': '1px' } },
     { selector: 'node.visitado', style: {
@@ -61,8 +64,11 @@ const ESTILOS = [
     { selector: 'edge.procesada', style: {
         'line-color': COLORES.arco_procesado, 'target-arrow-color': COLORES.arco_procesado,
         width: 2.5 } },
+    /* El árbol de caminos es la respuesta: va más grueso y más oscuro que el
+       resto, que es lo que lo separa del celeste de los ya examinados. */
     { selector: 'edge.solucion', style: {
-        'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde, width: 4 } },
+        'line-color': COLORES.solucion_borde, 'target-arrow-color': COLORES.solucion_borde,
+        width: 5, 'arrow-scale': 1.5 } },
     { selector: 'edge.activo', style: {
         'line-color': COLORES.activo_borde, 'target-arrow-color': COLORES.activo_borde, width: 4 } },
     { selector: 'edge.entrante', style: {

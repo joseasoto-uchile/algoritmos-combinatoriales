@@ -303,8 +303,18 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 
 .vectores-cabecera h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #607d8b; }
 
-/* Con muchos nodos la tabla se desplaza por dentro y no ensancha la columna. */
-.vectores-envoltura { overflow-x: auto; }
+/* Una fila por nodo: la tabla crece hacia abajo y se desplaza por dentro. Los
+   encabezados quedan fijos al desplazarse. */
+.vectores-envoltura {
+    overflow: auto;
+    max-height: 34vh;
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+}
+
+#tabla-vectores thead th { position: sticky; top: 0; z-index: 2; }
+#tabla-vectores th.fila-nodo { position: sticky; left: 0; z-index: 1; }
+#tabla-vectores thead th.esquina { left: 0; z-index: 3; }
 
 #tabla-vectores {
     border-collapse: collapse;
@@ -323,7 +333,7 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 
 #tabla-vectores thead th { background: #eceff1; font-weight: 700; border-bottom-width: 2px; }
 #tabla-vectores thead th.esquina { background: #37474f; color: #fff; }
-#tabla-vectores th.fila-nombre { background: #eceff1; font-weight: 700; }
+#tabla-vectores th.fila-nodo { background: #eceff1; font-weight: 700; }
 #tabla-vectores td.indefinido { color: #90a4ae; }
 
 /* Nodos que el algoritmo ya no vuelve a procesar, el del paso actual y aquel

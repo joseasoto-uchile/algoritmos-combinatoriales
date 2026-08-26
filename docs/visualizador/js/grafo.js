@@ -305,25 +305,6 @@ function generarAleatorio({
  * Instancias de ejemplo con estructura definida y coordenadas fijas, de modo
  * que el recorrido del algoritmo se corresponda con el dibujo.
  * ------------------------------------------------------------------------- */
-function ejArbolBinario(niveles = 4) {
-    const G = new Grafo();
-    const total = 2 ** niveles - 1;
-    for (let i = 0; i < total; i++) G.agregarNodo(i);
-    for (let i = 0; i < total; i++) {
-        for (const hijo of [2 * i + 1, 2 * i + 2]) {
-            if (hijo < total) G.agregarArista(i, hijo, 1 + (hijo % 5));
-        }
-    }
-    for (let i = 0; i < total; i++) {
-        const nivel = Math.floor(Math.log2(i + 1));
-        const enNivel = 2 ** nivel;
-        const x = ((i - (enNivel - 1) + 0.5) / enNivel) * ESCALA_POSICIONES;
-        const y = (nivel / Math.max(niveles - 1, 1)) * ESCALA_POSICIONES * 0.8 + 40;
-        G.nodos.get(String(i)).pos = [x, y];
-    }
-    return G;
-}
-
 function ejCiclo(n = 8) {
     const G = new Grafo();
     for (let i = 0; i < n; i++) G.agregarNodo(i);
@@ -382,6 +363,22 @@ function ejDagCapas(capas = [1, 3, 3, 2, 1]) {
     return G;
 }
 
+/* Pesos negativos sin ciclo negativo. Es acíclico, de modo que admite tanto
+ * Bellman-Ford como el camino mínimo por orden topológico, y los dos deben dar
+ * lo mismo. Dijkstra no se ofrece. */
+function ejPesosNegativos() {
+    const G = new Grafo();
+    const posiciones = {
+        s: [80, 400], a: [300, 200], b: [300, 600], d: [520, 620], c: [560, 380], t: [760, 380],
+    };
+    for (const [id, pos] of Object.entries(posiciones)) G.agregarNodo(id, { pos });
+    // El camino a c pasa por d y usa el arco de peso -3, no por a.
+    [['s', 'a', 6], ['s', 'b', 2], ['b', 'a', -1], ['a', 'c', 3],
+     ['b', 'd', 4], ['d', 'c', -3], ['c', 't', 2]]
+        .forEach(([u, v, w]) => G.agregarArista(u, v, w));
+    return G;
+}
+
 function ejCicloNegativo() {
     const G = new Grafo();
     const posiciones = {
@@ -410,9 +407,9 @@ function ejCompleto(n = 6) {
 }
 
 const EJEMPLOS = {
-    arbol: { nombre: 'Arborescencia binaria (15 nodos)', constructor: ejArbolBinario,
-        descripcion: 'Arcos de padre a hijo. Es acíclico, de modo que admite el camino '
-            + 'mínimo por orden topológico.' },
+    negativos: { nombre: 'Pesos negativos sin ciclo', constructor: ejPesosNegativos,
+        descripcion: 'Acíclico y con dos arcos de peso negativo. Bellman-Ford y el orden '
+            + 'topológico dan lo mismo; Dijkstra no está disponible.' },
     ciclo: { nombre: 'Ciclo (8 nodos)', constructor: ejCiclo,
         descripcion: 'Ciclo dirigido: desde el origen se llega a todos dando la vuelta.' },
     rejilla: { nombre: 'Rejilla 4×5', constructor: () => ejRejilla(),

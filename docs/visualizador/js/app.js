@@ -179,18 +179,18 @@ function reconstruirGrafo({ recalcular = true } = {}) {
 
 /* --- Vectores D y Pi ------------------------------------------------------ */
 
-/* Una fila por vector, una columna por nodo. Se reconstruyen desde la traza en
- * cada paso, igual que las clases del grafo. Cada algoritmo declara en el
- * registro qué vectores mantiene: DFS no calcula distancias, solo el padre. */
+/* Una fila por nodo y una columna por vector. En vertical la tabla ocupa poco
+ * ancho, que es lo escaso en la columna del pseudocódigo, y crece hacia abajo,
+ * donde puede desplazarse.
+ *
+ * Cada algoritmo declara en el registro qué vectores mantiene: DFS no calcula
+ * distancias, solo el padre. */
 function pintarVectores() {
     const panel = $('#panel-vectores');
     const info = ALGORITMOS[estado.algEjecutado] || {};
     const cuales = info.vectores || [];
     const mostrar = cuales.length > 0 && estado.traza
         && $('#dd-algoritmo').value === estado.algEjecutado;
-    // Aparecer o desaparecer cambia el alto de #cyto. La vista se reencuadra en
-    // el cuadro siguiente. Se usa fit y no el layout: fit ajusta el encuadre y
-    // deja los nodos donde están.
     const cambia = panel.hidden === mostrar;
     panel.hidden = !mostrar;
     if (cambia && estado.cy) {
@@ -203,8 +203,8 @@ function pintarVectores() {
 
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
     const v = vectoresDelPaso(paso);
-
     const ids = estado.G.ids;
+
     const reconstruccion = estado.destino === null ? {}
         : reconstruirCamino(v.Pi, estado.destino, $('#dd-origen').value);
     const enCamino = new Set(reconstruccion.camino || []);
@@ -235,26 +235,26 @@ function pintarVectores() {
     esquina.className = 'esquina';
     esquina.textContent = 'v';
     filaEnc.append(esquina);
-    for (const id of ids) {
+    for (const nombre of cuales) {
         const th = document.createElement('th');
-        th.textContent = id;
-        th.className = clasesDe(id);
-        th.dataset.nodo = id;
-        th.title = `Arcos que entran a ${id}`;
+        th.textContent = nombre;
         filaEnc.append(th);
     }
     thead.append(filaEnc);
 
     const FILAS = { 'D': [v.D, '∞'], 'Π': [v.Pi, '⊥'] };
     const tbody = document.createElement('tbody');
-    for (const nombre of cuales) {
-        const [mapa, vacio] = FILAS[nombre];
+    for (const id of ids) {
+        const clases = clasesDe(id);
         const tr = document.createElement('tr');
         const th = document.createElement('th');
-        th.textContent = nombre;
-        th.className = 'fila-nombre';
+        th.textContent = id;
+        th.className = ['fila-nodo', clases].filter(Boolean).join(' ');
+        th.dataset.nodo = id;
+        th.title = `Arcos que entran a ${id}`;
         tr.append(th);
-        for (const id of ids) {
+        for (const nombre of cuales) {
+            const [mapa, vacio] = FILAS[nombre];
             const td = document.createElement('td');
             const valor = mapa.get(id);
             const indefinido = valor === undefined || valor === null || valor === Infinity;
@@ -265,7 +265,7 @@ function pintarVectores() {
             else if (v.sinMinimo.has(id)) texto = nombre === 'D' ? '−∞' : vacio;
             else texto = indefinido ? vacio : String(valor);
             td.textContent = texto;
-            td.className = [clasesDe(id),
+            td.className = [clases,
                 v.inicializado && indefinido && !v.sinMinimo.has(id) ? 'indefinido' : '']
                 .filter(Boolean).join(' ');
             tr.append(td);
@@ -274,10 +274,10 @@ function pintarVectores() {
     }
     $('#tabla-vectores').replaceChildren(thead, tbody);
 
-    // Con un destino elegido el texto da su camino; sin él, el estado del
-    // conjunto de nodos cerrados.
     const lista = [...v.cerrados];
     let texto = '';
+    // Con un destino elegido el texto da su camino; sin él, el estado del
+    // conjunto de nodos cerrados.
     if (estado.destino !== null) {
         texto = textoCamino(reconstruccion, v);
     } else if (v.sinMinimo.size) {
@@ -665,7 +665,6 @@ const CLAVE_LEYENDA = 'grafos:leyenda-abierta';
 
 function activarLeyenda() {
     const d = document.querySelector('.leyenda');
-    // Abierta salvo que se haya cerrado antes.
     try {
         const guardado = localStorage.getItem(CLAVE_LEYENDA);
         if (guardado !== null) d.open = guardado === '1';
@@ -791,8 +790,8 @@ function iniciar() {
         estado.destino = $('#dd-destino').value || null;
         pintarEstado();
     });
-    // La cabecera de una columna marca los arcos que entran a ese nodo. Volver
-    // a pulsarla quita la marca.
+    // La celda del nodo marca los arcos que entran a él. Volver a pulsarla quita
+    // la marca.
     $('#tabla-vectores').addEventListener('click', (ev) => {
         const th = ev.target.closest('th[data-nodo]');
         if (!th) return;
