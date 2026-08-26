@@ -350,23 +350,38 @@ function arcosDelCiclo(ciclo) {
 
 /* Contenido de la cola de BFS o de la pila de DFS en `pasoActual`.
  *
+ * Devuelve todo lo que ha entrado, en orden de entrada, marcando con `fuera`
+ * lo que ya salió. Así se ve el recorrido completo y no solo lo que queda.
+ *
  * Los dos algoritmos usan los mismos eventos con significados distintos, de
  * modo que el registro declara cuál de las dos reglas se aplica:
  *
- *   fifo  visitar_nodo encola;      procesar_nodo saca el primero
- *   lifo  visitar_nodo apila;       nodo_finalizado desapila
+ *   fifo  visitar_nodo encola;   procesar_nodo saca
+ *   lifo  visitar_nodo apila;    nodo_finalizado saca
  *
- * Devuelve null si el algoritmo no mantiene ninguna de las dos. El primer
- * elemento de la lista es el que sale a continuación. */
+ * Devuelve null si el algoritmo no mantiene ninguna de las dos. */
 function calcularEstructura(traza, pasoActual, tipo) {
     if (!traza || !traza.length || !tipo) return null;
-    const cola = [];
+    const entradas = [];
+    const salida = tipo === 'fifo' ? 'procesar_nodo' : 'nodo_finalizado';
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'visitar_nodo') cola.push(ev.nodo);
-        else if (tipo === 'fifo' && ev.tipo === 'procesar_nodo') cola.shift();
-        else if (tipo === 'lifo' && ev.tipo === 'nodo_finalizado') cola.pop();
+        if (ev.tipo === 'visitar_nodo') entradas.push({ nodo: ev.nodo, fuera: false });
+        else if (ev.tipo === salida) {
+            // Cada nodo entra una sola vez en las dos estructuras, de modo que
+            // basta con buscarlo por su identificador.
+            const e = entradas.find((x) => x.nodo === ev.nodo);
+            if (e) e.fuera = true;
+        }
     }
-    return tipo === 'fifo' ? cola : cola.slice().reverse();
+    return entradas;
+}
+
+/* El que sale a continuación: el primero que queda dentro en una cola, el
+ * último en una pila. */
+function proximoDeLaEstructura(entradas, tipo) {
+    const dentro = entradas.filter((e) => !e.fuera);
+    if (!dentro.length) return null;
+    return tipo === 'fifo' ? dentro[0].nodo : dentro[dentro.length - 1].nodo;
 }

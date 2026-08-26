@@ -90,7 +90,12 @@ delante de la lista: la línea se recorta por el final.
 ## Cola y pila
 
 BFS mantiene una cola y DFS una pila. El panel las muestra en una línea sobre la
-tabla, con el elemento que sale a continuación indicado aparte.
+tabla.
+
+La línea conserva todo lo que ha entrado, en orden de entrada. Lo que ya salió
+va tachado en su sitio, de modo que se lee el recorrido completo y no solo lo
+que queda dentro. El que sale a continuación va en naranjo: el primero que
+sigue dentro en una cola, el último en una pila.
 
 Las dos se reconstruyen desde la traza. Los dos algoritmos usan los mismos
 eventos con significados distintos, de modo que el registro declara cuál de las
@@ -102,10 +107,12 @@ dos reglas se aplica:
 | Pila de DFS | `visitar_nodo` | `nodo_finalizado` |
 
 En DFS la pila es la de la recursión: `visitar(u)` apila u y su fin lo desapila,
-de modo que el contenido es el camino desde el origen hasta el nodo en curso.
+de modo que lo que sigue dentro es el camino desde el origen hasta el nodo en
+curso.
 
-La línea ocupa su alto también en los tres algoritmos que no mantienen ninguna
-de las dos estructuras.
+Con muchos nodos la línea desborda su ancho, de modo que se desplaza para dejar
+a la vista el que sale a continuación y lo que viene detrás. Ocupa su alto
+también en los tres algoritmos que no mantienen ninguna de las dos estructuras.
 
 ## Camino a un destino
 

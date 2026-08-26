@@ -296,15 +296,40 @@ function pintarVectores() {
     actualizarTextoSeleccion(v);
 }
 
-/* Cola de BFS o pila de DFS, con el elemento que sale a continuación marcado. */
+/* Cola de BFS o pila de DFS. Lo que ya salió va tachado y en su sitio, de modo
+ * que la línea muestra el orden completo en que entraron los nodos.
+ *
+ * Se construye con la API del DOM: los identificadores de nodo son datos de
+ * entrada y no deben concatenarse dentro de innerHTML. */
 function actualizarTextoEstructura(info, paso) {
     const salida = $('#txt-estructura');
     const e = info.estructura;
-    if (!e) { salida.textContent = ''; return; }
-    const lista = calcularEstructura(estado.traza, paso, e.tipo);
-    if (!lista.length) { salida.textContent = `${e.nombre} vacía.`; return; }
-    salida.textContent = `${e.nombre}:  ${lista.join(', ')}`
-        + `   (${e.primero}: ${lista[0]})`;
+    if (!e) { salida.replaceChildren(); return; }
+
+    const entradas = calcularEstructura(estado.traza, paso, e.tipo);
+    if (!entradas.length) { salida.textContent = `${e.nombre} vacía.`; return; }
+
+    const proximo = proximoDeLaEstructura(entradas, e.tipo);
+    const partes = [document.createTextNode(`${e.nombre}:  `)];
+    let marca = null;
+    entradas.forEach((entrada, i) => {
+        if (i) partes.push(document.createTextNode(', '));
+        const span = document.createElement('span');
+        span.textContent = entrada.nodo;
+        if (entrada.fuera) span.className = 'fuera';
+        else if (entrada.nodo === proximo) { span.className = 'proximo'; marca = span; }
+        partes.push(span);
+    });
+    partes.push(document.createTextNode(
+        proximo === null ? '   (vacía)' : `   (${e.primero}: ${proximo})`));
+    salida.replaceChildren(...partes);
+
+    // La línea conserva todo lo que ha entrado y acaba desbordando. Se desplaza
+    // para dejar a la vista el que sale a continuación y lo que viene detrás.
+    if (marca && salida.scrollWidth > salida.clientWidth) {
+        const dx = marca.getBoundingClientRect().left - salida.getBoundingClientRect().left;
+        salida.scrollLeft = Math.max(0, salida.scrollLeft + dx - salida.clientWidth / 3);
+    }
 }
 
 /* Camino reconstruido y su largo, el ciclo encontrado, o el motivo de que no
