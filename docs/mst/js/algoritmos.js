@@ -4,6 +4,12 @@
  * número de línea del pseudocódigo que le corresponde, de modo que la capa de
  * dibujo sirve para todos sin distinguir cuál se está ejecutando.
  *
+ * La unidad de la traza es una vuelta del ciclo del pseudocódigo, no una
+ * arista: un paso de Jarník-Prim saca un nodo de la cola y aplica de una vez
+ * todas las actualizaciones que provoca, uno de Kruskal decide una arista de la
+ * lista ordenada, y una fase de Borůvka son dos pasos, la elección simultánea
+ * de todas las e_K y la unión de Aux con F.
+ *
  * Los tres suponen las aristas totalmente ordenadas: primero por peso y, entre
  * pesos iguales, por el orden en que se declararon. Con ese orden fijo los tres
  * devuelven el mismo árbol y Borůvka es correcto, cosa que no ocurre si dos
@@ -64,26 +70,31 @@ function primTraza(G, raiz) {
 
     const enCola = new Set(ids);
     const arbol = [];
+    let n = 0;
     while (enCola.size) {
         const u = _extraerMinimo(enCola, D, aristaDe, rango);
         enCola.delete(u);
-        tb.emitir('visitar_nodo', { nodo: u, dist: D[u], padre: Pi[u], linea: [4, 5] });
-        if (Pi[u] !== null) {
-            arbol.push([Pi[u], u]);
-            tb.emitir('arista_solucion', { u: Pi[u], v: u, peso: D[u], linea: 5 });
-        }
+        const arista = Pi[u] === null ? null : [Pi[u], u];
+        if (arista) arbol.push(arista);
+
+        const exploradas = [], actualizadas = [], descartadas = [];
         for (const { v, peso } of G.vecinos(u)) {
             if (!enCola.has(v)) continue;
-            tb.emitir('explorar_arista', { u, v, peso, linea: [6, 7] });
+            exploradas.push([u, v]);
             if (peso < D[v]) {
                 D[v] = peso;
                 Pi[v] = u;
                 aristaDe[v] = claveArista(u, v);
-                tb.emitir('actualizar', { nodo: v, dist: peso, padre: u, linea: [8, 9, 10] });
+                actualizadas.push({ nodo: v, dist: peso, padre: u });
             } else {
-                tb.emitir('descartar_arista', { u, v, peso, motivo: 'no_mejora', linea: 7 });
+                descartadas.push([u, v]);
             }
         }
+        tb.emitir('iteracion', {
+            n: ++n, nodo: u, dist: D[u], padre: Pi[u], arista, peso: D[u],
+            exploradas, actualizadas, descartadas,
+            linea: [4, 5, 6, 7, 8, 9, 10],
+        });
     }
     const peso = _pesoDe(G, arbol);
     tb.emitir('fin', { aristas: arbol, peso, linea: 11 });
@@ -91,6 +102,8 @@ function primTraza(G, raiz) {
 }
 
 /* --- Kruskal ------------------------------------------------------------- */
+/* Una vuelta del ciclo por arista de la lista ordenada: se mira dónde están sus
+ * extremos y se acepta o se rechaza. */
 function kruskalTraza(G) {
     const tb = new ConstructorTraza();
     const uf = new UnionFind(G.ids);
@@ -98,15 +111,14 @@ function kruskalTraza(G) {
     tb.emitir('inicializar', { orden: orden.map((a) => [a.origen, a.destino]), linea: [2, 3] });
 
     const arbol = [];
+    let n = 0;
     for (const { origen: u, destino: v, peso } of orden) {
-        tb.emitir('explorar_arista', { u, v, peso, linea: [4, 5] });
-        if (uf.mismaComponente(u, v)) {
-            tb.emitir('descartar_arista', { u, v, peso, motivo: 'ciclo', linea: 5 });
-        } else {
-            uf.unir(u, v);
-            arbol.push([u, v]);
-            tb.emitir('arista_solucion', { u, v, peso, linea: 6 });
-        }
+        const acepta = !uf.mismaComponente(u, v);
+        if (acepta) { uf.unir(u, v); arbol.push([u, v]); }
+        tb.emitir('iteracion', {
+            n: ++n, u, v, peso, aceptada: acepta,
+            linea: acepta ? [4, 5, 6] : [4, 5],
+        });
     }
     const peso = _pesoDe(G, arbol);
     tb.emitir('fin', { aristas: arbol, peso, linea: 7 });
@@ -114,8 +126,12 @@ function kruskalTraza(G) {
 }
 
 /* --- Borůvka ------------------------------------------------------------- */
-/* En cada fase, toda componente elige su arista saliente mínima y después se
- * agregan todas de una vez. Dos componentes pueden elegir la misma arista, de
+/* Dos pasos por fase, que son las dos mitades del cuerpo del ciclo: primero
+ * toda componente elige su arista saliente mínima, y después se agregan todas
+ * de una vez.
+ *
+ * Las elecciones se muestran juntas porque juntas se hacen: es lo que separa a
+ * Borůvka de los otros dos. Dos componentes pueden elegir la misma arista, de
  * modo que Aux tiene menos elementos que componentes hay. */
 function boruvkaTraza(G) {
     const tb = new ConstructorTraza();
@@ -129,9 +145,7 @@ function boruvkaTraza(G) {
     let fase = 0;
     while (componentes > 1) {
         fase += 1;
-        tb.emitir('inicio_fase', { fase, componentes, linea: [3, 4] });
-
-        const elegidas = new Map();  // clave de arista -> {u, v, peso}
+        const exploradas = [], elecciones = [];
         for (const [rep, nodos] of agruparComponentes(componentesDe(ids, arbol))) {
             const dentro = new Set(nodos);
             let mejor = null;
@@ -139,30 +153,21 @@ function boruvkaTraza(G) {
                 for (const { v, peso } of G.vecinos(u)) {
                     // Las aristas internas de la componente no están en δ(K).
                     if (dentro.has(v)) continue;
-                    tb.emitir('explorar_arista', { u, v, peso, componente: rep, linea: [5, 6] });
-                    // Pierde la comparación una de las dos, y esa se descarta:
-                    // al terminar el barrido solo queda sin descartar la mínima.
+                    exploradas.push([u, v]);
                     const r = rango.get(claveArista(u, v));
-                    const descartar = (a) => tb.emitir('descartar_arista', {
-                        u: a.u, v: a.v, peso: a.peso, motivo: 'no_minima', componente: rep, linea: 6,
-                    });
-                    if (mejor === null) mejor = { u, v, peso, r };
-                    else if (r < mejor.r) { descartar(mejor); mejor = { u, v, peso, r }; }
-                    else descartar({ u, v, peso });
+                    if (mejor === null || r < mejor.r) mejor = { u, v, peso, r };
                 }
             }
-            tb.emitir('elegir_minimo', {
-                componente: rep, u: mejor.u, v: mejor.v, peso: mejor.peso, linea: 6,
-            });
-            elegidas.set(claveArista(mejor.u, mejor.v), { u: mejor.u, v: mejor.v, peso: mejor.peso });
+            elecciones.push({ componente: rep, u: mejor.u, v: mejor.v, peso: mejor.peso });
         }
+        tb.emitir('fase_elegir', {
+            fase, componentes, elecciones, exploradas, linea: [3, 4, 5, 6],
+        });
 
-        tb.emitir('reunir_aux', { cantidad: elegidas.size, linea: 7 });
-        for (const { u, v, peso } of elegidas.values()) {
-            uf.unir(u, v);
-            arbol.push([u, v]);
-            tb.emitir('arista_solucion', { u, v, peso, linea: 8 });
-        }
+        const aux = new Map();
+        for (const e of elecciones) aux.set(claveArista(e.u, e.v), [e.u, e.v, e.peso]);
+        for (const [u, v] of aux.values()) { uf.unir(u, v); arbol.push([u, v]); }
+        tb.emitir('fase_unir', { fase, aristas: [...aux.values()], linea: [7, 8] });
         componentes = agruparComponentes(componentesDe(ids, arbol)).length;
     }
     const peso = _pesoDe(G, arbol);

@@ -3,6 +3,23 @@
 Jarník–Prim, Kruskal y Borůvka sobre grafos no dirigidos, con la traza
 reproducible paso a paso. Corresponde a la clase 09.
 
+## Un paso es una vuelta del ciclo
+
+La unidad de la traza no es una arista, sino una iteración del ciclo del
+pseudocódigo:
+
+- **Jarník–Prim**: un paso saca un nodo de la cola, mete su arista en F y aplica
+  de una vez todas las actualizaciones de D y Π que provoca. Un paso por nodo.
+- **Kruskal**: un paso decide una arista de la lista ordenada. Un paso por
+  arista, que es lo que hace el `para i ← 1 hasta m`.
+- **Borůvka**: dos pasos por fase, las dos mitades del cuerpo del ciclo. En el
+  primero todas las componentes eligen su arista mínima a la vez, que es como
+  se hace; en el segundo entra Aux en F.
+
+Sobre la instancia de la clase son 9, 12 y 6 pasos. La velocidad va de 1 a 20
+pasos por segundo, no a 100 como en las otras dos aplicaciones: las trazas son
+mucho más cortas.
+
 ## Grafos no dirigidos y conexos
 
 Es la única de las tres aplicaciones que no trabaja con digrafos. Un archivo con
@@ -55,15 +72,16 @@ La columna entre el grafo y el pseudocódigo muestra la estructura principal del
 algoritmo, que es distinta en cada uno. El registro lo declara con `panel`.
 
 - **Jarník–Prim**: una fila por nodo con D y Π. Los nodos que ya salieron de la
-  cola aparecen sombreados; el del paso actual con borde naranjo y aquel cuya
-  casilla se evalúa con borde azul.
+  cola aparecen sombreados, el que salió en este paso con borde naranjo y con
+  borde azul aquellos cuya casilla cambió en él.
 - **Kruskal**: la lista de aristas en el orden en que la recorre. Lo aceptado va
   en verde y lo rechazado tachado en su sitio, no se quita, de modo que se ve el
   recorrido completo. La lista se desplaza sola para dejar a la vista la arista
   en examen.
-- **Borůvka**: una fila por componente de (V, F) con la arista mínima que ha
-  elegido en la fase en curso. El botón «Fase» de la barra salta al comienzo de
-  la fase siguiente.
+- **Borůvka**: una fila por componente de (V, F) con la arista mínima que
+  eligió en la fase en curso, y bajo la tabla el conjunto Aux. Dos componentes
+  pueden elegir la misma arista, y en Aux entra una sola vez: por eso Aux tiene
+  menos elementos que filas hay.
 
 Sobre la tabla van dos líneas de alto fijo: el tamaño y el peso de F, y las
 componentes de (V, F). El alto fijo importa porque la cabecera del panel
@@ -81,19 +99,22 @@ Las aristas llevan su propio juego: gris oscuro sin examinar, celeste ya
 examinada, roja punteada descartada y verde gruesa dentro de F. Sobre eso va el
 naranjo del paso actual.
 
-Las marcas de examinada y descartada duran lo que dura el algoritmo en
-Jarník–Prim y Kruskal, que no vuelven sobre una arista. En Borůvka se borran al
-empezar cada fase, porque una arista descartada en una fase puede ser la elegida
-en la siguiente; el registro lo declara con `aristasNoSeRevisitan`.
+Las marcas duran lo que dura el algoritmo en Jarník–Prim y Kruskal, que no
+vuelven sobre una arista. En Borůvka se borran al empezar cada fase, porque una
+arista que no fue la mínima de un corte puede ser la elegida en la fase
+siguiente; el registro lo declara con `aristasNoSeRevisitan`. Por lo mismo, en
+Borůvka ninguna arista queda en rojo: las que no se eligieron están examinadas,
+no descartadas.
 
 ## Instancias de ejemplo
 
 - **Instancia de la clase**: la de las láminas, siete nodos y diez aristas de
   pesos distintos. El árbol es único: `{ab, bc, de, fg, ce, eg}`, de peso 24.
-- **Pesos empatados**: el árbol no es único y Jarník–Prim y Kruskal devuelven
-  árboles distintos del mismo peso.
-- **Ciclo**: el árbol es el ciclo sin su arista más pesada, y cada algoritmo la
-  descarta en un momento distinto.
+- **Pesos empatados**: el árbol no es único. Desde la raíz por omisión,
+  Jarník–Prim devuelve `{ab, ad, bc, be, cf}` y Kruskal `{ab, ad, bc, cf, de}`,
+  los dos de peso 6.
+- **Ciclo**: el árbol es el ciclo sin su arista más pesada, y cada algoritmo
+  llega a ella en un momento distinto.
 - **Rejilla 4×5**: 20 nodos y 31 aristas; el árbol usa 19.
 - **Parejas por fases**: cuatro parejas unidas por aristas baratas. Borůvka
   reduce el número de componentes a la mitad en cada fase y cierra en tres.

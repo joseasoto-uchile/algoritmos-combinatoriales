@@ -37,7 +37,7 @@ const ESTADOS_LEYENDA = [
     ['Activo', 'Lo que ocurre en este paso', COLORES.activo, COLORES.activo_borde],
     ['Arista sin examinar', 'Todavía no considerada', COLORES.arista, COLORES.arista],
     ['Arista examinada', 'Ya considerada en este algoritmo', COLORES.arista_procesada, COLORES.arista_procesada],
-    ['Arista descartada', 'Cerraría un ciclo o no es la mínima del corte', COLORES.arista_descartada, COLORES.arista_descartada],
+    ['Arista descartada', 'Cerraría un ciclo, o no mejora D[v]', COLORES.arista_descartada, COLORES.arista_descartada],
     ['Arista de F', 'Dentro del árbol de expansión mínima', COLORES.solucion_borde, COLORES.solucion_borde],
     ['Arista incidente', 'Toca el nodo elegido en la tabla', COLORES.incidente, COLORES.incidente],
 ];
@@ -95,6 +95,13 @@ function idArista(u, v) {
     return String(u) < String(v) ? `${u}__${v}` : `${v}__${u}`;
 }
 
+/* Nombre de una arista para mostrarla. Los extremos van ordenados: el que la
+ * eligió pudo encontrarla desde cualquiera de los dos, y dos componentes que
+ * eligen la misma tienen que escribirla igual. */
+function nombreArista(u, v, separador = ' — ') {
+    return String(u) < String(v) ? `${u}${separador}${v}` : `${v}${separador}${u}`;
+}
+
 function grafoAElementos(G, incluirPosiciones = true) {
     const elementos = [];
     for (const nodo of G.nodos.values()) {
@@ -114,9 +121,10 @@ function grafoAElementos(G, incluirPosiciones = true) {
     return elementos;
 }
 
-const EVENTOS_ARISTA = new Set(['explorar_arista', 'descartar_arista', 'elegir_minimo']);
-
 /* Clases de nodos y aristas en `pasoActual`.
+ *
+ * Un paso es una vuelta del ciclo, de modo que cada evento trae listas: las
+ * aristas que esa vuelta examinó, las que descartó y la que entró en F.
  *
  * Las aristas de F son permanentes. Las marcas de examinada y descartada duran
  * lo que dure el algoritmo en Jarník–Prim y Kruskal, que no vuelven sobre una
@@ -133,14 +141,34 @@ function calcularEstado(traza, pasoActual, info = {}, ids = []) {
 
     let transitorias = new Map();  // id de arista -> 'procesada' | 'descartada'
     const aceptadas = [];
+    const marcar = (lista, clase) => {
+        for (const [u, v] of lista || []) transitorias.set(idArista(u, v), clase);
+    };
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'inicio_fase' && !persisten) transitorias = new Map();
-        if (EVENTOS_ARISTA.has(ev.tipo)) {
-            transitorias.set(idArista(ev.u, ev.v),
-                ev.tipo === 'descartar_arista' ? 'descartada' : 'procesada');
-        } else if (ev.tipo === 'arista_solucion') {
-            aceptadas.push([ev.u, ev.v]);
+        switch (ev.tipo) {
+            case 'iteracion':
+                if ('aceptada' in ev) {
+                    // Kruskal: la vuelta decide una sola arista.
+                    transitorias.set(idArista(ev.u, ev.v), ev.aceptada ? 'procesada' : 'descartada');
+                    if (ev.aceptada) aceptadas.push([ev.u, ev.v]);
+                } else {
+                    marcar(ev.exploradas, 'procesada');
+                    marcar(ev.descartadas, 'descartada');
+                    if (ev.arista) aceptadas.push(ev.arista);
+                }
+                break;
+            case 'fase_elegir':
+                if (!persisten) transitorias = new Map();
+                // Ninguna queda descartada: la que no es mínima de este corte
+                // puede ser la elegida en la fase siguiente.
+                marcar(ev.exploradas, 'procesada');
+                break;
+            case 'fase_unir':
+                for (const [u, v] of ev.aristas) aceptadas.push([u, v]);
+                break;
+            default:
+                break;
         }
     }
     for (const [id, clase] of transitorias) agregar(clasesArista, id, clase);
@@ -154,12 +182,17 @@ function calcularEstado(traza, pasoActual, info = {}, ids = []) {
 
     if (tope >= 0) {
         const ev = traza[tope];
-        if (EVENTOS_ARISTA.has(ev.tipo) || ev.tipo === 'arista_solucion') {
-            agregar(clasesArista, idArista(ev.u, ev.v), 'activa');
-            agregar(clasesNodo, ev.u, 'activo');
-            agregar(clasesNodo, ev.v, 'activo');
-        } else if (ev.tipo === 'visitar_nodo' || ev.tipo === 'actualizar') {
-            agregar(clasesNodo, ev.nodo, 'activo');
+        const activa = (u, v) => {
+            agregar(clasesArista, idArista(u, v), 'activa');
+            agregar(clasesNodo, u, 'activo');
+            agregar(clasesNodo, v, 'activo');
+        };
+        // En Borůvka se marcan las aristas y no sus extremos: la elección es de
+        // la componente, y pintar los nodos taparía su color.
+        if (ev.tipo === 'iteracion' && 'aceptada' in ev) activa(ev.u, ev.v);
+        else if (ev.tipo === 'iteracion') agregar(clasesNodo, ev.nodo, 'activo');
+        else if (ev.tipo === 'fase_elegir') {
+            for (const e of ev.elecciones) agregar(clasesArista, idArista(e.u, e.v), 'activa');
         }
     }
     return [clasesNodo, clasesArista, componentes];
@@ -188,9 +221,13 @@ function calcularSolucion(traza, pasoActual) {
     const tope = traza.length ? Math.max(0, Math.min(pasoActual, traza.length - 1)) : -1;
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo !== 'arista_solucion') continue;
-        aristas.push([ev.u, ev.v]);
-        if (typeof ev.peso === 'number') peso += ev.peso;
+        if (ev.tipo === 'iteracion' && 'aceptada' in ev) {
+            if (ev.aceptada) { aristas.push([ev.u, ev.v]); peso += ev.peso; }
+        } else if (ev.tipo === 'iteracion' && ev.arista) {
+            aristas.push(ev.arista); peso += ev.peso;
+        } else if (ev.tipo === 'fase_unir') {
+            for (const [u, v, w] of ev.aristas) { aristas.push([u, v]); peso += w; }
+        }
     }
     return { aristas, peso };
 }
@@ -201,7 +238,8 @@ function calcularSolucion(traza, pasoActual) {
  * de los vectores, de modo que se reproducen en orden.
  *
  * `cerrados` son los nodos que ya salieron de la cola, es decir U. `activo` es
- * el nodo del paso actual y `destino` aquel cuya casilla se está evaluando.
+ * el nodo que salió en este paso y `actualizados` aquellos cuya casilla cambió
+ * en él.
  *
  * `inicializado` indica si la línea que asigna los valores iniciales ya se
  * ejecutó. Las casillas van vacías hasta entonces, de modo que ese paso también
@@ -211,39 +249,31 @@ function calcularVectores(traza, pasoActual, ids) {
     const D = new Map(ids.map((v) => [v, Infinity]));
     const Pi = new Map(ids.map((v) => [v, null]));
     const cerrados = new Set();
-    let inicializado = false, activo = null, destino = null;
+    let inicializado = false, activo = null;
+    let actualizados = new Set();
 
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        switch (ev.tipo) {
-            case 'inicializar':
-                inicializado = true;
-                break;
-            case 'visitar_nodo':
-                D.set(ev.nodo, ev.dist);
-                Pi.set(ev.nodo, ev.padre);
-                cerrados.add(ev.nodo);
-                break;
-            case 'actualizar':
-                D.set(ev.nodo, ev.dist);
-                Pi.set(ev.nodo, ev.padre);
-                break;
-            default:
-                break;
-        }
+        if (ev.tipo === 'inicializar') { inicializado = true; continue; }
+        if (ev.tipo !== 'iteracion' || !('nodo' in ev)) continue;
+        D.set(ev.nodo, ev.dist);
+        Pi.set(ev.nodo, ev.padre);
+        cerrados.add(ev.nodo);
+        for (const a of ev.actualizadas) { D.set(a.nodo, a.dist); Pi.set(a.nodo, a.padre); }
     }
     const ev = traza[tope];
-    if (EVENTOS_ARISTA.has(ev.tipo)) { activo = ev.u; destino = ev.v; }
-    else if (ev.tipo === 'visitar_nodo' || ev.tipo === 'actualizar') activo = ev.nodo;
-
-    return { D, Pi, cerrados, activo, destino, inicializado };
+    if (ev.tipo === 'iteracion' && 'nodo' in ev) {
+        activo = ev.nodo;
+        actualizados = new Set(ev.actualizadas.map((a) => a.nodo));
+    }
+    return { D, Pi, cerrados, activo, actualizados, inicializado };
 }
 
 /* Lista ordenada de aristas con lo que Kruskal decidió sobre cada una.
  *
  * Devuelve null si el algoritmo no recorre una lista ordenada. `estado` es
- * 'pendiente', 'actual', 'aceptada' o 'rechazada'. */
+ * 'pendiente', 'aceptada' o 'rechazada'; `actual` es la que decide este paso. */
 function calcularAristas(traza, pasoActual) {
     if (!traza || !traza.length) return null;
     const inicio = traza.find((ev) => ev.tipo === 'inicializar' && Array.isArray(ev.orden));
@@ -255,50 +285,44 @@ function calcularAristas(traza, pasoActual) {
     let actual = null;
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        const j = EVENTOS_ARISTA.has(ev.tipo) || ev.tipo === 'arista_solucion'
-            ? indice.get(idArista(ev.u, ev.v)) : undefined;
+        if (ev.tipo !== 'iteracion') continue;
+        const j = indice.get(idArista(ev.u, ev.v));
         if (j === undefined) continue;
-        if (ev.tipo === 'explorar_arista') actual = j;
-        else if (ev.tipo === 'arista_solucion') filas[j].estado = 'aceptada';
-        else if (ev.tipo === 'descartar_arista') filas[j].estado = 'rechazada';
+        filas[j].estado = ev.aceptada ? 'aceptada' : 'rechazada';
+        actual = j;
     }
-    if (actual !== null && filas[actual].estado === 'pendiente') filas[actual].estado = 'actual';
+    if (traza[tope].tipo !== 'iteracion') actual = null;
     return { filas, actual };
 }
 
-/* Arista mínima elegida por cada componente en la fase en curso.
+/* Arista mínima que eligió cada componente en la fase en curso.
  *
  * Devuelve null si el algoritmo no trabaja por fases. Las elecciones se borran
  * al empezar cada fase: son las de la fase actual, no las acumuladas. */
 function calcularComponentesFase(traza, pasoActual) {
     if (!traza || !traza.length) return null;
-    if (!traza.some((ev) => ev.tipo === 'inicio_fase')) return null;
+    if (!traza.some((ev) => ev.tipo === 'fase_elegir')) return null;
     let elecciones = new Map();  // representante -> {u, v, peso}
-    let enExamen = null;
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'inicio_fase') { elecciones = new Map(); enExamen = null; }
-        else if (ev.tipo === 'explorar_arista') enExamen = ev.componente ?? null;
-        else if (ev.tipo === 'elegir_minimo') {
-            elecciones.set(ev.componente, { u: ev.u, v: ev.v, peso: ev.peso });
-            enExamen = null;
-        }
+        if (ev.tipo !== 'fase_elegir') continue;
+        elecciones = new Map(ev.elecciones.map((e) => [e.componente, e]));
     }
-    return { elecciones, enExamen };
+    return { elecciones };
 }
 
 /* Estado del contador de fases en `pasoActual`. Devuelve null si el algoritmo
  * no trabaja por fases. Solo Borůvka las emite. */
 function calcularFase(traza, pasoActual) {
     if (!traza || !traza.length) return null;
-    const total = traza.filter((ev) => ev.tipo === 'inicio_fase').length;
+    const total = traza.filter((ev) => ev.tipo === 'fase_elegir').length;
     if (!total) return null;
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     let fase = 0, componentes = null, terminado = false;
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'inicio_fase') { fase = ev.fase; componentes = ev.componentes; }
+        if (ev.tipo === 'fase_elegir') { fase = ev.fase; componentes = ev.componentes; }
         else if (ev.tipo === 'fin') terminado = true;
     }
     return { fase, total, componentes, terminado };
@@ -333,4 +357,37 @@ function textoComponentes(mapa) {
     const partes = grupos.map(([, nodos]) => `{${nodos.join(', ')}}`);
     const plural = grupos.length === 1 ? 'componente' : 'componentes';
     return `${grupos.length} ${plural}: ${partes.join(', ')}`;
+}
+
+/* Qué hizo la vuelta del ciclo que corresponde a este paso.
+ *
+ * Con un paso por iteración el tipo de evento por sí solo no dice nada: los
+ * tres algoritmos emiten casi siempre el mismo. */
+function textoDelPaso(ev) {
+    switch (ev.tipo) {
+        case 'inicializar':
+            return 'valores iniciales';
+        case 'iteracion': {
+            if ('aceptada' in ev) {
+                return `iteración ${ev.n}: ${ev.u} — ${ev.v} (${ev.peso}), `
+                    + (ev.aceptada ? 'aceptada' : 'rechazada, cerraría un ciclo');
+            }
+            const partes = [`iteración ${ev.n}: sale ${ev.nodo} de Q`];
+            if (ev.arista) partes.push(`entra ${ev.arista[0]} — ${ev.arista[1]} en F`);
+            if (ev.actualizadas.length) {
+                partes.push(`${ev.actualizadas.length} `
+                    + (ev.actualizadas.length === 1 ? 'casilla actualizada' : 'casillas actualizadas'));
+            }
+            return partes.join(', ');
+        }
+        case 'fase_elegir':
+            return `fase ${ev.fase}: las ${ev.componentes} componentes eligen su arista mínima`;
+        case 'fase_unir':
+            return `fase ${ev.fase}: F ← F ∪ Aux, entran ${ev.aristas.length} `
+                + (ev.aristas.length === 1 ? 'arista' : 'aristas');
+        case 'fin':
+            return `fin: ${ev.aristas.length} aristas, peso ${ev.peso}`;
+        default:
+            return ev.tipo;
+    }
 }

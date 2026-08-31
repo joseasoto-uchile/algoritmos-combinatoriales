@@ -7,9 +7,11 @@
 
 const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];
 const URL_LICENCIA = 'https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE';
-const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 5;
+const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 2;
 const INTERVALO_MINIMO_MS = 16;
-const ATAJOS_VELOCIDAD = [1, 5, 15, 50, 100];
+/* Una traza va de unos pocos pasos a algunas decenas, de modo que los atajos
+ * altos del visualizador de recorridos aquí no significan nada. */
+const ATAJOS_VELOCIDAD = [1, 2, 5, 10, 20];
 
 const estado = {
     G: null,
@@ -216,7 +218,7 @@ function clasesDeNodo(id, v, incidentes) {
     if (v && v.cerrados.has(id)) c.push('cerrado');
     if (incidentes.has(id)) c.push('incidente');
     if (v && id === v.activo) c.push('activo');
-    if (v && id === v.destino) c.push('destino');
+    if (v && v.actualizados.has(id)) c.push('destino');
     return c.join(' ');
 }
 
@@ -292,12 +294,13 @@ function panelAristas(paso) {
     }
     thead.append(filaEnc);
 
-    const MARCA = { aceptada: '∈ F', rechazada: 'ciclo', actual: '?', pendiente: '' };
+    const MARCA = { aceptada: '∈ F', rechazada: 'ciclo', pendiente: '' };
     const tbody = document.createElement('tbody');
     let filaActual = null;
     datos.filas.forEach((f, i) => {
         const tr = document.createElement('tr');
-        tr.className = `arista-${f.estado}`;
+        tr.className = [`arista-${f.estado}`, i === datos.actual ? 'fila-actual' : '']
+            .filter(Boolean).join(' ');
         const th = document.createElement('th');
         th.textContent = `${f.u} — ${f.v}`;
         th.className = 'fila-nodo';
@@ -326,13 +329,13 @@ function panelAristas(paso) {
     $('#txt-detalle').textContent =
         `${plural(cuenta('aceptada'), 'aceptada', 'aceptadas')}, `
         + `${plural(cuenta('rechazada'), 'rechazada', 'rechazadas')}, `
-        + `${cuenta('pendiente') + cuenta('actual')} por revisar.`;
+        + `${cuenta('pendiente')} por revisar.`;
 }
 
 /* Una fila por componente de (V, F), con la arista mínima que ha elegido en la
  * fase en curso. */
 function panelComponentes(paso, componentes) {
-    const { elecciones, enExamen } = calcularComponentesFase(estado.traza, paso);
+    const { elecciones } = calcularComponentesFase(estado.traza, paso);
     const incidentes = nodosIncidentes();
 
     const thead = document.createElement('thead');
@@ -349,8 +352,7 @@ function panelComponentes(paso, componentes) {
     for (const [rep, nodos] of agruparComponentes(componentes)) {
         const elegida = elecciones.get(rep);
         const tr = document.createElement('tr');
-        if (rep === enExamen) tr.className = 'comp-en-examen';
-        else if (elegida) tr.className = 'comp-elegida';
+        if (elegida) tr.className = 'comp-elegida';
         const th = document.createElement('th');
         th.textContent = `{${nodos.join(',')}}`;
         th.className = ['fila-nodo', nodos.some((n) => incidentes.has(n)) ? 'incidente' : '']
@@ -358,8 +360,7 @@ function panelComponentes(paso, componentes) {
         th.dataset.nodo = rep;
         th.title = `Aristas incidentes a ${rep}`;
         const tdArista = document.createElement('td');
-        tdArista.textContent = elegida ? `${elegida.u} — ${elegida.v}`
-            : (rep === enExamen ? '…' : '⊥');
+        tdArista.textContent = elegida ? nombreArista(elegida.u, elegida.v) : '⊥';
         const tdPeso = document.createElement('td');
         tdPeso.textContent = elegida ? String(elegida.peso) : '';
         tr.append(th, tdArista, tdPeso);
@@ -367,7 +368,10 @@ function panelComponentes(paso, componentes) {
     }
     $('#tabla-estado').replaceChildren(thead, tbody);
 
-    const aux = [...new Set([...elecciones.values()].map((e) => `${e.u}—${e.v}`))];
+    // Dos componentes pueden elegir la misma arista, y en Aux entra una vez.
+    // La clave normaliza el orden de los extremos: {u,v} y {v,u} son la misma.
+    const aux = [...new Map([...elecciones.values()]
+        .map((e) => [claveArista(e.u, e.v), nombreArista(e.u, e.v, '')])).values()];
     $('#txt-detalle').textContent = aux.length
         ? `Aux = {${aux.join(', ')}}`
         : 'Aux = ∅. Ninguna componente ha elegido todavía.';
@@ -400,7 +404,7 @@ function actualizarTextoPaso() {
         return;
     }
     const paso = Math.max(0, Math.min(estado.paso, estado.traza.length - 1));
-    t.textContent = `Paso ${paso + 1}/${estado.traza.length}: ${estado.traza[paso].tipo}`;
+    t.textContent = `Paso ${paso + 1}/${estado.traza.length}: ${textoDelPaso(estado.traza[paso])}`;
     it.textContent = textoFase(calcularFase(estado.traza, paso));
 }
 
@@ -568,18 +572,6 @@ function avanzarAutomatico() {
             break;
         }
     }
-    pintarEstado();
-}
-
-/* Salta al comienzo de la fase siguiente de Borůvka, o al final de la traza si
- * ya es la última. Las fases son la unidad natural del algoritmo y recorrerlas
- * paso a paso es largo. */
-function saltarFase() {
-    if (!estado.traza) return;
-    if (estado.reproduciendo) pausar();
-    const desde = Math.min(estado.paso, estado.traza.length - 1);
-    const j = estado.traza.findIndex((ev, i) => i > desde && ev.tipo === 'inicio_fase');
-    estado.paso = j === -1 ? estado.traza.length - 1 : j;
     pintarEstado();
 }
 
@@ -838,7 +830,6 @@ function iniciar() {
     $('#btn-centrar').addEventListener('click', () => recalcularLayout());
     $('#btn-play').addEventListener('click', alternarPlay);
     $('#btn-siguiente').addEventListener('click', () => controlPaso(1));
-    $('#btn-fase').addEventListener('click', saltarFase);
     $('#btn-anterior').addEventListener('click', () => controlPaso(-1));
     $('#btn-reiniciar').addEventListener('click', () => controlPaso(null));
     $('#in-velocidad').addEventListener('change', () => {
