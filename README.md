@@ -8,7 +8,7 @@ Universidad de Chile. Se ejecutan por completo en el navegador, sin servidor.
 ## Aplicaciones
 
 `docs/` contiene el sitio publicado. Cada aplicación es independiente: tiene su
-propio HTML, CSS y JavaScript, y no importa código de la otra. Lo único
+propio HTML, CSS y JavaScript, y no importa código de las otras. Lo único
 compartido es `docs/js/cytoscape.min.js`.
 
 ### 1. Programación dinámica (`docs/dp/`)
@@ -27,9 +27,19 @@ interfaz reproduce paso a paso, con el pseudocódigo resaltado, puntos de
 interrupción por línea y los vectores D y Π bajo el grafo. Incluye un editor de
 la instancia por matriz de pesos. Ver `docs/visualizador/README.md`.
 
+### 3. MST: arboles de expansion minima (`docs/mst/`)
+
+Jarnik-Prim, Kruskal y Boruvka sobre grafos no dirigidos y conexos, de la clase
+09. Los tres mantienen un optimo parcial y aplican la regla de corte, con las
+aristas totalmente ordenadas por peso. La columna lateral muestra la estructura
+propia de cada algoritmo: los vectores D y Pi en Jarnik-Prim, la lista ordenada
+de aristas en Kruskal y la arista minima de cada componente en Boruvka. Incluye
+la instancia de las laminas y un editor por matriz de pesos simetrica. Ver
+`docs/mst/README.md`.
+
 ## Arquitectura
 
-Las dos aplicaciones siguen el mismo esquema. El algoritmo no dibuja: produce
+Las tres aplicaciones siguen el mismo esquema. El algoritmo no dibuja: produce
 una lista de eventos, uno por cada paso que se quiere mostrar.
 
     {"tipo": "relajar", "u": "A", "v": "B", "nueva_dist": 7, "paso": 4}
@@ -40,6 +50,18 @@ una segunda implementación del algoritmo para la animación.
 
 Reproducir un paso hacia atrás no deshace el estado: se reconstruye desde el
 principio de la traza hasta el paso pedido.
+
+## Comprobaciones
+
+`herramientas/verificar_mst.js` ejecuta Jarnik-Prim, Kruskal y Boruvka sobre los
+ejemplos y sobre grafos aleatorios y comprueba que los tres devuelven el mismo
+peso total, y el mismo conjunto de aristas cuando los pesos son distintos y el
+arbol es unico. Compara ademas contra un Kruskal de referencia escrito aparte,
+que no comparte codigo con la aplicacion.
+
+```bash
+node herramientas/verificar_mst.js 500
+```
 
 ## Ejecución local
 

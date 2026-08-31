@@ -1,0 +1,558 @@
+/* Port de assets/style.css, con la misma disposición que la versión Dash. */
+
+html, body { height: 100%; margin: 0; }
+
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
+    color: #263238;
+}
+
+/* La propiedad height fija el alto a la ventana y mantiene la columna de
+   controles acotada, con desplazamiento propio. min-height establece el alto
+   mínimo: en una ventana más baja, el contenedor deja de reducirse y el
+   desplazamiento vertical pasa a la página. */
+.app-contenedor {
+    padding: 12px 24px 16px;
+    height: 100vh;
+    min-height: 640px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-contenedor h2 { margin: 0 0 12px 0; flex: 0 0 auto; font-size: 1.4rem; }
+
+/* El ancho de las columnas laterales está en estas variables, que el arrastre
+   de los divisores modifica. La columna del grafo no declara ancho: ocupa el
+   espacio restante, de modo que al reducir una lateral el lienzo aumenta. */
+.fila-principal {
+    --ancho-controles: 280px;
+    --ancho-codigo: 300px;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+}
+
+.columna-controles {
+    flex: 0 0 var(--ancho-controles);
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* El alto mínimo del lienzo se declara aquí, no en la fila. En la fila haría
+   que esta alcanzara el alto de la columna de controles. 480 px corresponde a
+   la barra, el lienzo mínimo (240), la leyenda y las separaciones. */
+.columna-grafo {
+    flex: 1 1 320px;
+    min-width: 280px;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.columna-codigo {
+    flex: 0 0 var(--ancho-codigo);
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* min-height fija el alto mínimo del lienzo y permite que se reduzca. Un
+   elemento flex sin min-height explícito usa 'auto', equivalente al tamaño de
+   su contenido, y no cede altura. */
+#cyto {
+    flex: 1;
+    min-height: 240px;
+    width: 100%;
+    border: 1px solid #cfd8dc;
+    background: #fff;
+}
+
+/* --- Divisores arrastrables ---
+   El elemento mide 10 px para facilitar el arrastre con el puntero. La línea
+   visible es de 2 px. */
+.divisor { flex: 0 0 10px; cursor: col-resize; position: relative; align-self: stretch; }
+.divisor::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 2px;
+    background: #e0e0e0; border-radius: 1px; transition: background .15s;
+}
+.divisor:hover::after { background: #1565c0; }
+body.redimensionando { cursor: col-resize; user-select: none; }
+
+/* En ventanas estrechas las tres columnas no caben en una fila. Se apilan y el
+   desplazamiento vertical pasa a la página. */
+@media (max-width: 900px) {
+    .app-contenedor { height: auto; min-height: 100vh; }
+    .fila-principal { flex-direction: column; overflow-x: visible; }
+    .columna-controles, .columna-codigo { flex: 0 0 auto; width: 100%; overflow-y: visible; }
+    .columna-grafo { flex: 0 0 auto; width: 100%; min-height: 60vh; }
+    .divisor { display: none; }
+}
+
+/* --- Paneles ------------------------------------------------------------ */
+.panel {
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 14px;
+}
+.panel h4 {
+    margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase;
+    letter-spacing: .04em; color: #546e7a;
+}
+.panel label { display: block; font-size: 12px; color: #607d8b; margin-top: 6px; }
+.panel input[type="number"], .panel select {
+    width: 100%; box-sizing: border-box; padding: 5px 6px;
+    border: 1px solid #cfd8dc; border-radius: 4px; font-size: 13px; background: #fff;
+}
+.panel label input[type="checkbox"] { width: auto; margin-right: 4px; }
+
+.btn-primario {
+    margin-top: 10px; width: 100%; background: #1565c0; color: #fff; border: none;
+    border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px;
+}
+.btn-primario:hover { background: #0d47a1; }
+
+.fila-botones { display: flex; gap: 6px; justify-content: space-between; }
+.fila-botones button { flex: 1; padding: 6px 0; cursor: pointer; }
+
+.btn-archivo {
+    display: inline-block; padding: 5px 10px; border: 1px solid #cfd8dc;
+    border-radius: 4px; cursor: pointer; font-size: 13px; background: #fff;
+    color: #37474f; margin-right: 6px;
+}
+.btn-archivo:hover { border-color: #1565c0; color: #1565c0; }
+
+.txt-estado { margin-top: 8px; font-size: 12px; color: #37474f; }
+.txt-ayuda { font-size: 11px; color: #90a4ae; }
+.txt-error {
+    margin-top: 8px; font-size: 12px; color: #c62828; background: #ffebee;
+    border-left: 3px solid #c62828; padding: 6px 8px; border-radius: 3px;
+}
+
+.fila-algoritmo { display: flex; gap: 6px; align-items: center; }
+.fila-algoritmo select { flex: 1; min-width: 0; }
+.btn-info {
+    flex: 0 0 auto; border: 1px solid #b0bec5; background: #fff;
+    border-radius: 6px; width: 34px; height: 30px; cursor: pointer;
+}
+
+/* --- Barra de reproducción ---------------------------------------------- */
+.toolbar-grafo {
+    flex: 0 0 auto; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 8px 14px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.toolbar-grafo .fila-botones { display: flex; gap: 6px; }
+.toolbar-grafo .fila-botones button { padding: 6px 10px; cursor: pointer; flex: 0 0 auto; }
+.fila-velocidad { display: flex; align-items: center; gap: 8px; }
+
+.entrada-velocidad {
+    width: 62px; padding: 4px 6px; font-size: 12px;
+    border: 1px solid #cfd8dc; border-radius: 4px; text-align: right;
+}
+.atajos-velocidad { display: flex; gap: 3px; }
+.atajos-velocidad button {
+    padding: 3px 7px; font-size: 11px; border: 1px solid #cfd8dc; background: #fff;
+    border-radius: 4px; cursor: pointer; color: #546e7a;
+}
+.atajos-velocidad button:hover { border-color: #1565c0; color: #1565c0; }
+
+/* --- Pseudocódigo -------------------------------------------------------- */
+.panel-codigo { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.bloque-codigo {
+    overflow-y: auto; flex: 1; font-family: Consolas, "Courier New", monospace;
+    font-size: 12.5px; line-height: 1.6; background: #fafbfc;
+    border: 1px solid #eceff1; border-radius: 6px; margin-top: 6px;
+}
+.linea-codigo {
+    padding: 2px 8px; white-space: pre-wrap; color: #37474f;
+    border-left: 3px solid transparent; cursor: pointer;
+}
+.linea-codigo:hover { background: #eceff1; }
+.num-linea { display: inline-block; width: 20px; color: #b0bec5; user-select: none; }
+.linea-activa { background: #fff3cd; border-left-color: #f57f17; font-weight: 600; color: #263238; }
+
+/* Punto de interrupción. La reproducción automática se detiene al alcanzar
+   esta línea. Se señala con un punto rojo junto al número de línea. */
+.linea-breakpoint { border-left-color: #d32f2f; }
+.linea-breakpoint .num-linea { color: #d32f2f; font-weight: 700; }
+.linea-breakpoint .num-linea::before { content: "●"; margin-right: 2px; font-size: 9px; vertical-align: middle; }
+.linea-breakpoint.linea-activa { border-left-color: #d32f2f; }
+
+.insignia-complejidad {
+    display: inline-block; background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;
+    border-radius: 4px; padding: 1px 7px; font-family: Consolas, monospace;
+    font-size: 11.5px; margin-bottom: 6px;
+}
+
+/* --- Leyenda ------------------------------------------------------------- */
+.leyenda {
+    flex: 0 0 auto; background: #fff; border: 1px solid #e0e0e0;
+    border-radius: 8px; padding: 6px 12px; font-size: 11px;
+}
+.leyenda > summary {
+    cursor: pointer; color: #546e7a; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em; list-style: none;
+}
+.leyenda > summary::before { content: "▸ "; }
+.leyenda[open] > summary::before { content: "▾ "; }
+.leyenda-contenido { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; }
+.leyenda-item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.leyenda-etiqueta {
+    flex-basis: 100%; white-space: normal; padding-bottom: 4px;
+    border-bottom: 1px dashed #eceff1; margin-bottom: 2px;
+}
+.leyenda-punto { width: 13px; height: 13px; border-radius: 50%; border: 2px solid; flex: 0 0 auto; }
+.leyenda-nombre { color: #37474f; font-weight: 600; }
+.leyenda-detalle { color: #90a4ae; }
+.muestra-etiqueta {
+    display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15;
+    font-family: Consolas, monospace; background: #fafbfc; border: 1px solid #e0e0e0;
+    border-radius: 4px; padding: 1px 5px; flex: 0 0 auto;
+}
+.muestra-nombre { color: #263238; font-weight: 700; }
+.muestra-dist { color: #546e7a; font-size: 10px; }
+
+/* --- Pie ----------------------------------------------------------------- */
+.pie {
+    flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 5px;
+    margin-top: 6px; padding-top: 5px; border-top: 1px solid #e0e0e0;
+    font-size: 10px; line-height: 1.35; color: #a4b3bb;
+}
+.pie-credito {
+    color: #78909c; font-weight: 600; text-decoration: none;
+    border-bottom: 1px dotted #b0bec5;
+}
+.pie-credito:hover { color: #1565c0; border-bottom-color: #1565c0; }
+.pie-asistencia { font-style: italic; }
+
+/* --- Modal --------------------------------------------------------------- */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+}
+.modal-contenido {
+    background: #fff; border-radius: 10px; padding: 20px 24px; max-width: 520px;
+    width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.modal-header h3 { margin: 0; color: #1565c0; }
+.modal-contenido p { white-space: pre-wrap; font-size: 13px; line-height: 1.6; margin: 0; }
+.btn-cerrar { border: none; background: transparent; font-size: 18px; cursor: pointer; color: #607d8b; line-height: 1; }
+.btn-cerrar:hover { color: #263238; }
+
+/* Contador de fases, solo para Borůvka. En los demás algoritmos queda vacío y
+   no ocupa espacio. */
+.txt-fase:not(:empty) {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1565c0;
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
+/* --- Panel de la estructura del algoritmo --- */
+.panel-estructura {
+    flex: 0 0 auto;
+    background: #fff;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+}
+
+/* Una sola línea de alto fijo. El texto crece con el número de nodos cerrados;
+   si envolviera, el panel crecería y el lienzo del grafo encogería, moviendo el
+   grafo en mitad de la animación. */
+.estructura-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    height: 18px;
+    margin-bottom: 6px;
+}
+
+#txt-resumen {
+    flex: 1 1 0;
+    min-width: 0;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.estructura-cabecera h4 {
+    margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em;
+    color: #607d8b;
+    /* El título cambia con el algoritmo. Si envolviera, la cabecera crecería y
+       el lienzo del grafo encogería. */
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+/* Una fila por nodo: la tabla crece hacia abajo y se desplaza por dentro. Los
+   encabezados quedan fijos al desplazarse. */
+.estructura-envoltura {
+    overflow: auto;
+    max-height: 34vh;
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+}
+
+#tabla-estado thead th { position: sticky; top: 0; z-index: 2; }
+#tabla-estado th.fila-nodo { position: sticky; left: 0; z-index: 1; }
+#tabla-estado thead th.esquina { left: 0; z-index: 3; }
+
+#tabla-estado {
+    border-collapse: collapse;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+}
+
+#tabla-estado th, #tabla-estado td {
+    border: 1px solid #b0bec5;
+    min-width: 40px;
+    height: 26px;
+    padding: 1px 6px;
+    text-align: center;
+    background: #fff;
+}
+
+#tabla-estado thead th { background: #eceff1; font-weight: 700; border-bottom-width: 2px; }
+#tabla-estado thead th.esquina { background: #37474f; color: #fff; }
+#tabla-estado th.fila-nodo { background: #eceff1; font-weight: 700; }
+#tabla-estado td.indefinido { color: #90a4ae; }
+
+/* Nodos que ya salieron de la cola, el del paso actual y aquel cuya casilla se
+   evalúa. */
+#tabla-estado .cerrado { background: #e8eaf6; }
+#tabla-estado td.cerrado { color: #3949ab; }
+#tabla-estado .activo { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; font-weight: 700; }
+#tabla-estado .destino { background: #e3f2fd; box-shadow: inset 0 0 0 2px #1976d2; }
+
+/* El texto del paso ocupa siempre una línea entera de la barra y no cambia de
+   alto. Si creciera al alargarse el texto, o saltara de renglón, la barra
+   cambiaría de alto y el lienzo del grafo con ella: el grafo se movería en
+   mitad de la animación. Lo que no cabe se recorta con puntos suspensivos. */
+#txt-paso, .txt-fase:not(:empty) {
+    flex: 1 0 100%;
+    min-width: 0;
+    margin-top: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#txt-paso {
+    line-height: 18px;
+    height: 18px;
+}
+
+.txt-fase:not(:empty) {
+    line-height: 18px;
+    height: 24px;
+}
+
+/* --- Leyenda en la columna del pseudocódigo --- */
+/* La columna es angosta, de modo que los estados van uno por renglón en vez de
+   repartidos en varias columnas. */
+.columna-codigo .leyenda {
+    margin-top: 8px;
+    font-size: 10.5px;
+    padding: 5px 10px;
+}
+
+.columna-codigo .leyenda-contenido {
+    display: block;
+    margin-top: 4px;
+}
+
+.columna-codigo .leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.columna-codigo .leyenda-punto { width: 10px; height: 10px; border-width: 1.5px; }
+.columna-codigo .leyenda-detalle { overflow: hidden; text-overflow: ellipsis; }
+.columna-codigo .leyenda-etiqueta { white-space: normal; }
+
+/* El pseudocódigo cede el alto sobrante a la leyenda. */
+.columna-codigo .panel-codigo { min-height: 0; overflow-y: auto; }
+
+/* --- Columna de controles plegable --- */
+/* Al plegarla, la columna y su divisor dejan de ocupar espacio y el lienzo del
+   grafo se queda con todo el ancho. */
+.fila-principal.controles-plegados > .columna-controles,
+.fila-principal.controles-plegados > .divisor[data-objetivo="controles"] {
+    display: none;
+}
+
+#btn-plegar { font-size: 12px; }
+
+/* En ventanas angostas el boton se queda con la flecha: la barra no tiene sitio
+   para la palabra y la pagina acabaria desplazandose en horizontal. */
+@media (max-width: 900px) {
+    .solo-ancho { display: none; }
+}
+
+/* --- Editor de la matriz de pesos --- */
+#dlg-editor {
+    border: 1px solid #cfd8dc;
+    border-radius: 8px;
+    padding: 16px 18px;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: #fff;
+    color: #263238;
+    box-shadow: 0 10px 30px rgba(38, 50, 56, .18);
+}
+
+#dlg-editor::backdrop { background: rgba(38, 50, 56, .45); }
+#dlg-editor h4 { margin: 0 0 6px; font-size: 15px; }
+#dlg-editor p { margin: 0 0 10px; max-width: 62ch; }
+
+.editor-barra { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+.editor-barra button {
+    padding: 5px 9px; border: 1px solid #cfd8dc; border-radius: 4px;
+    background: #fff; cursor: pointer; font-size: 12px; color: #263238;
+}
+
+.editor-barra button:disabled { color: #cfd8dc; cursor: default; }
+
+.editor-envoltura {
+    overflow: auto; max-height: 56vh;
+    border: 1px solid #cfd8dc; border-radius: 4px;
+}
+
+#tabla-editor {
+    border-collapse: collapse;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+}
+
+#tabla-editor th, #tabla-editor td {
+    border: 1px solid #90a4ae; padding: 0; text-align: center;
+}
+
+#tabla-editor thead th {
+    position: sticky; top: 0; z-index: 2; background: #eceff1;
+    font-weight: 700; padding: 3px 6px; min-width: 54px;
+}
+
+#tabla-editor thead th.esquina { background: #37474f; color: #fff; left: 0; z-index: 3; }
+#tabla-editor tbody th { position: sticky; left: 0; z-index: 1; background: #eceff1; }
+
+#tabla-editor input {
+    width: 54px; height: 26px; border: none; background: transparent;
+    text-align: center; font-family: inherit; font-size: 13px; color: #263238;
+}
+
+#tabla-editor input:focus { outline: 2px solid #1565c0; outline-offset: -2px; }
+#tabla-editor input.nombre-nodo { font-weight: 700; }
+/* La diagonal serían lazos, que esta aplicación no admite. */
+#tabla-editor input.celda-diagonal { background: #eceff1; }
+/* Triángulo inferior: copia de la casilla simétrica, no se edita. */
+#tabla-editor input.celda-reflejo { background: #fafafa; color: #78909c; }
+
+#tabla-editor .celda-borrar { border: none; }
+
+#tabla-editor .celda-borrar button {
+    border: none; background: transparent; color: #78909c;
+    cursor: pointer; font-size: 15px; padding: 0 7px;
+}
+
+#tabla-editor .celda-borrar button:hover { color: #c62828; }
+
+.editor-pie { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.editor-pie .btn-primario { width: auto; margin-top: 0; }
+
+.editor-pie button:not(.btn-primario) {
+    padding: 7px 14px; border: 1px solid #cfd8dc; border-radius: 5px;
+    background: #fff; cursor: pointer; font-size: 13px; color: #263238;
+}
+
+/* Componentes de (V, F). Ocupa su línea también cuando está vacío, con alto
+   fijo por la misma razón que la cabecera. */
+#txt-componentes {
+    margin-bottom: 5px;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+#txt-detalle {
+    margin-top: 5px;
+    line-height: 16px;
+    height: 16px;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+/* Nodo elegido en la tabla y sus vecinos por una arista. */
+#tabla-estado .incidente { background: #e3f2fd; box-shadow: inset 0 0 0 2px #1565c0; }
+#tabla-estado th { cursor: pointer; }
+
+/* Lista ordenada de Kruskal. Lo rechazado queda tachado en su sitio, de modo
+   que se ve el recorrido completo y no solo lo que queda. */
+#tabla-estado tr.arista-aceptada th,
+#tabla-estado tr.arista-aceptada td { background: #e8f5e9; color: #1b5e20; font-weight: 700; }
+#tabla-estado tr.arista-rechazada th,
+#tabla-estado tr.arista-rechazada td { color: #b0bec5; text-decoration: line-through; }
+#tabla-estado tr.arista-actual th,
+#tabla-estado tr.arista-actual td { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; font-weight: 700; }
+
+/* Componentes de Borůvka: la que está eligiendo su arista mínima y las que ya
+   la eligieron en esta fase. */
+#tabla-estado tr.comp-en-examen th,
+#tabla-estado tr.comp-en-examen td { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; }
+#tabla-estado tr.comp-elegida th,
+#tabla-estado tr.comp-elegida td { background: #e8f5e9; color: #1b5e20; }
+
+/* --- Columna de la estructura --- */
+/* Entre el grafo y el pseudocódigo. La tabla es angosta y esta columna se
+   ajusta a su contenido, de modo que no le quita ancho al pseudocódigo ni lo
+   tapa. */
+.columna-estado {
+    /* Ancho fijo: sin él la columna se ajusta al texto más largo de la cabecera
+       y le quita al grafo mucho más de lo que ocupa la tabla. */
+    flex: 0 0 250px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-left: 10px;
+}
+
+.columna-estado .panel-estructura { margin-top: 0; }
+/* La lista de Kruskal llega a 435 filas. Sin tope, la tabla crece hasta pasarse
+   del borde inferior de la ventana y sus últimas filas quedan fuera de alcance;
+   con él se desplaza por dentro. */
+.columna-estado .estructura-envoltura { max-height: 58vh; flex: 1 1 auto; min-height: 0; }
+
+/* Con el panel oculto la columna no ocupa nada. */
+.columna-estado:has(> [hidden]) { display: none; }
+
+@media (max-width: 900px) {
+    .columna-estado { width: 100%; margin-left: 0; }
+}
