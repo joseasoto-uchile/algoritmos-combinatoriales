@@ -9,8 +9,8 @@ const LAYOUTS = ['circle', 'breadthfirst', 'grid', 'cose', 'preset'];
 const URL_LICENCIA = 'https://github.com/joseasoto-uchile/algoritmos-combinatoriales/blob/main/LICENSE';
 const VELOCIDAD_MINIMA = 1, VELOCIDAD_MAXIMA = 100, VELOCIDAD_INICIAL = 2;
 const INTERVALO_MINIMO_MS = 16;
-/* Una traza va de unos pocos pasos a algunas decenas, de modo que los atajos
- * altos del visualizador de recorridos aquí no significan nada. */
+/* Una traza va de unos pocos pasos a algunas decenas: por encima de veinte
+ * pasos por segundo no queda nada que mirar. */
 const ATAJOS_VELOCIDAD = [1, 2, 5, 10, 20];
 
 const estado = {
@@ -456,23 +456,15 @@ function ajustarRaiz() {
         : `${info.nombre || 'Este algoritmo'} no parte de una raíz: la elige el propio algoritmo.`;
 }
 
+/* Los tres algoritmos se aplican a todo grafo conexo con pesos de cualquier
+ * signo, de modo que la lista no depende de la instancia y el algoritmo elegido
+ * sobrevive a un cambio de grafo. */
 function actualizarOpciones() {
-    const estados = estadoAlgoritmos(estado.G);
-    const disponibles = estados.filter((e) => e.disponible);
+    const ids = Object.keys(ALGORITMOS);
     const sel = $('#dd-algoritmo');
     const previo = sel.value;
-    // La lista muestra siempre todos los algoritmos. Los que no aplican a esta
-    // instancia quedan desactivados con el motivo, en lugar de desaparecer.
-    sel.replaceChildren(...estados.map((e) => {
-        const op = document.createElement('option');
-        op.value = e.id;
-        op.textContent = e.nombre;
-        op.disabled = !e.disponible;
-        if (e.motivo) op.title = e.motivo;
-        return op;
-    }));
-    // Conserva el algoritmo elegido si el grafo nuevo también lo admite.
-    sel.value = disponibles.some((e) => e.id === previo) ? previo : (disponibles[0]?.id ?? '');
+    llenarDesplegable(sel, ids.map((id) => [id, ALGORITMOS[id].nombre]));
+    sel.value = ids.includes(previo) ? previo : ids[0];
 
     const raiz = $('#dd-raiz');
     llenarDesplegable(raiz, estado.G.ids.map((n) => [n, n]));
@@ -612,8 +604,8 @@ function renderPseudocodigo() {
     resaltarPseudocodigo();
 }
 
-/* Un paso puede ejecutar más de una línea, como la relajación, que asigna D y
- * Π. El campo llega entonces como lista. */
+/* Un paso ejecuta un bloque entero del pseudocódigo, de modo que el campo llega
+ * como lista de líneas. Incluye la del comentario que encabeza el bloque. */
 function lineasDelPaso(ev) {
     if (Array.isArray(ev.linea)) return ev.linea;
     return ev.linea === undefined ? [] : [ev.linea];

@@ -123,13 +123,14 @@ function grafoAElementos(G, incluirPosiciones = true) {
 
 /* Clases de nodos y aristas en `pasoActual`.
  *
- * Un paso es una vuelta del ciclo, de modo que cada evento trae listas: las
- * aristas que esa vuelta examinó, las que descartó y la que entró en F.
+ * Un paso es un bloque del pseudocódigo, de modo que cada evento trae listas
+ * de aristas: las que el bloque examinó, las que descartó y la que entró en F.
  *
  * Las aristas de F son permanentes. Las marcas de examinada y descartada duran
  * lo que dure el algoritmo en Jarník–Prim y Kruskal, que no vuelven sobre una
- * arista; en Borůvka se borran al empezar cada fase, porque una arista
- * descartada en una fase puede ser la elegida en la siguiente.
+ * arista. En Borůvka se borran al empezar cada fase: la que no fue la mínima de
+ * un corte puede ser la elegida en la fase siguiente, y por lo mismo ahí
+ * ninguna queda descartada.
  *
  * El color de componente sale de las componentes de (V, F), que es la
  * definición que usan los tres algoritmos, y no de un evento aparte. */
@@ -365,10 +366,10 @@ function textoComponentes(mapa) {
     return `${grupos.length} ${plural}: ${partes.join(', ')}`;
 }
 
-/* Qué hizo la vuelta del ciclo que corresponde a este paso.
+/* Qué hizo el bloque que corresponde a este paso.
  *
- * Con un paso por iteración el tipo de evento por sí solo no dice nada: los
- * tres algoritmos emiten casi siempre el mismo. */
+ * El tipo de evento nombra el bloque, pero no qué nodos y aristas tocó, que es
+ * lo que hace falta para seguir la animación. */
 function textoDelPaso(ev) {
     switch (ev.tipo) {
         case 'inicializar':

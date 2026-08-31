@@ -85,8 +85,8 @@ function alcanzablesDesde(ids, pares, inicio) {
 /* Rechaza un objeto de grafo que no cumple el formato.
  *
  * La validación del peso es necesaria porque en JavaScript un peso de tipo
- * texto no produce error: se concatena, y los pesos acumulados salen como
- * "0diez2".
+ * texto no produce error: se concatena con los demás en lugar de sumarse, y el
+ * peso del árbol sale como una cadena.
  *
  * Se informa solo el primer problema encontrado.
  */
@@ -367,7 +367,7 @@ function ejClase() {
 }
 
 /* Ciclo con pesos distintos. El árbol de expansión mínima es el ciclo sin su
- * arista más pesada, y los tres algoritmos la descartan en momentos distintos. */
+ * arista más pesada, y cada algoritmo llega a ella en un momento distinto. */
 function ejCiclo(n = 8) {
     const G = new Grafo();
     for (let i = 0; i < n; i++) G.agregarNodo(i);

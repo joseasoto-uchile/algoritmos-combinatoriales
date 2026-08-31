@@ -1,4 +1,3 @@
-/* Port de assets/style.css, con la misma disposición que la versión Dash. */
 
 html, body { height: 100%; margin: 0; }
 
@@ -270,9 +269,9 @@ body.redimensionando { cursor: col-resize; user-select: none; }
     margin-top: 8px;
 }
 
-/* Una sola línea de alto fijo. El texto crece con el número de nodos cerrados;
-   si envolviera, el panel crecería y el lienzo del grafo encogería, moviendo el
-   grafo en mitad de la animación. */
+/* Una sola línea de alto fijo. La columna está acotada por el alto de la
+   ventana, de modo que una cabecera que envolviera no agrandaría el panel: le
+   quitaría filas visibles a la tabla. */
 .estructura-cabecera {
     display: flex;
     align-items: center;
@@ -334,8 +333,8 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 #tabla-estado th.fila-nodo { background: #eceff1; font-weight: 700; }
 #tabla-estado td.indefinido { color: #90a4ae; }
 
-/* Nodos que ya salieron de la cola, el del paso actual y aquel cuya casilla se
-   evalúa. */
+/* Nodos que ya salieron de la cola, el del paso actual y aquellos cuya casilla
+   cambió en él. */
 #tabla-estado .cerrado { background: #e8eaf6; }
 #tabla-estado td.cerrado { color: #3949ab; }
 #tabla-estado .activo { background: #fff3e0; box-shadow: inset 0 0 0 2px #e65100; font-weight: 700; }
@@ -551,9 +550,8 @@ body.redimensionando { cursor: col-resize; user-select: none; }
 }
 
 .columna-estado .panel-estructura { margin-top: 0; }
-/* La lista de Kruskal llega a 435 filas. Sin tope, la tabla crece hasta pasarse
-   del borde inferior de la ventana y sus últimas filas quedan fuera de alcance;
-   con él se desplaza por dentro. */
+/* La lista de Kruskal llega a 435 filas. El tope mantiene la tabla dentro de la
+   ventana y la desplaza por dentro. */
 .columna-estado .estructura-envoltura { max-height: 58vh; flex: 1 1 auto; min-height: 0; }
 
 /* Con el panel oculto la columna no ocupa nada. */

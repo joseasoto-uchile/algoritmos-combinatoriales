@@ -91,9 +91,13 @@ algoritmo, que es distinta en cada uno. El registro lo declara con `panel`.
   menos elementos que filas hay.
 
 Sobre la tabla van dos líneas de alto fijo: el tamaño y el peso de F, y las
-componentes de (V, F). El alto fijo importa porque la cabecera del panel
-determina el del lienzo, y un texto que creciera movería el grafo en mitad de la
-animación. El recuento va delante de la lista: la línea se recorta por el final.
+componentes de (V, F). El alto fijo importa porque la columna está acotada por
+la ventana: lo que crezca ahí se lo quita a la tabla. El recuento va delante de
+la lista, que la línea se recorta por el final.
+
+El que sí mueve el grafo es el texto de la barra, que está encima del lienzo en
+la misma columna: por eso `#txt-paso` y el contador de fases van a una línea de
+alto fijo.
 
 ## Colores
 

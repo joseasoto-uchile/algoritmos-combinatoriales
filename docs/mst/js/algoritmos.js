@@ -262,16 +262,3 @@ const ALGORITMOS = {
         ],
     },
 };
-
-/* Motivo por el que un algoritmo no es aplicable al grafo, o null si lo es.
- * Los tres se aplican a todo grafo conexo, con pesos de cualquier signo; la
- * conexidad la garantiza el modelo antes de llegar aquí. */
-function motivoNoDisponible() {
-    return null;
-}
-
-function estadoAlgoritmos() {
-    return Object.values(ALGORITMOS).map((info) => ({
-        id: info.id, nombre: info.nombre, disponible: true, motivo: null,
-    }));
-}
