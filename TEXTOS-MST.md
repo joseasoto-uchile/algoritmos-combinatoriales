@@ -11,9 +11,12 @@ deliberados:
 - En Boruvka la lamina asigna `Aux` dos veces: primero `Aux <- vacio` y despues
   `Aux <- {e_K : ...}`. Se conservan las dos lineas tal cual.
 
-Las lineas del pseudocodigo estan numeradas porque cada paso de la animacion
-apunta a una o varias. Si agregas, quitas o mueves lineas, dimelo y reajusto esa
-correspondencia.
+Las lineas que empiezan por % agrupan las instrucciones que se ejecutan en un
+mismo paso de la animacion. No llevan numero y no admiten punto de
+interrupcion; el paso resalta el bloque entero.
+
+Las instrucciones estan numeradas porque cada paso apunta a una o varias. Si
+agregas, quitas o mueves lineas, dimelo y reajusto esa correspondencia.
 
 ---
 
@@ -32,10 +35,13 @@ La arista {Π[u], u} se dibuja como parte del árbol cuando u sale de Q, que es 
 ### Pseudocodigo
 
    1  Jarník–Prim(G, r, w)
+      % inicializar
    2    para v ∈ V:  D[v] ← +∞;  Π[v] ← ⊥
    3    D[r] ← 0;  Q ← {(x, D[x]) : x ∈ V}
    4    mientras Q no esté vacía:
+      % extraer mínimo
    5      (u, D[u]) ← Extraer-mínimo(Q)
+      % aumentar
    6      para v ∈ N(u) con v en Q:
    7        si w(uv) < D[v]:
    8          D[v] ← w(uv)
@@ -58,9 +64,11 @@ El ciclo recorre las m aristas aunque el árbol quede fijado antes.
 ### Pseudocodigo
 
    1  Kruskal(G, w)
+      % inicializar
    2    ordenar E = {e₁, …, e_m} de menor a mayor peso
    3    F ← ∅
    4    para i ← 1 hasta m:
+      % decidir
    5      si los extremos de eᵢ están en componentes distintas de (V, F):
    6        F ← F + eᵢ
    7    devolver F
@@ -80,11 +88,14 @@ Dos componentes pueden elegir la misma arista, y entonces se agrega una sola vez
 ### Pseudocodigo
 
    1  Borůvka(G, w)
+      % inicializar
    2    F ← ∅
    3    mientras F no sea conexo:
+      % elegir
    4      Aux ← ∅
    5      para cada componente K de (V, F):
    6        e_K ← arista mínima de δ(K)
    7      Aux ← {e_K : K componente de (V, F)}
+      % aumentar
    8      F ← F ∪ Aux
    9    devolver F

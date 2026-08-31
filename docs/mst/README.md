@@ -3,22 +3,29 @@
 Jarník–Prim, Kruskal y Borůvka sobre grafos no dirigidos, con la traza
 reproducible paso a paso. Corresponde a la clase 09.
 
-## Un paso es una vuelta del ciclo
+## Un paso es un bloque del pseudocódigo
 
-La unidad de la traza no es una arista, sino una iteración del ciclo del
-pseudocódigo:
+La unidad de la traza no es una arista, sino un grupo de instrucciones que se
+ejecutan juntas. Los grupos van marcados en el propio pseudocódigo con una línea
+de comentario que empieza por `%`, y el paso resalta el bloque entero:
 
-- **Jarník–Prim**: un paso saca un nodo de la cola, mete su arista en F y aplica
-  de una vez todas las actualizaciones de D y Π que provoca. Un paso por nodo.
-- **Kruskal**: un paso decide una arista de la lista ordenada. Un paso por
-  arista, que es lo que hace el `para i ← 1 hasta m`.
-- **Borůvka**: dos pasos por fase, las dos mitades del cuerpo del ciclo. En el
-  primero todas las componentes eligen su arista mínima a la vez, que es como
-  se hace; en el segundo entra Aux en F.
+| Algoritmo | Bloques del ciclo | Pasos |
+| --- | --- | --- |
+| Jarník–Prim | `% extraer mínimo`, `% aumentar` | dos por vuelta |
+| Kruskal | `% decidir` | uno por arista |
+| Borůvka | `% elegir`, `% aumentar` | dos por fase |
 
-Sobre la instancia de la clase son 9, 12 y 6 pasos. La velocidad va de 1 a 20
-pasos por segundo, no a 100 como en las otras dos aplicaciones: las trazas son
-mucho más cortas.
+En Jarník–Prim, `% extraer mínimo` saca un nodo de la cola y mete su arista en
+F; `% aumentar` revisa de una vez sus aristas hacia la cola y aplica todas las
+actualizaciones de D y Π. En Borůvka, `% elegir` es la elección simultánea de
+todas las e_K, que es como se hace, y `% aumentar` la unión de Aux con F.
+
+Las líneas de comentario no llevan número ni admiten punto de interrupción: la
+numeración corre sobre las instrucciones. Sobre la instancia de la clase son 16,
+12 y 6 pasos.
+
+La velocidad va de 1 a 20 pasos por segundo, no a 100 como en las otras dos
+aplicaciones: las trazas son mucho más cortas.
 
 ## Grafos no dirigidos y conexos
 
@@ -72,8 +79,8 @@ La columna entre el grafo y el pseudocódigo muestra la estructura principal del
 algoritmo, que es distinta en cada uno. El registro lo declara con `panel`.
 
 - **Jarník–Prim**: una fila por nodo con D y Π. Los nodos que ya salieron de la
-  cola aparecen sombreados, el que salió en este paso con borde naranjo y con
-  borde azul aquellos cuya casilla cambió en él.
+  cola aparecen sombreados, el del paso actual con borde naranjo y con borde
+  azul aquellos cuya casilla cambió en `% aumentar`.
 - **Kruskal**: la lista de aristas en el orden en que la recorre. Lo aceptado va
   en verde y lo rechazado tachado en su sitio, no se quita, de modo que se ve el
   recorrido completo. La lista se desplaza sola para dejar a la vista la arista

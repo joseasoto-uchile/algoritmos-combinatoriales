@@ -148,15 +148,16 @@ function calcularEstado(traza, pasoActual, info = {}, ids = []) {
         const ev = traza[i];
         switch (ev.tipo) {
             case 'iteracion':
-                if ('aceptada' in ev) {
-                    // Kruskal: la vuelta decide una sola arista.
-                    transitorias.set(idArista(ev.u, ev.v), ev.aceptada ? 'procesada' : 'descartada');
-                    if (ev.aceptada) aceptadas.push([ev.u, ev.v]);
-                } else {
-                    marcar(ev.exploradas, 'procesada');
-                    marcar(ev.descartadas, 'descartada');
-                    if (ev.arista) aceptadas.push(ev.arista);
-                }
+                // Kruskal: la vuelta decide una sola arista.
+                transitorias.set(idArista(ev.u, ev.v), ev.aceptada ? 'procesada' : 'descartada');
+                if (ev.aceptada) aceptadas.push([ev.u, ev.v]);
+                break;
+            case 'extraer':
+                if (ev.arista) aceptadas.push(ev.arista);
+                break;
+            case 'aumentar':
+                marcar(ev.exploradas, 'procesada');
+                marcar(ev.descartadas, 'descartada');
                 break;
             case 'fase_elegir':
                 if (!persisten) transitorias = new Map();
@@ -189,9 +190,10 @@ function calcularEstado(traza, pasoActual, info = {}, ids = []) {
         };
         // En Borůvka se marcan las aristas y no sus extremos: la elección es de
         // la componente, y pintar los nodos taparía su color.
-        if (ev.tipo === 'iteracion' && 'aceptada' in ev) activa(ev.u, ev.v);
-        else if (ev.tipo === 'iteracion') agregar(clasesNodo, ev.nodo, 'activo');
-        else if (ev.tipo === 'fase_elegir') {
+        if (ev.tipo === 'iteracion') activa(ev.u, ev.v);
+        else if (ev.tipo === 'extraer' || ev.tipo === 'aumentar') {
+            agregar(clasesNodo, ev.nodo, 'activo');
+        } else if (ev.tipo === 'fase_elegir') {
             for (const e of ev.elecciones) agregar(clasesArista, idArista(e.u, e.v), 'activa');
         }
     }
@@ -221,9 +223,9 @@ function calcularSolucion(traza, pasoActual) {
     const tope = traza.length ? Math.max(0, Math.min(pasoActual, traza.length - 1)) : -1;
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'iteracion' && 'aceptada' in ev) {
+        if (ev.tipo === 'iteracion') {
             if (ev.aceptada) { aristas.push([ev.u, ev.v]); peso += ev.peso; }
-        } else if (ev.tipo === 'iteracion' && ev.arista) {
+        } else if (ev.tipo === 'extraer' && ev.arista) {
             aristas.push(ev.arista); peso += ev.peso;
         } else if (ev.tipo === 'fase_unir') {
             for (const [u, v, w] of ev.aristas) { aristas.push([u, v]); peso += w; }
@@ -234,12 +236,13 @@ function calcularSolucion(traza, pasoActual) {
 
 /* Estado de los vectores D y Π en `pasoActual`, reconstruido desde la traza.
  *
- * Solo Jarník–Prim los mantiene. Los eventos guardan los cambios, no una copia
- * de los vectores, de modo que se reproducen en orden.
+ * Solo Jarník–Prim los mantiene, y en dos pasos: `extraer` fija la casilla del
+ * nodo que sale de la cola y `aumentar` las de sus vecinos. Los eventos guardan
+ * los cambios, no una copia de los vectores, de modo que se reproducen en
+ * orden.
  *
  * `cerrados` son los nodos que ya salieron de la cola, es decir U. `activo` es
- * el nodo que salió en este paso y `actualizados` aquellos cuya casilla cambió
- * en él.
+ * el nodo de este paso y `actualizados` aquellos cuya casilla cambió en él.
  *
  * `inicializado` indica si la línea que asigna los valores iniciales ya se
  * ejecutó. Las casillas van vacías hasta entonces, de modo que ese paso también
@@ -255,15 +258,18 @@ function calcularVectores(traza, pasoActual, ids) {
     const tope = Math.max(0, Math.min(pasoActual, traza.length - 1));
     for (let i = 0; i <= tope; i++) {
         const ev = traza[i];
-        if (ev.tipo === 'inicializar') { inicializado = true; continue; }
-        if (ev.tipo !== 'iteracion' || !('nodo' in ev)) continue;
-        D.set(ev.nodo, ev.dist);
-        Pi.set(ev.nodo, ev.padre);
-        cerrados.add(ev.nodo);
-        for (const a of ev.actualizadas) { D.set(a.nodo, a.dist); Pi.set(a.nodo, a.padre); }
+        if (ev.tipo === 'inicializar') { inicializado = true; }
+        else if (ev.tipo === 'extraer') {
+            D.set(ev.nodo, ev.dist);
+            Pi.set(ev.nodo, ev.padre);
+            cerrados.add(ev.nodo);
+        } else if (ev.tipo === 'aumentar') {
+            for (const a of ev.actualizadas) { D.set(a.nodo, a.dist); Pi.set(a.nodo, a.padre); }
+        }
     }
     const ev = traza[tope];
-    if (ev.tipo === 'iteracion' && 'nodo' in ev) {
+    if (ev.tipo === 'extraer') activo = ev.nodo;
+    else if (ev.tipo === 'aumentar') {
         activo = ev.nodo;
         actualizados = new Set(ev.actualizadas.map((a) => a.nodo));
     }
@@ -367,18 +373,20 @@ function textoDelPaso(ev) {
     switch (ev.tipo) {
         case 'inicializar':
             return 'valores iniciales';
-        case 'iteracion': {
-            if ('aceptada' in ev) {
-                return `iteración ${ev.n}: ${ev.u} — ${ev.v} (${ev.peso}), `
-                    + (ev.aceptada ? 'aceptada' : 'rechazada, cerraría un ciclo');
+        case 'iteracion':
+            return `iteración ${ev.n}: ${ev.u} — ${ev.v} (${ev.peso}), `
+                + (ev.aceptada ? 'aceptada' : 'rechazada, cerraría un ciclo');
+        case 'extraer':
+            return `iteración ${ev.n}, extraer mínimo: sale ${ev.nodo} de Q`
+                + (ev.arista ? `, entra ${nombreArista(...ev.arista)} en F` : ' (es la raíz)');
+        case 'aumentar': {
+            if (!ev.exploradas.length) {
+                return `iteración ${ev.n}, aumentar: ${ev.nodo} no tiene vecinos en Q`;
             }
-            const partes = [`iteración ${ev.n}: sale ${ev.nodo} de Q`];
-            if (ev.arista) partes.push(`entra ${ev.arista[0]} — ${ev.arista[1]} en F`);
-            if (ev.actualizadas.length) {
-                partes.push(`${ev.actualizadas.length} `
-                    + (ev.actualizadas.length === 1 ? 'casilla actualizada' : 'casillas actualizadas'));
-            }
-            return partes.join(', ');
+            const n = ev.actualizadas.length, m = ev.exploradas.length;
+            return `iteración ${ev.n}, aumentar: se ${m === 1 ? 'revisa 1 arista' : `revisan ${m} aristas`} `
+                + `de ${ev.nodo} hacia Q, ` + (n === 0 ? 'ninguna casilla cambia'
+                    : `${n} ${n === 1 ? 'casilla cambia' : 'casillas cambian'}`);
         }
         case 'fase_elegir':
             return `fase ${ev.fase}: las ${ev.componentes} componentes eligen su arista mínima`;

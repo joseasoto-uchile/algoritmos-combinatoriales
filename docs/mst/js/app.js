@@ -594,10 +594,21 @@ function renderPseudocodigo() {
         `<span class="insignia-complejidad">${info.complejidad}</span>`;
     // Los puntos de interrupción son propios de cada algoritmo.
     estado.breakpoints.clear();
-    $('#pseudocodigo-lineas').innerHTML = info.pseudocodigo.map((texto, i) =>
-        `<div class="linea-codigo" data-linea="${i + 1}">`
-        + `<span class="num-linea">${String(i + 1).padStart(2, ' ')}</span> `
-        + `${texto.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('');
+    // Una línea que empieza por % es un comentario que agrupa las instrucciones
+    // que se ejecutan en un mismo paso. No lleva número ni admite punto de
+    // interrupción, pero se resalta junto con su bloque.
+    let numero = 0;
+    $('#pseudocodigo-lineas').innerHTML = info.pseudocodigo.map((texto, i) => {
+        const escapado = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        if (texto.trimStart().startsWith('%')) {
+            return `<div class="linea-codigo linea-comentario" data-linea="${i + 1}">`
+                + `<span class="num-linea"></span> ${escapado}</div>`;
+        }
+        numero += 1;
+        return `<div class="linea-codigo" data-linea="${i + 1}">`
+            + `<span class="num-linea">${String(numero).padStart(2, ' ')}</span> `
+            + `${escapado}</div>`;
+    }).join('');
     resaltarPseudocodigo();
 }
 
@@ -846,7 +857,7 @@ function iniciar() {
     });
     $('#pseudocodigo-lineas').addEventListener('click', (ev) => {
         const linea = ev.target.closest('.linea-codigo');
-        if (!linea) return;
+        if (!linea || linea.classList.contains('linea-comentario')) return;
         const n = Number(linea.dataset.linea);
         if (estado.breakpoints.has(n)) estado.breakpoints.delete(n);
         else estado.breakpoints.add(n);

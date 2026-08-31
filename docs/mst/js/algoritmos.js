@@ -4,11 +4,13 @@
  * número de línea del pseudocódigo que le corresponde, de modo que la capa de
  * dibujo sirve para todos sin distinguir cuál se está ejecutando.
  *
- * La unidad de la traza es una vuelta del ciclo del pseudocódigo, no una
- * arista: un paso de Jarník-Prim saca un nodo de la cola y aplica de una vez
- * todas las actualizaciones que provoca, uno de Kruskal decide una arista de la
- * lista ordenada, y una fase de Borůvka son dos pasos, la elección simultánea
- * de todas las e_K y la unión de Aux con F.
+ * La unidad de la traza es un bloque del pseudocódigo, no una arista. Los
+ * bloques van marcados en el propio pseudocódigo con una línea de comentario, y
+ * cada evento apunta a las líneas del suyo:
+ *
+ *   Jarník-Prim   % extraer mínimo   % aumentar        dos pasos por vuelta
+ *   Kruskal       % decidir                            un paso por arista
+ *   Borůvka       % elegir           % aumentar        dos pasos por fase
  *
  * Los tres suponen las aristas totalmente ordenadas: primero por peso y, entre
  * pesos iguales, por el orden en que se declararon. Con ese orden fijo los tres
@@ -66,7 +68,7 @@ function primTraza(G, raiz) {
     const D = {}, Pi = {}, aristaDe = {};
     for (const v of ids) { D[v] = Infinity; Pi[v] = null; aristaDe[v] = null; }
     D[raiz] = 0;
-    tb.emitir('inicializar', { linea: [2, 3] });
+    tb.emitir('inicializar', { linea: [2, 3, 4] });
 
     const enCola = new Set(ids);
     const arbol = [];
@@ -76,6 +78,10 @@ function primTraza(G, raiz) {
         enCola.delete(u);
         const arista = Pi[u] === null ? null : [Pi[u], u];
         if (arista) arbol.push(arista);
+        n += 1;
+        tb.emitir('extraer', {
+            n, nodo: u, dist: D[u], padre: Pi[u], arista, peso: D[u], linea: [5, 6, 7],
+        });
 
         const exploradas = [], actualizadas = [], descartadas = [];
         for (const { v, peso } of G.vecinos(u)) {
@@ -90,14 +96,13 @@ function primTraza(G, raiz) {
                 descartadas.push([u, v]);
             }
         }
-        tb.emitir('iteracion', {
-            n: ++n, nodo: u, dist: D[u], padre: Pi[u], arista, peso: D[u],
-            exploradas, actualizadas, descartadas,
-            linea: [4, 5, 6, 7, 8, 9, 10],
+        tb.emitir('aumentar', {
+            n, nodo: u, exploradas, actualizadas, descartadas,
+            linea: [8, 9, 10, 11, 12, 13],
         });
     }
     const peso = _pesoDe(G, arbol);
-    tb.emitir('fin', { aristas: arbol, peso, linea: 11 });
+    tb.emitir('fin', { aristas: arbol, peso, linea: 14 });
     return [{ aristas: arbol, peso }, tb.traza];
 }
 
@@ -108,7 +113,7 @@ function kruskalTraza(G) {
     const tb = new ConstructorTraza();
     const uf = new UnionFind(G.ids);
     const orden = G.aristasOrdenadas();
-    tb.emitir('inicializar', { orden: orden.map((a) => [a.origen, a.destino]), linea: [2, 3] });
+    tb.emitir('inicializar', { orden: orden.map((a) => [a.origen, a.destino]), linea: [2, 3, 4] });
 
     const arbol = [];
     let n = 0;
@@ -117,11 +122,11 @@ function kruskalTraza(G) {
         if (acepta) { uf.unir(u, v); arbol.push([u, v]); }
         tb.emitir('iteracion', {
             n: ++n, u, v, peso, aceptada: acepta,
-            linea: acepta ? [4, 5, 6] : [4, 5],
+            linea: acepta ? [5, 6, 7, 8] : [5, 6, 7],
         });
     }
     const peso = _pesoDe(G, arbol);
-    tb.emitir('fin', { aristas: arbol, peso, linea: 7 });
+    tb.emitir('fin', { aristas: arbol, peso, linea: 9 });
     return [{ aristas: arbol, peso }, tb.traza];
 }
 
@@ -138,7 +143,7 @@ function boruvkaTraza(G) {
     const ids = G.ids;
     const rango = _rangoDeAristas(G);
     const uf = new UnionFind(ids);
-    tb.emitir('inicializar', { linea: 2 });
+    tb.emitir('inicializar', { linea: [2, 3] });
 
     const arbol = [];
     let componentes = agruparComponentes(componentesDe(ids, arbol)).length;
@@ -161,17 +166,17 @@ function boruvkaTraza(G) {
             elecciones.push({ componente: rep, u: mejor.u, v: mejor.v, peso: mejor.peso });
         }
         tb.emitir('fase_elegir', {
-            fase, componentes, elecciones, exploradas, linea: [3, 4, 5, 6],
+            fase, componentes, elecciones, exploradas, linea: [4, 5, 6, 7, 8, 9],
         });
 
         const aux = new Map();
         for (const e of elecciones) aux.set(claveArista(e.u, e.v), [e.u, e.v, e.peso]);
         for (const [u, v] of aux.values()) { uf.unir(u, v); arbol.push([u, v]); }
-        tb.emitir('fase_unir', { fase, aristas: [...aux.values()], linea: [7, 8] });
+        tb.emitir('fase_unir', { fase, aristas: [...aux.values()], linea: [10, 11] });
         componentes = agruparComponentes(componentesDe(ids, arbol)).length;
     }
     const peso = _pesoDe(G, arbol);
-    tb.emitir('fin', { aristas: arbol, peso, fases: fase, linea: 9 });
+    tb.emitir('fin', { aristas: arbol, peso, fases: fase, linea: 12 });
     return [{ aristas: arbol, peso, fases: fase }, tb.traza];
 }
 
@@ -194,10 +199,13 @@ const ALGORITMOS = {
             + 'el momento en que deja de poder cambiar.',
         pseudocodigo: [
             'Jarník–Prim(G, r, w)',
+            '% inicializar',
             '  para v ∈ V:  D[v] ← +∞;  Π[v] ← ⊥',
             '  D[r] ← 0;  Q ← {(x, D[x]) : x ∈ V}',
             '  mientras Q no esté vacía:',
+            '% extraer mínimo',
             '    (u, D[u]) ← Extraer-mínimo(Q)',
+            '% aumentar',
             '    para v ∈ N(u) con v en Q:',
             '      si w(uv) < D[v]:',
             '        D[v] ← w(uv)',
@@ -218,9 +226,11 @@ const ALGORITMOS = {
             + 'El ciclo recorre las m aristas aunque el árbol quede fijado antes.',
         pseudocodigo: [
             'Kruskal(G, w)',
+            '% inicializar',
             '  ordenar E = {e₁, …, e_m} de menor a mayor peso',
             '  F ← ∅',
             '  para i ← 1 hasta m:',
+            '% decidir',
             '    si los extremos de eᵢ están en componentes distintas de (V, F):',
             '      F ← F + eᵢ',
             '  devolver F',
@@ -238,12 +248,15 @@ const ALGORITMOS = {
             + 'vez: en una fase entran menos aristas que componentes había.',
         pseudocodigo: [
             'Borůvka(G, w)',
+            '% inicializar',
             '  F ← ∅',
             '  mientras F no sea conexo:',
+            '% elegir',
             '    Aux ← ∅',
             '    para cada componente K de (V, F):',
             '      e_K ← arista mínima de δ(K)',
             '    Aux ← {e_K : K componente de (V, F)}',
+            '% aumentar',
             '    F ← F ∪ Aux',
             '  devolver F',
         ],
